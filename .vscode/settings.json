@@ -1,0 +1,9 @@
+{
+  "json.maxItemsComputed": 50000,
+  "editor.foldingMaximumRegions": 50000,
+  "editor.foldingStrategy": "auto",
+  "[json]": {
+    "editor.foldingStrategy": "indentation"
+  },
+  "editor.unfoldOnClickAfterEnd": true
+}

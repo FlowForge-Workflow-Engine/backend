@@ -1,0 +1,6 @@
+// ✅ FOR HEALTH CHECK THE MEMORY CONSUMPTION SHOULD NOT EXCEED THIS SIZE
+export const MEM_SIZE = 250 * 1024 * 1024; // 250MB
+
+// ✅ FOR NETWORK OPERATION RETRY STRATEGY
+export const RATE_LIMIT_DELAY = 2000; // 2 seconds delay between requests
+export const MAX_RETRIES = 3;
