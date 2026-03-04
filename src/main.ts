@@ -19,7 +19,6 @@ import { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.int
 // import { loadSecretsFromAWS } from "./configs/app.config";
 import { createDataSource } from "./infra/configs/ormconfig";
 import { runMigrations } from "./migration-runner";
-import { swaggerDarkModeMiddleware, SWAGGER_CUSTOM_CSS } from "@debiprasadmishra50/swagger-dark-mode";
 
 /**
  * function for bootstraping the nest application

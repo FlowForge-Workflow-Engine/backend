@@ -1,10 +1,11 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class BaseEntity {
   @PrimaryGeneratedColumn()
   id: string;
 
+  @Index()
   @Column({ type: "uuid" })
   tenantId: string;
 
