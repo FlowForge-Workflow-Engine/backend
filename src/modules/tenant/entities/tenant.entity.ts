@@ -1,36 +1,42 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 export enum TenantPlan {
-  FREE = 'free',
-  PRO = 'pro',
-  ENTERPRISE = 'enterprise',
+  FREE = "free",
+  PRO = "pro",
+  ENTERPRISE = "enterprise",
 }
 
 /**
  * Root tenant aggregate. This table has NO tenant_id column —
  * it IS the root of the tenant hierarchy.
  */
-@Entity('tenants')
+@Entity("tenants")
 export class Tenant {
-  @PrimaryGeneratedColumn('uuid')
+  /** Primary key - unique identifier for each tenant in the multi-tenant system */
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  /** Human-readable tenant name for display purposes and identification */
+  @Column({ type: "varchar", length: 255 })
   name: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  /** URL-friendly unique identifier for tenant - used in subdomains and routing */
+  @Column({ type: "varchar", length: 100, unique: true })
   slug: string;
 
-  @Column({ type: 'enum', enum: TenantPlan, enumName: 'tenant_plan_enum' })
+  /** Subscription plan level - determines feature access and resource limits */
+  @Column({ type: "enum", enum: TenantPlan, enumName: "tenant_plan_enum" })
   plan: TenantPlan;
 
-  @Column({ type: 'boolean', default: true })
+  /** Soft delete flag - allows disabling tenant without data loss */
+  @Column({ type: "boolean", default: true })
   isActive: boolean;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  /** Timestamp when tenant was created - for billing and analytics */
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  /** Timestamp of last tenant update - tracks configuration changes */
+  @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 }
-

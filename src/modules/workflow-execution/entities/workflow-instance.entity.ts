@@ -1,10 +1,10 @@
-import { Column, Entity, Index } from 'typeorm';
-import { BaseEntity } from '@app/shared/entities/base.entity';
+import { Column, Entity, Index } from "typeorm";
+import { BaseEntity } from "@app/shared/entities/base.entity";
 
 export enum WorkflowInstanceStatus {
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  ACTIVE = "active",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
 }
 
 /**
@@ -18,45 +18,50 @@ export enum WorkflowInstanceStatus {
  *   `definitionVersion` links to the snapshot used at creation time.
  *   The live definition can change without affecting this instance.
  */
-@Entity('workflow_instances')
-@Index(['tenantId', 'status'])
-@Index(['tenantId', 'workflowDefinitionId'])
+@Entity("workflow_instances")
+@Index(["tenantId", "status"])
+@Index(["tenantId", "workflowDefinitionId"])
 export class WorkflowInstance extends BaseEntity {
-  @Column({ type: 'uuid', name: 'workflow_definition_id' })
+  /** Foreign key to workflow definition - links instance to its template */
+  @Column({ type: "uuid", name: "workflow_definition_id" })
   workflowDefinitionId: string;
 
-  @Column({ type: 'integer', name: 'definition_version' })
+  /** Version of definition used at creation - ensures instance uses consistent snapshot */
+  @Column({ type: "integer", name: "definition_version" })
   definitionVersion: number;
 
-  @Column({ type: 'uuid', name: 'current_state_id' })
+  /** Current state ID in the workflow - tracks instance position in state machine */
+  @Column({ type: "uuid", name: "current_state_id" })
   currentStateId: string;
 
-  /** Denormalized state name — avoids snapshot lookup on every read. */
-  @Column({ type: 'varchar', length: 100, name: 'current_state_name' })
+  /** Denormalized state name — avoids snapshot lookup on every read - performance optimization */
+  @Column({ type: "varchar", length: 100, name: "current_state_name" })
   currentStateName: string;
 
-  @Column({ type: 'jsonb', default: '{}' })
+  /** Dynamic data associated with this instance - stores business context and form data */
+  @Column({ type: "jsonb", default: "{}" })
   payload: Record<string, unknown>;
 
+  /** Current lifecycle status of the instance - tracks overall instance state */
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: WorkflowInstanceStatus,
     default: WorkflowInstanceStatus.ACTIVE,
   })
   status: WorkflowInstanceStatus;
 
   /**
-   * Optimistic lock counter (Constraint 6).
+   * Optimistic lock counter (Constraint 6) - prevents concurrent modification conflicts
    * Each successful transition increments this by 1.
    */
-  @Column({ type: 'integer', default: 1 })
+  @Column({ type: "integer", default: 1 })
   version: number;
 
-  /** UUID of the user who created this instance (from JWT — no FK). */
-  @Column({ type: 'uuid', name: 'created_by' })
+  /** UUID of the user who created this instance (from JWT — no FK) - tracks instance creator */
+  @Column({ type: "uuid", name: "created_by" })
   createdBy: string;
 
-  @Column({ type: 'timestamptz', name: 'completed_at', nullable: true, default: null })
+  /** Timestamp when instance reached terminal state - null for active instances */
+  @Column({ type: "timestamptz", name: "completed_at", nullable: true, default: null })
   completedAt: Date | null;
 }
-
