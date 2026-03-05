@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -7,10 +7,12 @@ import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-respon
 import { WorkflowStateService } from "../services/workflow-state.service";
 import { CreateWorkflowStateDto } from "../dto/create-workflow-state.dto";
 import { FindWorkflowStateDto } from "../dto/find-workflow-state.dto";
+import { UpdateWorkflowStateDto } from "../dto/update-workflow-state.dto";
 import {
   WorkflowStateListResponseDto,
   WorkflowStateDetailResponseDto,
   WorkflowStateCreatedResponseDto,
+  WorkflowStateUpdatedResponseDto,
 } from "../dto/dto-response/workflow-state-response.dto";
 
 /**
@@ -59,6 +61,19 @@ export class WorkflowStateController {
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<WorkflowStateDetailResponseDto>> {
     const data = await this.service.findById(stateId, tenantId);
+    return { status: "success", data };
+  }
+
+  @Patch(":stateId")
+  @ApiOperation({ summary: "Update a workflow state in a draft workflow definition" })
+  @ApiSuccessResponse(WorkflowStateUpdatedResponseDto, "Workflow state updated successfully")
+  async update(
+    @Param() { id }: IdParamDto,
+    @Param("stateId") stateId: string,
+    @Body() dto: UpdateWorkflowStateDto,
+    @TenantId() tenantId: string
+  ): Promise<ApiResponseDto<WorkflowStateUpdatedResponseDto>> {
+    const data = await this.service.update(id, stateId, dto, tenantId);
     return { status: "success", data };
   }
 

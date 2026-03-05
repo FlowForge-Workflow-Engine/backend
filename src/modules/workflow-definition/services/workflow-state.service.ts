@@ -6,6 +6,7 @@ import { WorkflowDefinitionStatus } from "../entities/workflow-definition.entity
 import { WorkflowState } from "../entities/workflow-state.entity";
 import { CreateWorkflowStateDto } from "../dto/create-workflow-state.dto";
 import { FindWorkflowStateDto } from "../dto/find-workflow-state.dto";
+import { UpdateWorkflowStateDto } from "../dto/update-workflow-state.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
@@ -44,6 +45,7 @@ export class WorkflowStateService {
    */
   async create(definitionId: string, dto: CreateWorkflowStateDto, tenantId: string): Promise<WorkflowState> {
     const definition = await this.definitionRepository.findByIdAndTenant(definitionId, tenantId);
+
     if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
     if (definition.status !== WorkflowDefinitionStatus.DRAFT) {
       throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
@@ -88,6 +90,7 @@ export class WorkflowStateService {
    */
   async findAll(dto: FindWorkflowStateDto, definitionId: string, tenantId: string): Promise<WorkflowState[]> {
     const { page, limit } = dto;
+
     return this.stateRepository.findByDefinitionAndTenant(definitionId, tenantId, { page, limit });
   }
 
@@ -101,8 +104,72 @@ export class WorkflowStateService {
    */
   async findById(id: string, tenantId: string): Promise<WorkflowState> {
     const state = await this.stateRepository.findByIdAndTenant(id, tenantId);
+
     if (!state) throw new NotFoundException(AppErrors.WORKFLOW_STATE_NOT_FOUND);
+
     return state;
+  }
+
+  /**
+   * Updates a workflow state within a definition.
+   * Only DRAFT definitions can have states modified.
+   * Preserves the single-initial-state invariant and invalidates related caches.
+   *
+   * @param definitionId - The workflow definition ID from the nested route
+   * @param stateId - The workflow state ID to update
+   * @param dto - Partial state update data
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowState> - The updated state entity
+   * @throws NotFoundException - If definition or state is not found
+   * @throws BadRequestException - If definition is not DRAFT or initial-state rules are violated
+   */
+  async update(
+    definitionId: string,
+    stateId: string,
+    dto: UpdateWorkflowStateDto,
+    tenantId: string
+  ): Promise<WorkflowState> {
+    const definition = await this.definitionRepository.findByIdAndTenant(definitionId, tenantId);
+
+    if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
+    if (definition.status !== WorkflowDefinitionStatus.DRAFT) {
+      throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
+    }
+
+    const state = await this.findById(stateId, tenantId);
+
+    if (state.workflowDefinitionId !== definitionId) {
+      throw new NotFoundException(AppErrors.WORKFLOW_STATE_NOT_FOUND);
+    }
+
+    if (dto.isInitial === true && !state.isInitial) {
+      const count = await this.stateRepository.countInitialStates(definitionId, tenantId);
+      if (count > 0) throw new BadRequestException(AppErrors.WORKFLOW_MULTIPLE_INITIAL_STATES);
+    }
+
+    if (dto.isInitial === false && state.isInitial) {
+      throw new BadRequestException(AppErrors.WORKFLOW_INITIAL_STATE_REQUIRED);
+    }
+
+    if (dto.name !== undefined) state.name = dto.name;
+    if (Object.prototype.hasOwnProperty.call(dto, "description")) state.description = dto.description ?? null;
+    if (dto.isInitial !== undefined) state.isInitial = dto.isInitial;
+    if (dto.isTerminal !== undefined) state.isTerminal = dto.isTerminal;
+    if (Object.prototype.hasOwnProperty.call(dto, "positionX")) state.positionX = dto.positionX ?? null;
+    if (Object.prototype.hasOwnProperty.call(dto, "positionY")) state.positionY = dto.positionY ?? null;
+    if (Object.prototype.hasOwnProperty.call(dto, "metadata")) state.metadata = dto.metadata ?? null;
+
+    const saved = await this.stateRepository.save(state);
+
+    await this.redis.del(
+      CacheKeys.workflowDefinition(tenantId, definitionId),
+      CacheKeys.workflowStates(tenantId, definitionId),
+      CacheKeys.workflowTransitions(tenantId, definitionId),
+      CacheKeys.workflowDefinitionList(tenantId)
+    );
+
+    this.logger.log(`WorkflowState updated: ${saved.id} [definition=${definitionId}]`);
+    return saved;
   }
 
   /**
@@ -116,8 +183,11 @@ export class WorkflowStateService {
    */
   async remove(id: string, tenantId: string): Promise<void> {
     const state = await this.findById(id, tenantId);
+
     const definitionId = state.workflowDefinitionId;
+
     await this.stateRepository.remove(state);
+
     await this.redis.del(
       CacheKeys.workflowDefinition(tenantId, definitionId),
       CacheKeys.workflowStates(tenantId, definitionId),

@@ -104,10 +104,13 @@ export class WorkflowDefinitionService {
    */
   async remove(id: string, tenantId: string): Promise<void> {
     const definition = await this.findById(id, tenantId);
+
     if (definition.status !== WorkflowDefinitionStatus.DRAFT) {
       throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
     }
+
     await this.definitionRepository.remove(definition);
+
     await this.redis.del(
       CacheKeys.workflowDefinition(tenantId, id),
       CacheKeys.workflowDefinitionList(tenantId)

@@ -23,6 +23,34 @@ export class WorkflowStateResponseDto {
   @ApiProperty({ example: false, description: "Whether this is a terminal state (no outgoing transitions)" })
   isTerminal: boolean;
 
+  @ApiProperty({
+    example: "Used when a request is waiting for manager action",
+    description: "Optional description explaining the state purpose",
+    nullable: true,
+  })
+  description: string | null;
+
+  @ApiProperty({
+    example: 120,
+    description: "X coordinate for visual positioning in the workflow diagram",
+    nullable: true,
+  })
+  positionX: number | null;
+
+  @ApiProperty({
+    example: 240,
+    description: "Y coordinate for visual positioning in the workflow diagram",
+    nullable: true,
+  })
+  positionY: number | null;
+
+  @ApiProperty({
+    example: { color: "#FF5733", icon: "clock" },
+    description: "Additional display metadata for the state",
+    nullable: true,
+  })
+  metadata: Record<string, unknown> | null;
+
   @ApiProperty({ example: "2026-03-01T08:00:00Z", description: "Workflow state creation timestamp" })
   createdAt: Date;
 
@@ -47,3 +75,9 @@ export class WorkflowStateDetailResponseDto extends WorkflowStateResponseDto {}
  * Used for POST /workflow-definitions/:id/states endpoint
  */
 export class WorkflowStateCreatedResponseDto extends WorkflowStateResponseDto {}
+
+/**
+ * Workflow State Updated Response DTO
+ * Used for PATCH /workflow-definitions/:id/states/:stateId endpoint
+ */
+export class WorkflowStateUpdatedResponseDto extends WorkflowStateResponseDto {}
