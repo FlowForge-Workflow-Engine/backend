@@ -25,14 +25,15 @@ import { JwtAuthGuard, TenantIsolationGuard, RolesGuard } from "@app/shared/guar
 import { GlobalExceptionFilter } from "@app/shared/filters";
 import { LoggingInterceptor, TenantContextInterceptor } from "@app/shared/interceptors";
 import { LoggerMiddleware } from "@app/shared/middlewares";
+import { envSchema } from "@app/shared";
 import { DatabaseContextInterceptor } from "./modules/database/interceptors/database-context.interceptor";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: [`.env.stage.${process.env.STAGE}`, '.env'],
+      envFilePath: [`.env.stage.${process.env.STAGE}`, ".env"],
       isGlobal: true,
-      validationSchema: require('@app/shared/utils/env.validation').envSchema,
+      validationSchema: envSchema,
       validationOptions: {
         allowUnknown: true,
         abortEarly: false,

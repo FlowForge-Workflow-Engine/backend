@@ -9,12 +9,12 @@ export abstract class BaseEntity {
   id: string;
 
   @Index()
-  @Column({ type: "uuid", nullable: false })
+  @Column({ type: "uuid", nullable: false, name: "tenant_id" })
   tenantId: string;
 
-  @CreateDateColumn({ type: "timestamptz" })
+  @CreateDateColumn({ type: "timestamptz", name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @UpdateDateColumn({ type: "timestamptz", name: "updated_at" })
   updatedAt: Date;
 }

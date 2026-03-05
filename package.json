@@ -23,9 +23,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:e2e:watch": "STAGE=test jest --config ./test/jest-e2e.json --watchAll --no-cache",
     "typedoc": "typedoc --options ./typedoc.json",
-    "typeorm": "cross-env STAGE=dev ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/configs/ormconfig.ts",
-    "migration:create": "npx typeorm migration:create ./src/database/migrations/Migration",
-    "migration:generate": "npm run typeorm -- migration:generate ./src/database/migrations/Migration -p",
+    "typeorm": "cross-env STAGE=dev ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/modules/database/ormconfig.ts",
+    "migration:create": "npx typeorm migration:create ./src/modules/database/migrations/Migration",
+    "migration:generate": "npm run typeorm -- migration:generate ./src/modules/database/migrations/Migration -p",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "prepare": "husky"

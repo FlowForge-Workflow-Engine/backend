@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# SQL Files
+*.sql
+
 # ENVs
 .env*
 
