@@ -12,6 +12,9 @@ import { WebhookConfigRepository } from "../repositories/webhook-config.reposito
 import { NotificationService } from "../services/notification.service";
 import { WebhookService } from "../services/webhook.service";
 import { NotificationChannel } from "../entities/notification-template.entity";
+import { RedisService } from "../../../infra/redis.service";
+import { CacheKeys } from "../../../infra/cache-keys";
+import { CacheTTL } from "../../../infra/cache-ttl";
 
 @Controller()
 export class NotificationSubscriber {
@@ -21,7 +24,8 @@ export class NotificationSubscriber {
     private readonly templateRepository: NotificationTemplateRepository,
     private readonly webhookConfigRepository: WebhookConfigRepository,
     private readonly notificationService: NotificationService,
-    private readonly webhookService: WebhookService
+    private readonly webhookService: WebhookService,
+    private readonly redis: RedisService
   ) {}
 
   @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CREATED)
@@ -57,6 +61,34 @@ export class NotificationSubscriber {
   }
 
   /**
+   * Cache-aside lookup: retrieve templates for an event trigger.
+   * TTL is MEDIUM since templates change infrequently but we want reasonably fresh data.
+   */
+  private async getTemplatesForEvent(eventName: string, tenantId: string): Promise<Record<string, any>[]> {
+    const cacheKey = CacheKeys.notifTemplates(tenantId, eventName);
+    const cached = await this.redis.get<Record<string, any>[]>(cacheKey);
+    if (cached) return cached;
+
+    const templates = await this.templateRepository.findActiveByEventTrigger(eventName, tenantId);
+    await this.redis.set(cacheKey, templates, CacheTTL.MEDIUM);
+    return templates;
+  }
+
+  /**
+   * Cache-aside lookup: retrieve webhook configs for an event name.
+   * TTL is MEDIUM since webhook configs change infrequently.
+   */
+  private async getActiveWebhooks(eventName: string, tenantId: string): Promise<Record<string, any>[]> {
+    const cacheKey = CacheKeys.notifWebhooks(tenantId, eventName);
+    const cached = await this.redis.get<Record<string, any>[]>(cacheKey);
+    if (cached) return cached;
+
+    const webhooks = await this.webhookConfigRepository.findActiveByEventName(eventName, tenantId);
+    await this.redis.set(cacheKey, webhooks, CacheTTL.MEDIUM);
+    return webhooks;
+  }
+
+  /**
    * Finds all active templates and webhook configs for the given event,
    * then dispatches notifications in parallel (fire-and-forget per handler).
    */
@@ -67,8 +99,8 @@ export class NotificationSubscriber {
   ): Promise<void> {
     try {
       const [templates, webhooks] = await Promise.all([
-        this.templateRepository.findActiveByEventTrigger(eventName, tenantId),
-        this.webhookConfigRepository.findActiveByEventName(eventName, tenantId),
+        this.getTemplatesForEvent(eventName, tenantId),
+        this.getActiveWebhooks(eventName, tenantId),
       ]);
 
       const emailTemplates = templates.filter((t) => t.channel === NotificationChannel.EMAIL);
