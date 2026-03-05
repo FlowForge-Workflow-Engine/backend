@@ -8,10 +8,12 @@ import { AuthPublisher } from "../publishers/auth.publisher";
 import { User } from "../entities/user.entity";
 import { UserRole } from "../entities/user-role.entity";
 import { CreateUserDto } from "../dto/create-user.dto";
+import { RoleResponseDto } from "../dto/dto-response/role-response.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
+import { FindUserDto } from "../dto/find-user.dto";
 
 /**
  * Internal user management service — NOT exported from AuthModule.
@@ -93,9 +95,12 @@ export class UserService {
     // Step 7: Invalidate tenant user list cache (new user added, list is stale)
     await this.redis.del(CacheKeys.usersByTenant(tenantId));
 
-    // Step 8: Log creation for operational monitoring and debugging
+    // Step 8: Reload user with roles to return complete user data in response
+    const userWithRoles = await this.userRepository.findByIdAndTenantWithRoles(saved.id, tenantId);
+
+    // Step 9: Log creation for operational monitoring and debugging
     this.logger.log(`User created: ${saved.id} [tenant=${tenantId}]`);
-    return saved;
+    return userWithRoles || saved;
   }
 
   /**
@@ -104,20 +109,22 @@ export class UserService {
    * @param tenantId - The tenant ID for multi-tenancy isolation
    * @returns Promise<User[]> - Array of all users in the tenant
    */
-  async findAll(tenantId: string): Promise<User[]> {
-    return this.userRepository.findByTenantId(tenantId);
+  async findAll(dto: FindUserDto, tenantId: string): Promise<User[]> {
+    const { page, limit } = dto;
+    return this.userRepository.findByTenantIdWithRoles(tenantId, { page, limit });
   }
 
   /**
-   * Retrieves a single user by ID within a tenant.
+   * Retrieves a single user by ID within a tenant with their assigned roles.
+   * Uses explicit JOIN to load roles in a single query (no N+1 problem).
    *
    * @param id - The user ID to retrieve
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @returns Promise<User> - The user entity
+   * @returns Promise<User> - The user entity with roles populated
    * @throws NotFoundException - If user not found in the tenant
    */
   async findById(id: string, tenantId: string): Promise<User> {
-    const user = await this.userRepository.findByIdAndTenant(id, tenantId);
+    const user = await this.userRepository.findByIdAndTenantWithRoles(id, tenantId);
     if (!user) throw new NotFoundException(AppErrors.USER_NOT_FOUND);
     return user;
   }

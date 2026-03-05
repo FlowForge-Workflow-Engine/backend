@@ -14,6 +14,7 @@ import {
   UserDetailResponseDto,
   UserCreatedResponseDto,
 } from "../dto/dto-response/user-response.dto";
+import { FindUserDto } from "../dto/find-user.dto";
 
 @ApiTags("Users")
 @ApiBearerAuth()
@@ -24,8 +25,14 @@ export class UserController {
   @Get()
   @ApiOperation({ summary: "List all users within the authenticated tenant" })
   @ApiSuccessResponse(UserListResponseDto, "Users retrieved successfully", { isArray: true })
-  async findAll(@TenantId() tenantId: string): Promise<CountApiResponseDto<UserListResponseDto[]>> {
-    const data = await this.userService.findAll(tenantId);
+  async findAll(
+    @Body() dto: FindUserDto,
+    @TenantId() tenantId: string
+  ): Promise<CountApiResponseDto<UserListResponseDto[]>> {
+    const users = await this.userService.findAll(dto, tenantId);
+
+    const data = users.map((user) => UserListResponseDto.fromEntity(user));
+
     return { status: "success", count: data.length, data };
   }
 
@@ -38,7 +45,10 @@ export class UserController {
     @TenantId() tenantId: string,
     @CurrentUser() actor: IJwtPayload
   ): Promise<ApiResponseDto<UserCreatedResponseDto>> {
-    const data = await this.userService.create(dto, tenantId, actor.sub);
+    const user = await this.userService.create(dto, tenantId, actor.sub);
+
+    const data = UserCreatedResponseDto.fromEntity(user);
+
     return { status: "success", data };
   }
 
@@ -49,7 +59,10 @@ export class UserController {
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<UserDetailResponseDto>> {
-    const data = await this.userService.findById(id, tenantId);
+    const user = await this.userService.findById(id, tenantId);
+
+    const data = UserDetailResponseDto.fromEntity(user);
+
     return { status: "success", data };
   }
 

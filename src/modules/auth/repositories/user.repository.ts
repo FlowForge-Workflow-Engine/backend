@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 import { User } from "../entities/user.entity";
+import { pagination } from "@app/shared/utils/paginaton";
 
 @Injectable()
 export class UserRepository {
@@ -18,8 +19,45 @@ export class UserRepository {
     return this.repo.findOne({ where: { id, tenantId } });
   }
 
+  /**
+   * Load user by ID with all assigned roles eagerly.
+   * Uses LEFT JOIN to include roles even if user has none.
+   * @param id - The user ID to retrieve
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<User | null> - User with userRoles[] populated, or null if not found
+   */
+  findByIdAndTenantWithRoles(id: string, tenantId: string): Promise<User | null> {
+    return this.repo
+      .createQueryBuilder("u")
+      .leftJoinAndSelect("u.userRoles", "ur")
+      .leftJoinAndSelect("ur.role", "r")
+      .where("u.id = :id AND u.tenantId = :tenantId", { id, tenantId })
+      .getOne();
+  }
+
   findByTenantId(tenantId: string): Promise<User[]> {
     return this.repo.find({ where: { tenantId }, order: { createdAt: "DESC" } });
+  }
+
+  /**
+   * Load all users in a tenant with their assigned roles.
+   * Uses LEFT JOIN to include roles even if users have none.
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<User[]> - Array of users with userRoles[] populated
+   */
+  findByTenantIdWithRoles(tenantId: string, options: { page: number; limit: number }): Promise<User[]> {
+    const { page, limit } = options;
+    const { skip, take } = pagination(page, limit);
+
+    return this.repo
+      .createQueryBuilder("u")
+      .leftJoinAndSelect("u.userRoles", "ur")
+      .leftJoinAndSelect("ur.role", "r")
+      .where("u.tenantId = :tenantId", { tenantId })
+      .orderBy("u.createdAt", "DESC")
+      .skip(skip)
+      .take(take)
+      .getMany();
   }
 
   findManyByIds(ids: string[], tenantId: string): Promise<User[]> {

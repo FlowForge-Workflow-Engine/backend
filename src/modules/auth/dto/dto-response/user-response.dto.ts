@@ -1,5 +1,6 @@
 import { ApiProperty, OmitType } from "@nestjs/swagger";
 import { User } from "../../entities/user.entity";
+import { RoleResponseDto } from "./role-response.dto";
 
 /**
  * Base User Response DTO
@@ -40,6 +41,49 @@ export class UserResponseDto extends OmitType(User, ["passwordHash"] as const) {
 
   @ApiProperty({ example: "2026-03-05T10:30:00Z", description: "User last update timestamp" })
   updatedAt: Date;
+
+  @ApiProperty({
+    type: [RoleResponseDto],
+    description: "Array of roles assigned to this user",
+    example: [
+      {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        tenantId: "550e8400-e29b-41d4-a716-446655440001",
+        name: "Admin",
+        description: "Full system access",
+        isSystemRole: true,
+        createdAt: "2026-03-01T08:00:00Z",
+        updatedAt: "2026-03-05T10:30:00Z",
+      },
+    ],
+  })
+  roles: RoleResponseDto[];
+
+  /**
+   * Transform a User entity to UserResponseDto
+   * Converts userRoles relationship to roles array using RoleResponseDto
+   * @param user - The user entity to transform
+   * @returns UserResponseDto with all fields populated
+   */
+  static fromEntity(user: User): UserResponseDto {
+    const dto = new UserResponseDto();
+    dto.id = user.id;
+    dto.tenantId = user.tenantId;
+    dto.email = user.email;
+    dto.firstName = user.firstName;
+    dto.lastName = user.lastName;
+    dto.isActive = user.isActive;
+    dto.isEmailVerified = user.isEmailVerified;
+    dto.lastLoginAt = user.lastLoginAt;
+    dto.createdAt = user.createdAt;
+    dto.updatedAt = user.updatedAt;
+    // Transform userRoles to roles array
+    dto.roles =
+      user.userRoles
+        ?.map((ur) => ur.role && RoleResponseDto.fromEntity(ur.role))
+        .filter((role): role is RoleResponseDto => role !== undefined && role !== null) ?? [];
+    return dto;
+  }
 }
 
 /**

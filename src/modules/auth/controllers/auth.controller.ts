@@ -104,7 +104,9 @@ export class AuthController {
   @ApiOperation({ summary: "Return Current Logged In User" })
   @ApiSuccessResponse(UserResponseDto, "User retrieved successfully")
   async getCurrentUser(@CurrentUser() user: IJwtPayload): Promise<ApiResponseDto<UserResponseDto>> {
-    const data = await this.userService.findById(user.sub, user.tenantId);
+    const userEntity = await this.userService.findById(user.sub, user.tenantId);
+
+    const data = UserResponseDto.fromEntity(userEntity);
 
     return { status: "success", data };
   }
