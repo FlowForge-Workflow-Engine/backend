@@ -26,7 +26,7 @@ export class UserController {
   @ApiSuccessResponse(UserListResponseDto, "Users retrieved successfully", { isArray: true })
   async findAll(@TenantId() tenantId: string): Promise<CountApiResponseDto<UserListResponseDto[]>> {
     const data = await this.userService.findAll(tenantId);
-    return { status: "success", data, count: data.length };
+    return { status: "success", count: data.length, data };
   }
 
   @Post()

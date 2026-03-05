@@ -58,7 +58,7 @@ export class NotificationTemplateController {
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<NotificationTemplateListResponseDto[]>> {
     const data = await this.templateRepository.findAllByTenant(tenantId);
-    return { status: "success", data, count: data.length };
+    return { status: "success", count: data.length, data };
   }
 
   @Get(":id")

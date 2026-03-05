@@ -35,7 +35,7 @@ export class WorkflowTransitionController {
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowTransitionListResponseDto[]>> {
     const data = await this.service.findAll(id, tenantId);
-    return { status: "success", data, count: data.length };
+    return { status: "success", count: data.length, data };
   }
 
   @Post()

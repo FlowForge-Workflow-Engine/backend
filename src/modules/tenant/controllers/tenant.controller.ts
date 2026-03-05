@@ -35,7 +35,7 @@ export class TenantController {
   @ApiSuccessResponse(TenantListResponseDto, "Tenants retrieved successfully", { isArray: true })
   async findAll(): Promise<CountApiResponseDto<TenantListResponseDto[]>> {
     const data = await this.tenantService.findAll();
-    return { status: "success", data, count: data.length };
+    return { status: "success", count: data.length, data };
   }
 
   @Post()
@@ -104,7 +104,7 @@ export class TenantController {
     @Param() { id }: IdParamDto
   ): Promise<CountApiResponseDto<TenantFeatureFlagListResponseDto[]>> {
     const data = await this.tenantService.getFeatureFlags(id);
-    return { status: "success", data, count: data.length };
+    return { status: "success", count: data.length, data };
   }
 
   @Post(":id/feature-flags")

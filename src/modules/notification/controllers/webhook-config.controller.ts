@@ -56,7 +56,7 @@ export class WebhookConfigController {
   })
   async findAll(@TenantId() tenantId: string): Promise<CountApiResponseDto<WebhookConfigListResponseDto[]>> {
     const data = await this.webhookConfigRepository.findAllByTenant(tenantId);
-    return { status: "success", data, count: data.length };
+    return { status: "success", count: data.length, data };
   }
 
   @Get(":id")
