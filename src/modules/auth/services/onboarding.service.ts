@@ -28,12 +28,7 @@ import { AuthPublisher } from "../publishers/auth.publisher";
 import { UserRole } from "../entities/user-role.entity";
 import { RegisterTenantDto } from "../dto/register-tenant.dto";
 import { RegisterDto } from "../dto/register.dto";
-
-const DEFAULT_SYSTEM_ROLES = [
-  { name: "Admin", description: "Full access to all tenant resources", isSystemRole: true },
-  { name: "Approver", description: "Can approve or reject workflow transitions", isSystemRole: true },
-  { name: "Requestor", description: "Can initiate and track workflow instances", isSystemRole: true },
-] as const;
+import { DEFAULT_SYSTEM_ROLES } from "../constants/default-system-roles";
 
 /**
  * Result of a successful onboarding flow (tenant or user registration).
