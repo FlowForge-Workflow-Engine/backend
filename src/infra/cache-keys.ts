@@ -4,40 +4,31 @@
  */
 export const CacheKeys = {
   // ─── Auth ──────────────────────────────────────────────────────────────────
-  userSummary: (tenantId: string, userId: string) =>
-    `wf-auth:${tenantId}:user:${userId}:summary`,
+  userSummary: (tenantId: string, userId: string) => `wf-auth:${tenantId}:user:${userId}:summary`,
 
-  userRoles: (tenantId: string, userId: string) =>
-    `wf-auth:${tenantId}:user:${userId}:roles`,
+  userRoles: (tenantId: string, userId: string) => `wf-auth:${tenantId}:user:${userId}:roles`,
 
-  usersByTenant: (tenantId: string) =>
-    `wf-auth:${tenantId}:users`,
+  usersByTenant: (tenantId: string) => `wf-auth:${tenantId}:users`,
 
-  jwtUser: (tenantId: string, userId: string) =>
-    `wf-auth:${tenantId}:jwt:${userId}`,
+  jwtUser: (tenantId: string, userId: string) => `wf-auth:${tenantId}:jwt:${userId}`,
 
   // ─── Tenant ────────────────────────────────────────────────────────────────
-  tenantById: (tenantId: string) =>
-    `wf-tenant:${tenantId}:detail`,
+  tenantById: (tenantId: string) => `wf-tenant:${tenantId}:detail`,
 
-  tenantSettings: (tenantId: string) =>
-    `wf-tenant:${tenantId}:settings`,
+  tenantBySlug: (slug: string) => `wf-tenant:slug:${slug}:detail`,
 
-  tenantFeatureFlags: (tenantId: string) =>
-    `wf-tenant:${tenantId}:feature-flags`,
+  tenantSettings: (tenantId: string) => `wf-tenant:${tenantId}:settings`,
 
-  tenantPlan: (tenantId: string) =>
-    `wf-tenant:${tenantId}:plan`,
+  tenantFeatureFlags: (tenantId: string) => `wf-tenant:${tenantId}:feature-flags`,
+
+  tenantPlan: (tenantId: string) => `wf-tenant:${tenantId}:plan`,
 
   // ─── Workflow Definition ───────────────────────────────────────────────────
-  workflowDefinition: (tenantId: string, definitionId: string) =>
-    `wf-def:${tenantId}:def:${definitionId}`,
+  workflowDefinition: (tenantId: string, definitionId: string) => `wf-def:${tenantId}:def:${definitionId}`,
 
-  workflowDefinitionList: (tenantId: string) =>
-    `wf-def:${tenantId}:list`,
+  workflowDefinitionList: (tenantId: string) => `wf-def:${tenantId}:list`,
 
-  workflowStates: (tenantId: string, definitionId: string) =>
-    `wf-def:${tenantId}:def:${definitionId}:states`,
+  workflowStates: (tenantId: string, definitionId: string) => `wf-def:${tenantId}:def:${definitionId}:states`,
 
   workflowTransitions: (tenantId: string, definitionId: string) =>
     `wf-def:${tenantId}:def:${definitionId}:transitions`,
@@ -59,14 +50,11 @@ export const CacheKeys = {
   notifTemplates: (tenantId: string, eventTrigger: string) =>
     `wf-notif:${tenantId}:templates:${eventTrigger}`,
 
-  notifWebhooks: (tenantId: string, eventTrigger: string) =>
-    `wf-notif:${tenantId}:webhooks:${eventTrigger}`,
+  notifWebhooks: (tenantId: string, eventTrigger: string) => `wf-notif:${tenantId}:webhooks:${eventTrigger}`,
 
   // ─── Rate Limiting ─────────────────────────────────────────────────────────
   rateLimitUser: (tenantId: string, userId: string, windowMin: number) =>
     `wf-rl:${tenantId}:user:${userId}:${windowMin}`,
 
-  rateLimitTenant: (tenantId: string, windowMin: number) =>
-    `wf-rl:${tenantId}:global:${windowMin}`,
+  rateLimitTenant: (tenantId: string, windowMin: number) => `wf-rl:${tenantId}:global:${windowMin}`,
 } as const;
-

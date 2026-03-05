@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { connect } from "nats";
 import { TENANT_QUERY_CONTRACT } from "@app/shared/interfaces/contracts/tenant-query.contract";
+import { TENANT_PROVISIONING_CONTRACT } from "@app/shared/interfaces/contracts/tenant-provisioning.contract";
 import { NATS_CLIENT } from "../../infra";
 import { Tenant } from "./entities/tenant.entity";
 import { TenantSettings } from "./entities/tenant-settings.entity";
@@ -12,6 +13,7 @@ import { TenantSettingsRepository } from "./repositories/tenant-settings.reposit
 import { TenantFeatureFlagRepository } from "./repositories/tenant-feature-flag.repository";
 import { TenantService } from "./services/tenant.service";
 import { TenantQueryService } from "./services/tenant-query.service";
+import { TenantProvisioningService } from "./services/tenant-provisioning.service";
 import { TenantPublisher } from "./publishers/tenant.publisher";
 import { TenantController } from "./controllers/tenant.controller";
 
@@ -36,11 +38,13 @@ import { TenantController } from "./controllers/tenant.controller";
     TenantFeatureFlagRepository,
     TenantService,
     TenantQueryService,
+    TenantProvisioningService,
     TenantPublisher,
-    /** Contract binding — only this token leaves the module boundary */
+    /** Contract bindings — only these tokens leave the module boundary */
     { provide: TENANT_QUERY_CONTRACT, useClass: TenantQueryService },
+    { provide: TENANT_PROVISIONING_CONTRACT, useClass: TenantProvisioningService },
   ],
   controllers: [TenantController],
-  exports: [TENANT_QUERY_CONTRACT],
+  exports: [TENANT_QUERY_CONTRACT, TENANT_PROVISIONING_CONTRACT],
 })
 export class TenantModule {}

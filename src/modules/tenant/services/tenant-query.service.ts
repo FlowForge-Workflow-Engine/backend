@@ -42,6 +42,25 @@ export class TenantQueryService implements ITenantQueryContract {
     return summary;
   }
 
+  async findBySlug(slug: string): Promise<TenantSummary | null> {
+    const key = CacheKeys.tenantBySlug(slug);
+    const cached = await this.redis.get<TenantSummary>(key);
+    if (cached) return cached;
+
+    const tenant = await this.tenantRepository.findBySlug(slug);
+    if (!tenant) return null;
+
+    const summary: TenantSummary = {
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      plan: tenant.plan,
+      isActive: tenant.isActive,
+    };
+    await this.redis.set(key, summary, CacheTTL.MEDIUM);
+    return summary;
+  }
+
   async isFeatureEnabled(tenantId: string, flagKey: string): Promise<boolean> {
     const key = CacheKeys.tenantFeatureFlags(tenantId);
     const cached = await this.redis.get<Record<string, boolean>>(key);

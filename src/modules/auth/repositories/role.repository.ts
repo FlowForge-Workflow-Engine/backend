@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { Role } from '../entities/role.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { In, Repository } from "typeorm";
+import { Role } from "../entities/role.entity";
 
 @Injectable()
 export class RoleRepository {
   constructor(
     @InjectRepository(Role)
-    private readonly repo: Repository<Role>,
+    private readonly repo: Repository<Role>
   ) {}
 
   findByTenantId(tenantId: string): Promise<Role[]> {
-    return this.repo.find({ where: { tenantId }, order: { name: 'ASC' } });
+    return this.repo.find({ where: { tenantId }, order: { name: "ASC" } });
   }
 
   findByNameAndTenant(name: string, tenantId: string): Promise<Role | null> {
@@ -39,5 +39,8 @@ export class RoleRepository {
   save(role: Role): Promise<Role> {
     return this.repo.save(role);
   }
-}
 
+  saveMany(roles: Role[]): Promise<Role[]> {
+    return this.repo.save(roles);
+  }
+}

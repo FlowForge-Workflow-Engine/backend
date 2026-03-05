@@ -6,6 +6,7 @@ import { PassportModule } from "@nestjs/passport";
 import { connect } from "nats";
 import { USER_QUERY_CONTRACT } from "@app/shared/interfaces/contracts/user-query.contract";
 import { NATS_CLIENT } from "../../infra";
+import { TenantModule } from "../tenant/tenant.module";
 
 // Entities
 import { User } from "./entities/user.entity";
@@ -23,6 +24,7 @@ import { RefreshTokenRepository } from "./repositories/refresh-token.repository"
 import { AuthService } from "./services/auth.service";
 import { UserService } from "./services/user.service";
 import { UserQueryService } from "./services/user-query.service";
+import { OnboardingService } from "./services/onboarding.service";
 
 // Strategy & Guard
 import { JwtStrategy } from "./strategies/jwt.strategy";
@@ -37,6 +39,7 @@ import { UserController } from "./controllers/user.controller";
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role, Permission, UserRole, RefreshToken]),
+    TenantModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -71,6 +74,7 @@ import { UserController } from "./controllers/user.controller";
     AuthService,
     UserService,
     UserQueryService,
+    OnboardingService,
 
     // Strategy
     JwtStrategy,

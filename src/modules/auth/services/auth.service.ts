@@ -44,7 +44,7 @@ export class AuthService {
     user.lastLoginAt = new Date();
     await this.userRepository.save(user);
 
-    return this.issueTokens(user.id, user.email, user.firstName, tenantId, roles);
+    return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, roles);
   }
 
   async refresh(rawRefreshToken: string): Promise<AuthTokens> {
@@ -65,7 +65,7 @@ export class AuthService {
 
     const roles = userWithRoles.userRoles?.map((ur) => ur.role?.name).filter(Boolean) ?? [];
 
-    return this.issueTokens(
+    return this.issueTokenPair(
       stored.userId,
       userWithRoles.email,
       userWithRoles.firstName,
@@ -82,7 +82,7 @@ export class AuthService {
     }
   }
 
-  private async issueTokens(
+  async issueTokenPair(
     userId: string,
     email: string,
     firstName: string,

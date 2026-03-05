@@ -17,6 +17,14 @@ export interface ITenantQueryContract {
   findById(tenantId: string): Promise<TenantSummary | null>;
 
   /**
+   * Find a tenant by its URL-friendly slug.
+   * Used during user self-registration to resolve the company without exposing UUIDs.
+   * @param slug - e.g. 'acme-corp'
+   * @returns TenantSummary or null if not found
+   */
+  findBySlug(slug: string): Promise<TenantSummary | null>;
+
+  /**
    * Check if a feature flag is enabled for a tenant.
    * @param tenantId - UUID of the tenant
    * @param flagKey - Feature flag key (e.g. 'enable_webhooks')
@@ -31,4 +39,3 @@ export interface ITenantQueryContract {
    */
   getPlan(tenantId: string): Promise<string>;
 }
-
