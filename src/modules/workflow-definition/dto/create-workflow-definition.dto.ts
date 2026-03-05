@@ -10,10 +10,10 @@ export class CreateWorkflowDefinitionDto {
     maxLength: 255,
     required: true,
   })
-  @IsNotEmpty({ message: "Workflow name is required" })
-  @IsString({ message: "Workflow name must be a string" })
-  @MinLength(1, { message: "Workflow name must be at least 1 character long" })
   @MaxLength(255, { message: "Workflow name must not exceed 255 characters" })
+  @MinLength(1, { message: "Workflow name must be at least 1 character long" })
+  @IsString({ message: "Workflow name must be a string" })
+  @IsNotEmpty({ message: "Workflow name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly name: string;
 
@@ -22,9 +22,9 @@ export class CreateWorkflowDefinitionDto {
     description: "Optional description explaining the workflow purpose (max 1000 characters)",
     maxLength: 1000,
   })
-  @IsOptional()
-  @IsString({ message: "Workflow description must be a string" })
   @MaxLength(1000, { message: "Workflow description must not exceed 1000 characters" })
+  @IsString({ message: "Workflow description must be a string" })
+  @IsOptional()
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly description?: string;
 }

@@ -8,10 +8,10 @@ export class LoginDto {
     description: "Email address of the user",
     required: true,
   })
-  @IsNotEmpty({ message: "Email is required" })
-  @IsString({ message: "Email must be a string" })
-  @IsEmail({}, { message: "Email must be a valid email address" })
   @MaxLength(255, { message: "Email must not exceed 255 characters" })
+  @IsEmail({}, { message: "Email must be a valid email address" })
+  @IsString({ message: "Email must be a string" })
+  @IsNotEmpty({ message: "Email is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   email: string;
 
@@ -22,9 +22,9 @@ export class LoginDto {
     maxLength: 32,
     required: true,
   })
-  @IsNotEmpty({ message: "Password is required" })
-  @IsString({ message: "Password must be a string" })
-  @MinLength(8, { message: "Password must be at least 8 characters long" })
   @MaxLength(32, { message: "Password must not exceed 32 characters" })
+  @MinLength(8, { message: "Password must be at least 8 characters long" })
+  @IsString({ message: "Password must be a string" })
+  @IsNotEmpty({ message: "Password is required" })
   password: string;
 }

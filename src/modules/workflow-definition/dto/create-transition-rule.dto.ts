@@ -19,10 +19,10 @@ export class CreateTransitionRuleDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Rule name is required" })
-  @IsString({ message: "Rule name must be a string" })
-  @MinLength(1, { message: "Rule name must be at least 1 character long" })
   @MaxLength(100, { message: "Rule name must not exceed 100 characters" })
+  @MinLength(1, { message: "Rule name must be at least 1 character long" })
+  @IsString({ message: "Rule name must be a string" })
+  @IsNotEmpty({ message: "Rule name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly ruleName: string;
 
@@ -33,8 +33,8 @@ export class CreateTransitionRuleDto {
     },
     required: true,
   })
-  @IsNotEmpty({ message: "Rule definition is required" })
   @IsObject({ message: "Rule definition must be an object" })
+  @IsNotEmpty({ message: "Rule definition is required" })
   readonly ruleDefinition: Record<string, unknown>;
 
   @ApiPropertyOptional({
@@ -42,8 +42,8 @@ export class CreateTransitionRuleDto {
     example: 0,
     minimum: 0,
   })
-  @IsOptional()
-  @IsInt({ message: "Evaluation order must be an integer" })
   @Min(0, { message: "Evaluation order must be at least 0" })
+  @IsInt({ message: "Evaluation order must be an integer" })
+  @IsOptional()
   readonly evaluationOrder?: number;
 }

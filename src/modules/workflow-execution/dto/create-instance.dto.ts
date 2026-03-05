@@ -8,15 +8,15 @@ export class CreateInstanceDto {
     format: "uuid",
     required: true,
   })
-  @IsNotEmpty({ message: "Workflow definition ID is required" })
   @IsUUID("4", { message: "Workflow definition ID must be a valid UUID" })
+  @IsNotEmpty({ message: "Workflow definition ID is required" })
   readonly workflowDefinitionId: string;
 
   @ApiPropertyOptional({
     description: "Initial form payload for the workflow instance (JSON object)",
     example: { requestedBy: "John Doe", amount: 5000 },
   })
-  @IsOptional()
   @IsObject({ message: "Payload must be an object" })
+  @IsOptional()
   readonly payload?: Record<string, unknown>;
 }

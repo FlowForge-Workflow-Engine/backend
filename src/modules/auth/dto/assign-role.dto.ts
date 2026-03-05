@@ -8,7 +8,7 @@ export class AssignRoleDto {
     example: "550e8400-e29b-41d4-a716-446655440000",
     required: true,
   })
-  @IsNotEmpty({ message: "Role ID is required" })
   @IsUUID("4", { message: "Role ID must be a valid UUID" })
+  @IsNotEmpty({ message: "Role ID is required" })
   roleId: string;
 }

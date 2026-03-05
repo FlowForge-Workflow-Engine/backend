@@ -10,10 +10,10 @@ export class UpdateTenantDto {
     minLength: 2,
     maxLength: 255,
   })
-  @IsOptional()
-  @IsString({ message: "Tenant name must be a string" })
-  @MinLength(2, { message: "Tenant name must be at least 2 characters long" })
   @MaxLength(255, { message: "Tenant name must not exceed 255 characters" })
+  @MinLength(2, { message: "Tenant name must be at least 2 characters long" })
+  @IsString({ message: "Tenant name must be a string" })
+  @IsOptional()
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly name?: string;
 
@@ -22,15 +22,15 @@ export class UpdateTenantDto {
     description: "Subscription plan for the tenant",
     example: TenantPlan.PRO,
   })
-  @IsOptional()
   @IsEnum(TenantPlan, { message: `Tenant plan must be one of: ${Object.values(TenantPlan).join(", ")}` })
+  @IsOptional()
   readonly plan?: TenantPlan;
 
   @ApiPropertyOptional({
     description: "Whether the tenant is active",
     example: true,
   })
-  @IsOptional()
   @IsBoolean({ message: "isActive must be a boolean" })
+  @IsOptional()
   readonly isActive?: boolean;
 }

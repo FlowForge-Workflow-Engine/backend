@@ -11,10 +11,10 @@ export class CreateTenantDto {
     maxLength: 255,
     required: true,
   })
-  @IsNotEmpty({ message: "Tenant name is required" })
-  @IsString({ message: "Tenant name must be a string" })
-  @MinLength(2, { message: "Tenant name must be at least 2 characters long" })
   @MaxLength(255, { message: "Tenant name must not exceed 255 characters" })
+  @MinLength(2, { message: "Tenant name must be at least 2 characters long" })
+  @IsString({ message: "Tenant name must be a string" })
+  @IsNotEmpty({ message: "Tenant name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly name: string;
 
@@ -27,13 +27,13 @@ export class CreateTenantDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Tenant slug is required" })
-  @IsString({ message: "Tenant slug must be a string" })
-  @MinLength(2, { message: "Tenant slug must be at least 2 characters long" })
-  @MaxLength(100, { message: "Tenant slug must not exceed 100 characters" })
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: "Tenant slug must contain only lowercase letters, numbers, and hyphens (e.g., acme-corp)",
   })
+  @MaxLength(100, { message: "Tenant slug must not exceed 100 characters" })
+  @MinLength(2, { message: "Tenant slug must be at least 2 characters long" })
+  @IsString({ message: "Tenant slug must be a string" })
+  @IsNotEmpty({ message: "Tenant slug is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   readonly slug: string;
 
@@ -43,7 +43,7 @@ export class CreateTenantDto {
     example: TenantPlan.FREE,
     required: true,
   })
-  @IsNotEmpty({ message: "Tenant plan is required" })
   @IsEnum(TenantPlan, { message: `Tenant plan must be one of: ${Object.values(TenantPlan).join(", ")}` })
+  @IsNotEmpty({ message: "Tenant plan is required" })
   readonly plan: TenantPlan;
 }

@@ -23,10 +23,10 @@ export class CreateUserDto {
     maxLength: 50,
     required: true,
   })
-  @IsNotEmpty({ message: "First name is required" })
-  @IsString({ message: "First name must be a string" })
-  @MinLength(1, { message: "First name must be at least 1 character long" })
   @MaxLength(50, { message: "First name must not exceed 50 characters" })
+  @MinLength(1, { message: "First name must be at least 1 character long" })
+  @IsString({ message: "First name must be a string" })
+  @IsNotEmpty({ message: "First name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   firstName: string;
 
@@ -37,10 +37,10 @@ export class CreateUserDto {
     maxLength: 50,
     required: true,
   })
-  @IsNotEmpty({ message: "Last name is required" })
-  @IsString({ message: "Last name must be a string" })
-  @MinLength(1, { message: "Last name must be at least 1 character long" })
   @MaxLength(50, { message: "Last name must not exceed 50 characters" })
+  @MinLength(1, { message: "Last name must be at least 1 character long" })
+  @IsString({ message: "Last name must be a string" })
+  @IsNotEmpty({ message: "Last name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   lastName: string;
 
@@ -49,10 +49,10 @@ export class CreateUserDto {
     description: "Email address of the user (valid email format required)",
     required: true,
   })
-  @IsNotEmpty({ message: "Email is required" })
-  @IsString({ message: "Email must be a string" })
-  @IsEmail({}, { message: "Email must be a valid email address" })
   @MaxLength(255, { message: "Email must not exceed 255 characters" })
+  @IsEmail({}, { message: "Email must be a valid email address" })
+  @IsString({ message: "Email must be a string" })
+  @IsNotEmpty({ message: "Email is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   email: string;
 
@@ -64,14 +64,14 @@ export class CreateUserDto {
     maxLength: 32,
     required: true,
   })
-  @IsNotEmpty({ message: "Password is required" })
-  @IsString({ message: "Password must be a string" })
-  @MinLength(8, { message: "Password must be at least 8 characters long" })
-  @MaxLength(32, { message: "Password must not exceed 32 characters" })
   @Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message:
       "Password must contain at least one uppercase letter, one lowercase letter, and one number or special character",
   })
+  @MaxLength(32, { message: "Password must not exceed 32 characters" })
+  @MinLength(8, { message: "Password must be at least 8 characters long" })
+  @IsString({ message: "Password must be a string" })
+  @IsNotEmpty({ message: "Password is required" })
   password: string;
 
   @ApiPropertyOptional({
@@ -79,9 +79,9 @@ export class CreateUserDto {
     example: ["Admin", "Viewer"],
     description: "Array of role names to assign to the user",
   })
-  @IsOptional()
-  @IsArray({ message: "Role names must be an array" })
   @IsString({ each: true, message: "Each role name must be a string" })
+  @IsArray({ message: "Role names must be an array" })
+  @IsOptional()
   @Transform(({ value }) =>
     Array.isArray(value) ? value.map((v) => (typeof v === "string" ? v.trim() : v)) : value
   )

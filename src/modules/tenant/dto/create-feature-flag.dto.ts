@@ -21,13 +21,13 @@ export class CreateFeatureFlagDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Feature flag key is required" })
-  @IsString({ message: "Feature flag key must be a string" })
-  @MinLength(1, { message: "Feature flag key must be at least 1 character long" })
-  @MaxLength(100, { message: "Feature flag key must not exceed 100 characters" })
   @Matches(/^[a-z0-9_]+$/, {
     message: "Feature flag key must contain only lowercase letters, numbers, and underscores",
   })
+  @MaxLength(100, { message: "Feature flag key must not exceed 100 characters" })
+  @MinLength(1, { message: "Feature flag key must be at least 1 character long" })
+  @IsString({ message: "Feature flag key must be a string" })
+  @IsNotEmpty({ message: "Feature flag key is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   readonly flagKey: string;
 
@@ -36,15 +36,15 @@ export class CreateFeatureFlagDto {
     example: false,
     required: true,
   })
-  @IsNotEmpty({ message: "isEnabled is required" })
   @IsBoolean({ message: "isEnabled must be a boolean" })
+  @IsNotEmpty({ message: "isEnabled is required" })
   readonly isEnabled: boolean;
 
   @ApiPropertyOptional({
     description: "Additional configuration payload for the flag",
     example: { maxCalls: 100, endpoint: "https://hooks.example.com" },
   })
-  @IsOptional()
   @IsObject({ message: "Config must be an object" })
+  @IsOptional()
   readonly config?: Record<string, unknown>;
 }

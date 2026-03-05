@@ -15,10 +15,10 @@ export class RegisterTenantDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Tenant name is required" })
-  @IsString({ message: "Tenant name must be a string" })
-  @MinLength(2, { message: "Tenant name must be at least 2 characters long" })
   @MaxLength(100, { message: "Tenant name must not exceed 100 characters" })
+  @MinLength(2, { message: "Tenant name must be at least 2 characters long" })
+  @IsString({ message: "Tenant name must be a string" })
+  @IsNotEmpty({ message: "Tenant name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   tenantName: string;
 
@@ -30,13 +30,13 @@ export class RegisterTenantDto {
     maxLength: 50,
     required: true,
   })
-  @IsNotEmpty({ message: "Tenant slug is required" })
-  @IsString({ message: "Tenant slug must be a string" })
-  @MinLength(3, { message: "Tenant slug must be at least 3 characters long" })
-  @MaxLength(50, { message: "Tenant slug must not exceed 50 characters" })
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: "Tenant slug must contain only lowercase letters, numbers, and hyphens (e.g., acme-corp)",
   })
+  @MaxLength(50, { message: "Tenant slug must not exceed 50 characters" })
+  @MinLength(3, { message: "Tenant slug must be at least 3 characters long" })
+  @IsString({ message: "Tenant slug must be a string" })
+  @IsNotEmpty({ message: "Tenant slug is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   tenantSlug: string;
 
@@ -47,10 +47,10 @@ export class RegisterTenantDto {
     maxLength: 50,
     required: true,
   })
-  @IsNotEmpty({ message: "First name is required" })
-  @IsString({ message: "First name must be a string" })
-  @MinLength(1, { message: "First name must be at least 1 character long" })
   @MaxLength(50, { message: "First name must not exceed 50 characters" })
+  @MinLength(1, { message: "First name must be at least 1 character long" })
+  @IsString({ message: "First name must be a string" })
+  @IsNotEmpty({ message: "First name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   firstName: string;
 
@@ -61,10 +61,10 @@ export class RegisterTenantDto {
     maxLength: 50,
     required: true,
   })
-  @IsNotEmpty({ message: "Last name is required" })
-  @IsString({ message: "Last name must be a string" })
-  @MinLength(1, { message: "Last name must be at least 1 character long" })
   @MaxLength(50, { message: "Last name must not exceed 50 characters" })
+  @MinLength(1, { message: "Last name must be at least 1 character long" })
+  @IsString({ message: "Last name must be a string" })
+  @IsNotEmpty({ message: "Last name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   lastName: string;
 
@@ -73,10 +73,10 @@ export class RegisterTenantDto {
     description: "Email address of the admin user (valid email format required)",
     required: true,
   })
-  @IsNotEmpty({ message: "Email is required" })
-  @IsString({ message: "Email must be a string" })
-  @IsEmail({}, { message: "Email must be a valid email address" })
   @MaxLength(255, { message: "Email must not exceed 255 characters" })
+  @IsEmail({}, { message: "Email must be a valid email address" })
+  @IsString({ message: "Email must be a string" })
+  @IsNotEmpty({ message: "Email is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   email: string;
 
@@ -88,13 +88,13 @@ export class RegisterTenantDto {
     maxLength: 32,
     required: true,
   })
-  @IsNotEmpty({ message: "Password is required" })
-  @IsString({ message: "Password must be a string" })
-  @MinLength(8, { message: "Password must be at least 8 characters long" })
-  @MaxLength(32, { message: "Password must not exceed 32 characters" })
   @Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message:
       "Password must contain at least one uppercase letter, one lowercase letter, and one number or special character",
   })
+  @MaxLength(32, { message: "Password must not exceed 32 characters" })
+  @MinLength(8, { message: "Password must be at least 8 characters long" })
+  @IsString({ message: "Password must be a string" })
+  @IsNotEmpty({ message: "Password is required" })
   password: string;
 }

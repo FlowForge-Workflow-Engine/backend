@@ -19,10 +19,10 @@ export class CreateWebhookConfigDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Webhook name is required" })
-  @IsString({ message: "Webhook name must be a string" })
-  @MinLength(1, { message: "Webhook name must be at least 1 character long" })
   @MaxLength(100, { message: "Webhook name must not exceed 100 characters" })
+  @MinLength(1, { message: "Webhook name must be at least 1 character long" })
+  @IsString({ message: "Webhook name must be a string" })
+  @IsNotEmpty({ message: "Webhook name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly name: string;
 
@@ -31,12 +31,12 @@ export class CreateWebhookConfigDto {
     description: "Valid HTTPS URL for the webhook endpoint",
     required: true,
   })
-  @IsNotEmpty({ message: "Webhook URL is required" })
-  @IsString({ message: "Webhook URL must be a string" })
   @IsUrl(
     { require_protocol: true, protocols: ["https"] },
     { message: "Webhook URL must be a valid HTTPS URL" }
   )
+  @IsString({ message: "Webhook URL must be a string" })
+  @IsNotEmpty({ message: "Webhook URL is required" })
   readonly url: string;
 
   @ApiProperty({
@@ -46,10 +46,10 @@ export class CreateWebhookConfigDto {
     maxLength: 500,
     required: true,
   })
-  @IsNotEmpty({ message: "Webhook secret is required" })
-  @IsString({ message: "Webhook secret must be a string" })
-  @MinLength(1, { message: "Webhook secret must be at least 1 character long" })
   @MaxLength(500, { message: "Webhook secret must not exceed 500 characters" })
+  @MinLength(1, { message: "Webhook secret must be at least 1 character long" })
+  @IsString({ message: "Webhook secret must be a string" })
+  @IsNotEmpty({ message: "Webhook secret is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly secret: string;
 
@@ -59,9 +59,9 @@ export class CreateWebhookConfigDto {
     description: "Array of NATS event names that trigger this webhook",
     required: true,
   })
-  @IsNotEmpty({ message: "Event triggers are required" })
-  @IsArray({ message: "Event triggers must be an array" })
   @IsString({ each: true, message: "Each event trigger must be a string" })
+  @IsArray({ message: "Event triggers must be an array" })
+  @IsNotEmpty({ message: "Event triggers are required" })
   @Transform(({ value }) =>
     Array.isArray(value) ? value.map((v) => (typeof v === "string" ? v.trim() : v)) : value
   )
@@ -71,7 +71,7 @@ export class CreateWebhookConfigDto {
     description: "Whether this webhook configuration is active",
     example: true,
   })
-  @IsOptional()
   @IsBoolean({ message: "isActive must be a boolean" })
+  @IsOptional()
   readonly isActive?: boolean;
 }

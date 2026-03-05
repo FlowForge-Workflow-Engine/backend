@@ -11,10 +11,10 @@ export class CreateNotificationTemplateDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Event trigger is required" })
-  @IsString({ message: "Event trigger must be a string" })
-  @MinLength(1, { message: "Event trigger must be at least 1 character long" })
   @MaxLength(100, { message: "Event trigger must not exceed 100 characters" })
+  @MinLength(1, { message: "Event trigger must be at least 1 character long" })
+  @IsString({ message: "Event trigger must be a string" })
+  @IsNotEmpty({ message: "Event trigger is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly eventTrigger: string;
 
@@ -24,10 +24,10 @@ export class CreateNotificationTemplateDto {
     example: NotificationChannel.EMAIL,
     required: true,
   })
-  @IsNotEmpty({ message: "Channel is required" })
   @IsEnum(NotificationChannel, {
     message: `Channel must be one of: ${Object.values(NotificationChannel).join(", ")}`,
   })
+  @IsNotEmpty({ message: "Channel is required" })
   readonly channel: NotificationChannel;
 
   @ApiPropertyOptional({
@@ -35,9 +35,9 @@ export class CreateNotificationTemplateDto {
     description: "Handlebars subject template (required for EMAIL channel, max 500 characters)",
     maxLength: 500,
   })
-  @IsOptional()
-  @IsString({ message: "Subject template must be a string" })
   @MaxLength(500, { message: "Subject template must not exceed 500 characters" })
+  @IsString({ message: "Subject template must be a string" })
+  @IsOptional()
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly subjectTemplate?: string;
 
@@ -48,10 +48,10 @@ export class CreateNotificationTemplateDto {
     maxLength: 5000,
     required: true,
   })
-  @IsNotEmpty({ message: "Body template is required" })
-  @IsString({ message: "Body template must be a string" })
-  @MinLength(1, { message: "Body template must be at least 1 character long" })
   @MaxLength(5000, { message: "Body template must not exceed 5000 characters" })
+  @MinLength(1, { message: "Body template must be at least 1 character long" })
+  @IsString({ message: "Body template must be a string" })
+  @IsNotEmpty({ message: "Body template is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly bodyTemplate: string;
 
@@ -59,7 +59,7 @@ export class CreateNotificationTemplateDto {
     description: "Whether this notification template is active",
     example: true,
   })
-  @IsOptional()
   @IsBoolean({ message: "isActive must be a boolean" })
+  @IsOptional()
   readonly isActive?: boolean;
 }

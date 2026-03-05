@@ -9,8 +9,8 @@ export class ExecuteTransitionDto {
     format: "uuid",
     required: true,
   })
-  @IsNotEmpty({ message: "Transition ID is required" })
   @IsUUID("4", { message: "Transition ID must be a valid UUID" })
+  @IsNotEmpty({ message: "Transition ID is required" })
   readonly transitionId: string;
 
   @ApiProperty({
@@ -19,10 +19,10 @@ export class ExecuteTransitionDto {
     minimum: 1,
     required: true,
   })
-  @IsNotEmpty({ message: "Expected version is required" })
-  @IsInt({ message: "Expected version must be an integer" })
-  @Min(1, { message: "Expected version must be at least 1" })
   @Max(2147483647, { message: "Expected version must not exceed maximum integer value" })
+  @Min(1, { message: "Expected version must be at least 1" })
+  @IsInt({ message: "Expected version must be an integer" })
+  @IsNotEmpty({ message: "Expected version is required" })
   readonly expectedVersion: number;
 
   @ApiPropertyOptional({
@@ -30,9 +30,9 @@ export class ExecuteTransitionDto {
     example: "Approved — all documents verified.",
     maxLength: 1000,
   })
-  @IsOptional()
-  @IsString({ message: "Comment must be a string" })
   @MaxLength(1000, { message: "Comment must not exceed 1000 characters" })
+  @IsString({ message: "Comment must be a string" })
+  @IsOptional()
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly comment?: string;
 
@@ -41,9 +41,9 @@ export class ExecuteTransitionDto {
     example: "req-abc123",
     maxLength: 128,
   })
-  @IsOptional()
-  @IsString({ message: "Idempotency key must be a string" })
   @MaxLength(128, { message: "Idempotency key must not exceed 128 characters" })
+  @IsString({ message: "Idempotency key must be a string" })
+  @IsOptional()
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly idempotencyKey?: string;
 }

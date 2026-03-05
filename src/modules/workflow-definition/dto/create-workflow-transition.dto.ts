@@ -19,10 +19,10 @@ export class CreateWorkflowTransitionDto {
     maxLength: 100,
     required: true,
   })
-  @IsNotEmpty({ message: "Transition name is required" })
-  @IsString({ message: "Transition name must be a string" })
-  @MinLength(1, { message: "Transition name must be at least 1 character long" })
   @MaxLength(100, { message: "Transition name must not exceed 100 characters" })
+  @MinLength(1, { message: "Transition name must be at least 1 character long" })
+  @IsString({ message: "Transition name must be a string" })
+  @IsNotEmpty({ message: "Transition name is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly name: string;
 
@@ -32,8 +32,8 @@ export class CreateWorkflowTransitionDto {
     format: "uuid",
     required: true,
   })
-  @IsNotEmpty({ message: "From state ID is required" })
   @IsUUID("4", { message: "From state ID must be a valid UUID" })
+  @IsNotEmpty({ message: "From state ID is required" })
   readonly fromStateId: string;
 
   @ApiProperty({
@@ -42,8 +42,8 @@ export class CreateWorkflowTransitionDto {
     format: "uuid",
     required: true,
   })
-  @IsNotEmpty({ message: "To state ID is required" })
   @IsUUID("4", { message: "To state ID must be a valid UUID" })
+  @IsNotEmpty({ message: "To state ID is required" })
   readonly toStateId: string;
 
   @ApiPropertyOptional({
@@ -52,16 +52,16 @@ export class CreateWorkflowTransitionDto {
     description:
       "Array of role UUIDs allowed to trigger this transition. Empty array = any role can trigger.",
   })
-  @IsOptional()
-  @IsArray({ message: "Allowed role IDs must be an array" })
   @IsUUID("4", { each: true, message: "Each role ID must be a valid UUID" })
+  @IsArray({ message: "Allowed role IDs must be an array" })
+  @IsOptional()
   readonly allowedRoleIds?: string[];
 
   @ApiPropertyOptional({
     description: "Whether a comment is required when executing this transition",
     example: false,
   })
-  @IsOptional()
   @IsBoolean({ message: "requiresComment must be a boolean" })
+  @IsOptional()
   readonly requiresComment?: boolean;
 }

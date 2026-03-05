@@ -6,15 +6,15 @@ export class UpdateFeatureFlagDto {
     description: "Whether the feature flag is enabled",
     example: true,
   })
-  @IsOptional()
   @IsBoolean({ message: "isEnabled must be a boolean" })
+  @IsOptional()
   readonly isEnabled?: boolean;
 
   @ApiPropertyOptional({
     description: "Additional configuration payload for the flag",
     example: { maxCalls: 200 },
   })
-  @IsOptional()
   @IsObject({ message: "Config must be an object" })
+  @IsOptional()
   readonly config?: Record<string, unknown>;
 }
