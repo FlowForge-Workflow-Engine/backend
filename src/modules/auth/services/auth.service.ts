@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 
@@ -6,6 +12,7 @@ import * as crypto from "crypto";
 import { argon2hash, argon2verify } from "@app/shared/utils/hashes/argon2";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { generateUUID } from "@app/shared/utils/uuid.util";
+import { sha256 } from "@app/shared/utils/hashes/hash";
 import { UserRepository } from "../repositories/user.repository";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 import { LoginDto } from "../dto/login.dto";
@@ -46,13 +53,15 @@ export class AuthService {
    * @returns Promise<AuthTokens> - Access token and refresh token on successful authentication
    * @throws UnauthorizedException - If user not found, inactive, or password is invalid
    */
-  async login(dto: LoginDto, tenantId: string): Promise<AuthTokens> {
-    const user = await this.userRepository.findByEmailAndTenant(dto.email, tenantId);
+  async login(dto: LoginDto): Promise<AuthTokens> {
+    const { tenantId, email, password } = dto;
+
+    const user = await this.userRepository.findByEmailAndTenant(email, tenantId);
     if (!user || !user.isActive) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    const passwordValid = await argon2verify(user.passwordHash, dto.password);
+    const passwordValid = await argon2verify(user.passwordHash, password);
     if (!passwordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
@@ -77,7 +86,7 @@ export class AuthService {
    * @throws UnauthorizedException - If refresh token is invalid, expired, or user is inactive
    */
   async refresh(rawRefreshToken: string): Promise<AuthTokens> {
-    const tokenHash = this.hashToken(rawRefreshToken);
+    const tokenHash = sha256(rawRefreshToken);
     const stored = await this.refreshTokenRepository.findByHash(tokenHash);
 
     if (!stored || stored.expiresAt < new Date()) {
@@ -111,7 +120,7 @@ export class AuthService {
    * @returns Promise<void>
    */
   async logout(rawRefreshToken: string): Promise<void> {
-    const tokenHash = this.hashToken(rawRefreshToken);
+    const tokenHash = sha256(rawRefreshToken);
     const stored = await this.refreshTokenRepository.findByHash(tokenHash);
     if (stored) {
       await this.refreshTokenRepository.revoke(stored.id);
@@ -150,7 +159,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
 
     const rawRefreshToken = generateUUID();
-    const tokenHash = this.hashToken(rawRefreshToken);
+    const tokenHash = sha256(rawRefreshToken);
     const refreshExpiryDays = this.configService.get<number>("JWT_REFRESH_EXPIRY_DAYS", 7);
     const expiresAt = new Date(Date.now() + refreshExpiryDays * 24 * 60 * 60 * 1000);
 
@@ -158,16 +167,5 @@ export class AuthService {
 
     this.logger.log(`Tokens issued for user=${userId}`);
     return { accessToken, refreshToken: rawRefreshToken };
-  }
-
-  /**
-   * Hashes a refresh token using SHA-256.
-   * Only the hash is stored in the database; the raw token is never persisted.
-   *
-   * @param token - The raw refresh token to hash
-   * @returns string - SHA-256 hex digest of the token
-   */
-  private hashToken(token: string): string {
-    return crypto.createHash("sha256").update(token).digest("hex");
   }
 }

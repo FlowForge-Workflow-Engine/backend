@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
+import { IsEmail, IsNotEmpty, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 
 export class LoginDto {
   @ApiProperty({
@@ -27,4 +27,14 @@ export class LoginDto {
   @IsString({ message: "Password must be a string" })
   @IsNotEmpty({ message: "Password is required" })
   password: string;
+
+  @ApiProperty({
+    example: "123e4567-e89b-12d3-a456-426614174000",
+    description: "Tenant ID for multi-tenancy isolation",
+    required: true,
+  })
+  @IsUUID("4")
+  @IsString({ message: "Tenant ID must be a string" })
+  @IsNotEmpty({ message: "Tenant ID is required" })
+  tenantId: string;
 }

@@ -69,11 +69,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Authenticate and receive token pair" })
   @ApiSuccessResponse(LoginResponseDto, "User authenticated successfully")
-  async login(
-    @Body() dto: LoginDto,
-    @Body("tenantId") tenantId: string
-  ): Promise<ApiResponseDto<LoginResponseDto>> {
-    const data = await this.authService.login(dto, tenantId);
+  async login(@Body() dto: LoginDto): Promise<ApiResponseDto<LoginResponseDto>> {
+    const data = await this.authService.login(dto);
     return { status: "success", data };
   }
 
