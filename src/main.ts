@@ -3,11 +3,11 @@ import { ClassSerializerInterceptor, ValidationPipe, VersioningType } from "@nes
 import { NestFactory, Reflector } from "@nestjs/core";
 import { MicroserviceOptions, Transport } from "@nestjs/microservices";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-import * as cookieParser from "cookie-parser";
-import * as compression from "compression";
-import * as csurf from "csurf";
-import * as xssClean from "xss-clean";
-import * as hpp from "hpp";
+import cookieParser from "cookie-parser";
+import compression from "compression";
+import csurf from "csurf";
+import xssClean from "xss-clean";
+import hpp from "hpp";
 import helmet from "helmet";
 import { json, urlencoded } from "express";
 import { ConfigService } from "@nestjs/config";

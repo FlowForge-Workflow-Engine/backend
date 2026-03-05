@@ -19,8 +19,7 @@
         "outDir": "dist/src"
       }
     ],
-    "watchAssets": true,
-    "webpack": true
+    "watchAssets": true
   },
   "generateOptions": {
     "spec": false

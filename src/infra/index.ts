@@ -1,4 +1,3 @@
-export * from "./typeorm.config";
 export * from "./redis.config";
 export * from "./nats.config";
 export * from "./redis.service";
