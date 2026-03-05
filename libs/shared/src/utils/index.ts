@@ -4,6 +4,7 @@ export * from "./hashes/hash";
 
 export * from "./batch-processing";
 export * from "./env.validation";
+export * from "./env.helper";
 export * from "./paginaton";
 export * from "./sleep";
 export * from "./uuid.util";

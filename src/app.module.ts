@@ -19,7 +19,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { winstonLoggerConfig } from "./infra/configs/winston.config";
 import { NATS_CLIENT } from "./infra/nats.config";
 import { InfraModule } from "./infra/infra.module";
-import { RateLimitMiddleware } from "./infra/middlewares/rate-limit.middleware";
+import { EnhancedRateLimitMiddleware } from "./infra/middlewares/enhanced-rate-limit.middleware";
 
 import { JwtAuthGuard, TenantIsolationGuard, RolesGuard } from "@app/shared/guards";
 import { GlobalExceptionFilter } from "@app/shared/filters";
@@ -30,8 +30,13 @@ import { DatabaseContextInterceptor } from "./modules/database/interceptors/data
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: [`.env.stage.${process.env.STAGE}`],
+      envFilePath: [`.env.stage.${process.env.STAGE}`, '.env'],
       isGlobal: true,
+      validationSchema: require('@app/shared/utils/env.validation').envSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: false,
+      },
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -88,7 +93,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes("/**");
     consumer
-      .apply(RateLimitMiddleware)
+      .apply(EnhancedRateLimitMiddleware)
       .exclude(
         { path: "health", method: RequestMethod.GET },
         { path: "health/ready", method: RequestMethod.GET }
