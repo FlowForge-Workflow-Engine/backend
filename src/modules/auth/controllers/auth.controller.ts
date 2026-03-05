@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, ParseUUIDPipe, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, ParseUUIDPipe, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Public } from "@app/shared/decorators/public.decorator";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
@@ -17,13 +17,16 @@ import {
   LoginResponseDto,
   RefreshTokenResponseDto,
 } from "../dto/dto-response/auth-response.dto";
+import { UserService } from "../services/user.service";
+import { UserResponseDto } from "../dto/dto-response/user-response.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly onboardingService: OnboardingService
+    private readonly onboardingService: OnboardingService,
+    private readonly userService: UserService
   ) {}
 
   /**
@@ -92,6 +95,21 @@ export class AuthController {
   }
 
   /**
+   * GET /auth/me
+   * Client sends the raw refresh token; a new token pair is returned (rotation).
+   */
+  @ApiBearerAuth()
+  @Get("me")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Return Current Logged In User" })
+  @ApiSuccessResponse(UserResponseDto, "User retrieved successfully")
+  async getCurrentUser(@CurrentUser() user: IJwtPayload): Promise<ApiResponseDto<UserResponseDto>> {
+    const data = await this.userService.findById(user.sub, user.tenantId);
+
+    return { status: "success", data };
+  }
+
+  /**
    * POST /auth/logout
    * Revokes the active refresh token. Protected — requires a valid access token.
    */
@@ -99,8 +117,9 @@ export class AuthController {
   @Post("logout")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Revoke the current refresh token" })
+  @ApiBody({ schema: { example: { refreshToken: "550e8400-e29b-41d4-a716-446655440000" } } })
   async logout(
-    @Body("refreshToken") refreshToken: string,
+    @Body("refreshToken", ParseUUIDPipe) refreshToken: string,
     @CurrentUser() _user: IJwtPayload,
     @TenantId() _tenantId: string
   ): Promise<void> {
