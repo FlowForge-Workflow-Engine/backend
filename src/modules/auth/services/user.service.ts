@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import * as argon2 from "argon2";
+import { argon2hash } from "@app/shared/utils/hashes/argon2";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { UserRepository } from "../repositories/user.repository";
@@ -44,7 +44,7 @@ export class UserService {
     const existing = await this.userRepository.findByEmailAndTenant(dto.email, tenantId);
     if (existing) throw new ConflictException(AppErrors.EMAIL_ALREADY_EXISTS);
 
-    const passwordHash = await argon2.hash(dto.password);
+    const passwordHash = await argon2hash(dto.password);
     const user = this.userRepository.create({
       email: dto.email,
       firstName: dto.firstName,
