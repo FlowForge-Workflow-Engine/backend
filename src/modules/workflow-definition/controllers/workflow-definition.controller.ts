@@ -8,6 +8,7 @@ import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-respo
 import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { WorkflowDefinitionService } from "../services/workflow-definition.service";
 import { CreateWorkflowDefinitionDto } from "../dto/create-workflow-definition.dto";
+import { FindWorkflowDefinitionDto } from "../dto/find-workflow-definition.dto";
 import {
   WorkflowDefinitionListResponseDto,
   WorkflowDefinitionDetailResponseDto,
@@ -28,9 +29,10 @@ export class WorkflowDefinitionController {
     isArray: true,
   })
   async findAll(
+    @Body() dto: FindWorkflowDefinitionDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowDefinitionListResponseDto[]>> {
-    const data = await this.service.findAll(tenantId);
+    const data = await this.service.findAll(dto, tenantId);
     return { status: "success", count: data.length, data };
   }
 

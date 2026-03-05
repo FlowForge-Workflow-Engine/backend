@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { WorkflowDefinition } from "../entities/workflow-definition.entity";
 
@@ -22,10 +23,18 @@ export class WorkflowDefinitionRepository {
     return this.repo.findOne({ where: { id, tenantId } });
   }
 
-  async findAllByTenant(tenantId: string): Promise<WorkflowDefinition[]> {
+  async findAllByTenant(
+    tenantId: string,
+    options: { page?: number; limit?: number } = {}
+  ): Promise<WorkflowDefinition[]> {
+    const { page, limit } = options;
+    const { skip, take } = pagination(page, limit);
+
     return this.repo.find({
       where: { tenantId },
       order: { createdAt: "DESC" },
+      skip,
+      take,
     });
   }
 

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { Tenant } from "../entities/tenant.entity";
 
@@ -10,8 +11,15 @@ export class TenantRepository {
     private readonly repo: Repository<Tenant>
   ) {}
 
-  findAll(): Promise<Tenant[]> {
-    return this.repo.find({ order: { createdAt: "DESC" } });
+  findAll(options: { page?: number; limit?: number } = {}): Promise<Tenant[]> {
+    const { page, limit } = options;
+    const { skip, take } = pagination(page, limit);
+
+    return this.repo.find({
+      order: { createdAt: "DESC" },
+      skip,
+      take,
+    });
   }
 
   findById(id: string): Promise<Tenant | null> {

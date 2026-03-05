@@ -7,11 +7,11 @@ import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-respon
 import { WorkflowTransitionService } from "../services/workflow-transition.service";
 import { CreateWorkflowTransitionDto } from "../dto/create-workflow-transition.dto";
 import { CreateTransitionRuleDto } from "../dto/create-transition-rule.dto";
+import { FindWorkflowTransitionDto } from "../dto/find-workflow-transition.dto";
 import {
   WorkflowTransitionListResponseDto,
   WorkflowTransitionDetailResponseDto,
   WorkflowTransitionCreatedResponseDto,
-  WorkflowTransitionRuleListResponseDto,
   WorkflowTransitionRuleCreatedResponseDto,
 } from "../dto/dto-response/workflow-transition-response.dto";
 
@@ -31,10 +31,11 @@ export class WorkflowTransitionController {
     isArray: true,
   })
   async findAll(
+    @Body() dto: FindWorkflowTransitionDto,
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowTransitionListResponseDto[]>> {
-    const data = await this.service.findAll(id, tenantId);
+    const data = await this.service.findAll(dto, id, tenantId);
     return { status: "success", count: data.length, data };
   }
 

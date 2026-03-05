@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { WebhookConfig } from "../entities/webhook-config.entity";
 
@@ -14,8 +15,19 @@ export class WebhookConfigRepository {
     return this.repo.findOne({ where: { id, tenantId } });
   }
 
-  findAllByTenant(tenantId: string): Promise<WebhookConfig[]> {
-    return this.repo.find({ where: { tenantId }, order: { createdAt: "DESC" } });
+  findAllByTenant(
+    tenantId: string,
+    options: { page?: number; limit?: number } = {}
+  ): Promise<WebhookConfig[]> {
+    const { page, limit } = options;
+    const { skip, take } = pagination(page, limit);
+
+    return this.repo.find({
+      where: { tenantId },
+      order: { createdAt: "DESC" },
+      skip,
+      take,
+    });
   }
 
   /**

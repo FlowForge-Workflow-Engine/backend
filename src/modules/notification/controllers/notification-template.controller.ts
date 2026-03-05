@@ -18,6 +18,7 @@ import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-respo
 import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { NotificationTemplateRepository } from "../repositories/notification-template.repository";
 import { CreateNotificationTemplateDto } from "../dto/create-notification-template.dto";
+import { FindNotificationTemplateDto } from "../dto/find-notification-template.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import {
@@ -55,9 +56,10 @@ export class NotificationTemplateController {
     isArray: true,
   })
   async findAll(
+    @Body() dto: FindNotificationTemplateDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<NotificationTemplateListResponseDto[]>> {
-    const data = await this.templateRepository.findAllByTenant(tenantId);
+    const data = await this.templateRepository.findAllByTenant(tenantId, dto);
     return { status: "success", count: data.length, data };
   }
 

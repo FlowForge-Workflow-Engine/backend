@@ -2,12 +2,12 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
-import { WorkflowVersionRepository } from "../repositories/workflow-version.repository";
 import { WorkflowVersionService } from "./workflow-version.service";
 import { WorkflowDefinitionPublisher } from "../publishers/workflow-definition.publisher";
 import { WorkflowDefinition, WorkflowDefinitionStatus } from "../entities/workflow-definition.entity";
 import { WorkflowDefinitionVersion } from "../entities/workflow-definition-version.entity";
 import { CreateWorkflowDefinitionDto } from "../dto/create-workflow-definition.dto";
+import { FindWorkflowDefinitionDto } from "../dto/find-workflow-definition.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
@@ -29,7 +29,6 @@ export class WorkflowDefinitionService {
 
   constructor(
     private readonly definitionRepository: WorkflowDefinitionRepository,
-    private readonly versionRepository: WorkflowVersionRepository,
     private readonly versionService: WorkflowVersionService,
     private readonly publisher: WorkflowDefinitionPublisher,
     private readonly redis: RedisService
@@ -67,13 +66,15 @@ export class WorkflowDefinitionService {
   }
 
   /**
-   * Retrieves all workflow definitions for a tenant.
+   * Retrieves paginated workflow definitions for a tenant.
    *
+   * @param dto - Pagination parameters
    * @param tenantId - The tenant ID
-   * @returns Promise<WorkflowDefinition[]> - Array of all definitions for the tenant
+   * @returns Promise<WorkflowDefinition[]> - Paginated definitions for the tenant
    */
-  async findAll(tenantId: string): Promise<WorkflowDefinition[]> {
-    return this.definitionRepository.findAllByTenant(tenantId);
+  async findAll(dto: FindWorkflowDefinitionDto, tenantId: string): Promise<WorkflowDefinition[]> {
+    const { page, limit } = dto;
+    return this.definitionRepository.findAllByTenant(tenantId, { page, limit });
   }
 
   /**

@@ -9,6 +9,7 @@ import { WorkflowTransition } from "../entities/workflow-transition.entity";
 import { TransitionRule } from "../entities/transition-rule.entity";
 import { CreateWorkflowTransitionDto } from "../dto/create-workflow-transition.dto";
 import { CreateTransitionRuleDto } from "../dto/create-transition-rule.dto";
+import { FindWorkflowTransitionDto } from "../dto/find-workflow-transition.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
@@ -86,14 +87,20 @@ export class WorkflowTransitionService {
   }
 
   /**
-   * Retrieves all transitions for a workflow definition.
+   * Retrieves paginated transitions for a workflow definition.
    *
+   * @param dto - Pagination parameters
    * @param definitionId - The workflow definition ID
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @returns Promise<WorkflowTransition[]> - Array of all transitions for the definition
+   * @returns Promise<WorkflowTransition[]> - Paginated transitions for the definition
    */
-  async findAll(definitionId: string, tenantId: string): Promise<WorkflowTransition[]> {
-    return this.transitionRepository.findByDefinitionAndTenant(definitionId, tenantId);
+  async findAll(
+    dto: FindWorkflowTransitionDto,
+    definitionId: string,
+    tenantId: string
+  ): Promise<WorkflowTransition[]> {
+    const { page, limit } = dto;
+    return this.transitionRepository.findByDefinitionAndTenant(definitionId, tenantId, { page, limit });
   }
 
   /**

@@ -5,6 +5,7 @@ import { WorkflowDefinitionRepository } from "../repositories/workflow-definitio
 import { WorkflowDefinitionStatus } from "../entities/workflow-definition.entity";
 import { WorkflowState } from "../entities/workflow-state.entity";
 import { CreateWorkflowStateDto } from "../dto/create-workflow-state.dto";
+import { FindWorkflowStateDto } from "../dto/find-workflow-state.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
@@ -78,14 +79,16 @@ export class WorkflowStateService {
   }
 
   /**
-   * Retrieves all states for a workflow definition.
+   * Retrieves paginated states for a workflow definition.
    *
+   * @param dto - Pagination parameters
    * @param definitionId - The workflow definition ID
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @returns Promise<WorkflowState[]> - Array of all states for the definition
+   * @returns Promise<WorkflowState[]> - Paginated states for the definition
    */
-  async findAll(definitionId: string, tenantId: string): Promise<WorkflowState[]> {
-    return this.stateRepository.findByDefinitionAndTenant(definitionId, tenantId);
+  async findAll(dto: FindWorkflowStateDto, definitionId: string, tenantId: string): Promise<WorkflowState[]> {
+    const { page, limit } = dto;
+    return this.stateRepository.findByDefinitionAndTenant(definitionId, tenantId, { page, limit });
   }
 
   /**

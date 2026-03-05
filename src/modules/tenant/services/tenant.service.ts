@@ -9,6 +9,7 @@ import { TenantSettings } from "../entities/tenant-settings.entity";
 import { TenantFeatureFlag } from "../entities/tenant-feature-flag.entity";
 import { TenantPublisher } from "../publishers/tenant.publisher";
 import { CreateTenantDto } from "../dto/create-tenant.dto";
+import { FindTenantDto } from "../dto/find-tenant.dto";
 import { UpdateTenantDto } from "../dto/update-tenant.dto";
 import { UpdateTenantSettingsDto } from "../dto/update-tenant-settings.dto";
 import { CreateFeatureFlagDto } from "../dto/create-feature-flag.dto";
@@ -85,12 +86,14 @@ export class TenantService {
   }
 
   /**
-   * Retrieves all tenants.
+   * Retrieves paginated tenants.
    *
-   * @returns Promise<Tenant[]> - Array of all tenants
+   * @param dto - Pagination parameters
+   * @returns Promise<Tenant[]> - Paginated tenants
    */
-  findAll(): Promise<Tenant[]> {
-    return this.tenantRepository.findAll();
+  findAll(dto: FindTenantDto): Promise<Tenant[]> {
+    const { page, limit } = dto;
+    return this.tenantRepository.findAll({ page, limit });
   }
 
   /**

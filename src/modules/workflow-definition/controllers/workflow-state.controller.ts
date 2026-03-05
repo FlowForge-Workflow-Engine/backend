@@ -6,6 +6,7 @@ import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-respo
 import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { WorkflowStateService } from "../services/workflow-state.service";
 import { CreateWorkflowStateDto } from "../dto/create-workflow-state.dto";
+import { FindWorkflowStateDto } from "../dto/find-workflow-state.dto";
 import {
   WorkflowStateListResponseDto,
   WorkflowStateDetailResponseDto,
@@ -28,10 +29,11 @@ export class WorkflowStateController {
     isArray: true,
   })
   async findAll(
+    @Body() dto: FindWorkflowStateDto,
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowStateListResponseDto[]>> {
-    const data = await this.service.findAll(id, tenantId);
+    const data = await this.service.findAll(dto, id, tenantId);
     return { status: "success", count: data.length, data };
   }
 

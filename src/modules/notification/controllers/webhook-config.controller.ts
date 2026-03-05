@@ -18,6 +18,7 @@ import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-respo
 import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { WebhookConfigRepository } from "../repositories/webhook-config.repository";
 import { CreateWebhookConfigDto } from "../dto/create-webhook-config.dto";
+import { FindWebhookConfigDto } from "../dto/find-webhook-config.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import {
@@ -54,8 +55,11 @@ export class WebhookConfigController {
   @ApiSuccessResponse(WebhookConfigListResponseDto, "Webhook configurations retrieved successfully", {
     isArray: true,
   })
-  async findAll(@TenantId() tenantId: string): Promise<CountApiResponseDto<WebhookConfigListResponseDto[]>> {
-    const data = await this.webhookConfigRepository.findAllByTenant(tenantId);
+  async findAll(
+    @Body() dto: FindWebhookConfigDto,
+    @TenantId() tenantId: string
+  ): Promise<CountApiResponseDto<WebhookConfigListResponseDto[]>> {
+    const data = await this.webhookConfigRepository.findAllByTenant(tenantId, dto);
     return { status: "success", count: data.length, data };
   }
 

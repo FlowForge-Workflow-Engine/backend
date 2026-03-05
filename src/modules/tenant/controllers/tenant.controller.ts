@@ -8,15 +8,14 @@ import { Roles } from "@app/shared/decorators/roles.decorator";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { DefaultSystemRoles } from "@app/shared/constants/default-system-roles.enum";
 import { TenantService } from "../services/tenant.service";
-import { CreateTenantDto } from "../dto/create-tenant.dto";
 import { UpdateTenantDto } from "../dto/update-tenant.dto";
 import { UpdateTenantSettingsDto } from "../dto/update-tenant-settings.dto";
 import { CreateFeatureFlagDto } from "../dto/create-feature-flag.dto";
 import { UpdateFeatureFlagDto } from "../dto/update-feature-flag.dto";
+import { FindTenantDto } from "../dto/find-tenant.dto";
 import {
   TenantListResponseDto,
   TenantDetailResponseDto,
-  TenantCreatedResponseDto,
   TenantUpdatedResponseDto,
 } from "../dto/dto-response/tenant-response.dto";
 import {
@@ -37,8 +36,8 @@ export class TenantController {
   @Get()
   @ApiOperation({ summary: "List all tenants (super-admin)" })
   @ApiSuccessResponse(TenantListResponseDto, "Tenants retrieved successfully", { isArray: true })
-  async findAll(): Promise<CountApiResponseDto<TenantListResponseDto[]>> {
-    const data = await this.tenantService.findAll();
+  async findAll(@Body() dto: FindTenantDto): Promise<CountApiResponseDto<TenantListResponseDto[]>> {
+    const data = await this.tenantService.findAll(dto);
     return { status: "success", count: data.length, data };
   }
 
