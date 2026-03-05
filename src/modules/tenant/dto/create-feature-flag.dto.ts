@@ -1,28 +1,50 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsObject, IsOptional, IsString, Matches, MaxLength } from "class-validator";
+import { Transform } from "class-transformer";
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from "class-validator";
 
 export class CreateFeatureFlagDto {
   @ApiProperty({
-    description: "Feature flag key (snake_case)",
+    description:
+      "Feature flag key in snake_case (lowercase letters, numbers, underscores only, 1-100 characters)",
     example: "enable_webhooks",
     pattern: "^[a-z0-9_]+$",
+    minLength: 1,
+    maxLength: 100,
+    required: true,
   })
+  @IsNotEmpty({ message: "Feature flag key is required" })
+  @IsString({ message: "Feature flag key must be a string" })
+  @MinLength(1, { message: "Feature flag key must be at least 1 character long" })
+  @MaxLength(100, { message: "Feature flag key must not exceed 100 characters" })
   @Matches(/^[a-z0-9_]+$/, {
-    message: "flagKey must contain only lowercase letters, numbers, and underscores",
+    message: "Feature flag key must contain only lowercase letters, numbers, and underscores",
   })
-  @MaxLength(100)
-  @IsString()
+  @Transform(({ value }) => (typeof value === "string" ? value.trim().toLowerCase() : value))
   readonly flagKey: string;
 
-  @ApiProperty({ description: "Whether the feature flag is enabled", example: false })
-  @IsBoolean()
+  @ApiProperty({
+    description: "Whether the feature flag is enabled",
+    example: false,
+    required: true,
+  })
+  @IsNotEmpty({ message: "isEnabled is required" })
+  @IsBoolean({ message: "isEnabled must be a boolean" })
   readonly isEnabled: boolean;
 
   @ApiPropertyOptional({
     description: "Additional configuration payload for the flag",
     example: { maxCalls: 100, endpoint: "https://hooks.example.com" },
   })
-  @IsObject()
   @IsOptional()
+  @IsObject({ message: "Config must be an object" })
   readonly config?: Record<string, unknown>;
 }

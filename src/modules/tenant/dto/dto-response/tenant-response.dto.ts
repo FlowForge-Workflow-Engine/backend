@@ -51,4 +51,3 @@ export class TenantCreatedResponseDto extends TenantResponseDto {}
  * Used for PATCH /tenants/:id endpoint
  */
 export class TenantUpdatedResponseDto extends TenantResponseDto {}
-

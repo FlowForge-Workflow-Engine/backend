@@ -47,4 +47,3 @@ export class WorkflowStateDetailResponseDto extends WorkflowStateResponseDto {}
  * Used for POST /workflow-definitions/:id/states endpoint
  */
 export class WorkflowStateCreatedResponseDto extends WorkflowStateResponseDto {}
-
