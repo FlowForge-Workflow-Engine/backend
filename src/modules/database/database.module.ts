@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { createTypeOrmConfig } from "../../infra/typeorm.config";
+import { createOrmConfig } from "./ormconfig";
 
 /**
  * DatabaseModule wires TypeORM to PostgreSQL using the centralised infra config.
@@ -12,7 +12,7 @@ import { createTypeOrmConfig } from "../../infra/typeorm.config";
   imports: [
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => createTypeOrmConfig(configService),
+      useFactory: (configService: ConfigService) => createOrmConfig(configService),
       inject: [ConfigService],
     }),
   ],
