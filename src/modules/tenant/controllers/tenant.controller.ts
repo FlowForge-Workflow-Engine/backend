@@ -3,6 +3,10 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger"
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
 import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-response.dto";
+import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
+import { Roles } from "@app/shared/decorators/roles.decorator";
+import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
+import { DefaultSystemRoles } from "@app/shared/constants/default-system-roles.enum";
 import { TenantService } from "../services/tenant.service";
 import { CreateTenantDto } from "../dto/create-tenant.dto";
 import { UpdateTenantDto } from "../dto/update-tenant.dto";
@@ -38,13 +42,13 @@ export class TenantController {
     return { status: "success", count: data.length, data };
   }
 
-  @Post()
-  @ApiOperation({ summary: "Create a new tenant" })
-  @ApiSuccessResponse(TenantCreatedResponseDto, "Tenant created successfully", { created: true })
-  async create(@Body() dto: CreateTenantDto): Promise<ApiResponseDto<TenantCreatedResponseDto>> {
-    const data = await this.tenantService.create(dto);
-    return { status: "success", data };
-  }
+  // @Post()
+  // @ApiOperation({ summary: "Create a new tenant" })
+  // @ApiSuccessResponse(TenantCreatedResponseDto, "Tenant created successfully", { created: true })
+  // async create(@Body() dto: CreateTenantDto): Promise<ApiResponseDto<TenantCreatedResponseDto>> {
+  //   const data = await this.tenantService.create(dto);
+  //   return { status: "success", data };
+  // }
 
   @Get(":id")
   @ApiOperation({ summary: "Get tenant by ID" })
@@ -55,21 +59,24 @@ export class TenantController {
   }
 
   @Patch(":id")
-  @ApiOperation({ summary: "Update tenant name, plan, or active status" })
+  @Roles(DefaultSystemRoles.ADMIN)
+  @ApiOperation({ summary: "Update tenant name, plan, or active status (Admin only)" })
   @ApiSuccessResponse(TenantUpdatedResponseDto, "Tenant updated successfully")
   async update(
     @Param() { id }: IdParamDto,
-    @Body() dto: UpdateTenantDto
+    @Body() dto: UpdateTenantDto,
+    @CurrentUser() user: IJwtPayload
   ): Promise<ApiResponseDto<TenantUpdatedResponseDto>> {
-    const data = await this.tenantService.update(id, dto);
+    const data = await this.tenantService.update(id, user.tenantId, dto);
     return { status: "success", data };
   }
 
   @Delete(":id")
+  @Roles(DefaultSystemRoles.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: "Deactivate a tenant" })
-  async deactivate(@Param() { id }: IdParamDto): Promise<void> {
-    await this.tenantService.deactivate(id);
+  @ApiOperation({ summary: "Deactivate a tenant (Admin only)" })
+  async deactivate(@Param() { id }: IdParamDto, @CurrentUser() user: IJwtPayload): Promise<void> {
+    await this.tenantService.deactivate(id, user.tenantId);
   }
 
   // ── Tenant Settings ───────────────────────────────────────────
@@ -83,13 +90,15 @@ export class TenantController {
   }
 
   @Patch(":id/settings")
-  @ApiOperation({ summary: "Update settings for a tenant" })
+  @Roles(DefaultSystemRoles.ADMIN)
+  @ApiOperation({ summary: "Update settings for a tenant (Admin only)" })
   @ApiSuccessResponse(TenantSettingsResponseDto, "Tenant settings updated successfully")
   async updateSettings(
     @Param() { id }: IdParamDto,
-    @Body() dto: UpdateTenantSettingsDto
+    @Body() dto: UpdateTenantSettingsDto,
+    @CurrentUser() user: IJwtPayload
   ): Promise<ApiResponseDto<TenantSettingsResponseDto>> {
-    const data = await this.tenantService.updateSettings(id, dto);
+    const data = await this.tenantService.updateSettings(id, user.tenantId, dto);
     return { status: "success", data };
   }
 
@@ -108,36 +117,45 @@ export class TenantController {
   }
 
   @Post(":id/feature-flags")
-  @ApiOperation({ summary: "Create a feature flag for a tenant" })
+  @Roles(DefaultSystemRoles.ADMIN)
+  @ApiOperation({ summary: "Create a feature flag for a tenant (Admin only)" })
   @ApiSuccessResponse(TenantFeatureFlagCreatedResponseDto, "Feature flag created successfully", {
     created: true,
   })
   async createFeatureFlag(
     @Param() { id }: IdParamDto,
-    @Body() dto: CreateFeatureFlagDto
+    @Body() dto: CreateFeatureFlagDto,
+    @CurrentUser() user: IJwtPayload
   ): Promise<ApiResponseDto<TenantFeatureFlagCreatedResponseDto>> {
-    const data = await this.tenantService.createFeatureFlag(id, dto);
+    const data = await this.tenantService.createFeatureFlag(id, user.tenantId, dto);
     return { status: "success", data };
   }
 
   @Patch(":id/feature-flags/:key")
-  @ApiOperation({ summary: "Update a feature flag" })
+  @Roles(DefaultSystemRoles.ADMIN)
+  @ApiOperation({ summary: "Update a feature flag (Admin only)" })
   @ApiParam({ name: "key", description: "Feature flag key (e.g. enable_webhooks)" })
   @ApiSuccessResponse(TenantFeatureFlagUpdatedResponseDto, "Feature flag updated successfully")
   async updateFeatureFlag(
     @Param() { id }: IdParamDto,
     @Param("key") key: string,
-    @Body() dto: UpdateFeatureFlagDto
+    @Body() dto: UpdateFeatureFlagDto,
+    @CurrentUser() user: IJwtPayload
   ): Promise<ApiResponseDto<TenantFeatureFlagUpdatedResponseDto>> {
-    const data = await this.tenantService.updateFeatureFlag(id, key, dto);
+    const data = await this.tenantService.updateFeatureFlag(id, user.tenantId, key, dto);
     return { status: "success", data };
   }
 
   @Delete(":id/feature-flags/:key")
+  @Roles(DefaultSystemRoles.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: "Delete a feature flag" })
+  @ApiOperation({ summary: "Delete a feature flag (Admin only)" })
   @ApiParam({ name: "key", description: "Feature flag key (e.g. enable_webhooks)" })
-  async deleteFeatureFlag(@Param() { id }: IdParamDto, @Param("key") key: string): Promise<void> {
-    await this.tenantService.deleteFeatureFlag(id, key);
+  async deleteFeatureFlag(
+    @Param() { id }: IdParamDto,
+    @Param("key") key: string,
+    @CurrentUser() user: IJwtPayload
+  ): Promise<void> {
+    await this.tenantService.deleteFeatureFlag(id, user.tenantId, key);
   }
 }

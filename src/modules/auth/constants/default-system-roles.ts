@@ -3,3 +3,5 @@ export const DEFAULT_SYSTEM_ROLES = [
   { name: "Approver", description: "Can approve or reject workflow transitions", isSystemRole: true },
   { name: "Requestor", description: "Can initiate and track workflow instances", isSystemRole: true },
 ] as const;
+
+// If any new roles gets added, update the same in libs/shared/src/constants/default-system-roles.enum.ts

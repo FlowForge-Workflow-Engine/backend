@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { TenantRepository } from "../repositories/tenant.repository";
@@ -39,6 +39,20 @@ export class TenantService {
     private readonly publisher: TenantPublisher,
     private readonly redis: RedisService
   ) {}
+
+  /**
+   * Verifies that a user belongs to a tenant.
+   * Used to prevent users from modifying tenants they don't belong to.
+   *
+   * @param tenantId - The tenant ID to verify
+   * @param userTenantId - The user's tenant ID from JWT payload
+   * @throws ForbiddenException - If user's tenant doesn't match the target tenant
+   */
+  verifyUserBelongsToTenant(tenantId: string, userTenantId: string): void {
+    if (tenantId !== userTenantId) {
+      throw new ForbiddenException(AppErrors.FORBIDDEN);
+    }
+  }
 
   /**
    * Creates a new tenant.
@@ -94,14 +108,17 @@ export class TenantService {
 
   /**
    * Updates a tenant's properties.
-   * Invalidates caches and publishes events for plan changes or deactivation.
+   * Verifies user belongs to tenant, invalidates caches, and publishes events for plan changes or deactivation.
    *
    * @param id - The tenant ID to update
+   * @param userTenantId - The user's tenant ID from JWT payload (for ownership verification)
    * @param dto - Partial tenant update data (name, plan, isActive, etc.)
    * @returns Promise<Tenant> - The updated tenant entity
+   * @throws ForbiddenException - If user doesn't belong to the tenant
    * @throws NotFoundException - If tenant not found
    */
-  async update(id: string, dto: UpdateTenantDto): Promise<Tenant> {
+  async update(id: string, userTenantId: string, dto: UpdateTenantDto): Promise<Tenant> {
+    this.verifyUserBelongsToTenant(id, userTenantId);
     const tenant = await this.findById(id);
     const oldPlan = tenant.plan;
 
@@ -134,14 +151,19 @@ export class TenantService {
 
   /**
    * Deactivates a tenant, preventing further access.
-   * Invalidates caches and publishes TENANT_DEACTIVATED event.
+   * Verifies user belongs to tenant, invalidates caches, and publishes TENANT_DEACTIVATED event.
    *
    * @param id - The tenant ID to deactivate
+   * @param userTenantId - The user's tenant ID from JWT payload (for ownership verification)
    * @returns Promise<Tenant> - The deactivated tenant entity
+   * @throws ForbiddenException - If user doesn't belong to the tenant
    * @throws NotFoundException - If tenant not found
    */
-  async deactivate(id: string): Promise<Tenant> {
+  async deactivate(id: string, userTenantId: string): Promise<Tenant> {
+    this.verifyUserBelongsToTenant(id, userTenantId);
+
     const tenant = await this.findById(id);
+
     tenant.isActive = false;
     const saved = await this.tenantRepository.save(tenant);
 
@@ -172,17 +194,28 @@ export class TenantService {
 
   /**
    * Updates tenant settings.
-   * Invalidates settings cache after update.
+   * Verifies user belongs to tenant and invalidates settings cache after update.
    *
    * @param tenantId - The tenant ID
+   * @param userTenantId - The user's tenant ID from JWT payload (for ownership verification)
    * @param dto - Partial settings update data
    * @returns Promise<TenantSettings> - The updated settings entity
+   * @throws ForbiddenException - If user doesn't belong to the tenant
    * @throws NotFoundException - If tenant not found
    */
-  async updateSettings(tenantId: string, dto: UpdateTenantSettingsDto): Promise<TenantSettings> {
+  async updateSettings(
+    tenantId: string,
+    userTenantId: string,
+    dto: UpdateTenantSettingsDto
+  ): Promise<TenantSettings> {
+    this.verifyUserBelongsToTenant(tenantId, userTenantId);
+
     await this.findById(tenantId);
+
     const result = await this.settingsRepository.upsert(tenantId, dto);
+
     await this.redis.del(CacheKeys.tenantSettings(tenantId));
+
     return result;
   }
 
@@ -200,64 +233,94 @@ export class TenantService {
 
   /**
    * Creates a new feature flag for a tenant.
-   * Validates that the flag key doesn't already exist.
-   * Invalidates feature flags cache after creation.
+   * Verifies user belongs to tenant, validates flag key uniqueness, and invalidates cache.
    *
    * @param tenantId - The tenant ID
+   * @param userTenantId - The user's tenant ID from JWT payload (for ownership verification)
    * @param dto - Feature flag creation data (flagKey, isEnabled, config)
    * @returns Promise<TenantFeatureFlag> - The created feature flag
+   * @throws ForbiddenException - If user doesn't belong to the tenant
    * @throws NotFoundException - If tenant not found
    * @throws ConflictException - If flag key already exists for this tenant
    */
-  async createFeatureFlag(tenantId: string, dto: CreateFeatureFlagDto): Promise<TenantFeatureFlag> {
+  async createFeatureFlag(
+    tenantId: string,
+    userTenantId: string,
+    dto: CreateFeatureFlagDto
+  ): Promise<TenantFeatureFlag> {
+    this.verifyUserBelongsToTenant(tenantId, userTenantId);
+
     await this.findById(tenantId);
+
     const existing = await this.featureFlagRepository.findByTenantIdAndKey(tenantId, dto.flagKey);
+
     if (existing) throw new ConflictException(`Feature flag '${dto.flagKey}' already exists for this tenant`);
+
     const flag = await this.featureFlagRepository.upsert(tenantId, dto.flagKey, {
       isEnabled: dto.isEnabled,
       config: dto.config ?? null,
     });
+
     await this.redis.del(CacheKeys.tenantFeatureFlags(tenantId));
+
     return flag;
   }
 
   /**
    * Updates an existing feature flag for a tenant.
-   * Invalidates feature flags cache after update.
+   * Verifies user belongs to tenant and invalidates feature flags cache after update.
    *
    * @param tenantId - The tenant ID
+   * @param userTenantId - The user's tenant ID from JWT payload (for ownership verification)
    * @param flagKey - The feature flag key to update
    * @param dto - Partial feature flag update data (isEnabled, config)
    * @returns Promise<TenantFeatureFlag> - The updated feature flag
+   * @throws ForbiddenException - If user doesn't belong to the tenant
    * @throws NotFoundException - If tenant or flag not found
    */
   async updateFeatureFlag(
     tenantId: string,
+    userTenantId: string,
     flagKey: string,
     dto: UpdateFeatureFlagDto
   ): Promise<TenantFeatureFlag> {
+    this.verifyUserBelongsToTenant(tenantId, userTenantId);
+
     await this.findById(tenantId);
+
     const existing = await this.featureFlagRepository.findByTenantIdAndKey(tenantId, flagKey);
+
     if (!existing) throw new NotFoundException(AppErrors.FEATURE_FLAG_NOT_FOUND);
+
     const flag = await this.featureFlagRepository.upsert(tenantId, flagKey, dto);
+
     await this.redis.del(CacheKeys.tenantFeatureFlags(tenantId));
+
     return flag;
   }
 
   /**
    * Deletes a feature flag for a tenant.
-   * Invalidates feature flags cache after deletion.
+   * Verifies user belongs to tenant and invalidates feature flags cache after deletion.
    *
    * @param tenantId - The tenant ID
+   * @param userTenantId - The user's tenant ID from JWT payload (for ownership verification)
    * @param flagKey - The feature flag key to delete
    * @returns Promise<void>
+   * @throws ForbiddenException - If user doesn't belong to the tenant
    * @throws NotFoundException - If tenant or flag not found
    */
-  async deleteFeatureFlag(tenantId: string, flagKey: string): Promise<void> {
+  async deleteFeatureFlag(tenantId: string, userTenantId: string, flagKey: string): Promise<void> {
+    this.verifyUserBelongsToTenant(tenantId, userTenantId);
+
     await this.findById(tenantId);
+
     const existing = await this.featureFlagRepository.findByTenantIdAndKey(tenantId, flagKey);
+
     if (!existing) throw new NotFoundException(AppErrors.FEATURE_FLAG_NOT_FOUND);
+
     await this.featureFlagRepository.remove(tenantId, flagKey);
+
     await this.redis.del(CacheKeys.tenantFeatureFlags(tenantId));
   }
 }
