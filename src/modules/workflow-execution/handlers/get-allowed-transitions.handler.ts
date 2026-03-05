@@ -6,7 +6,6 @@ import {
   WORKFLOW_QUERY_CONTRACT,
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
-import { WorkflowInstanceStatus } from "../entities/workflow-instance.entity";
 import {
   AllowedTransition,
   GetAllowedTransitionsQuery,
@@ -15,6 +14,7 @@ import {
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 @QueryHandler(GetAllowedTransitionsQuery)
 export class GetAllowedTransitionsHandler implements IQueryHandler<

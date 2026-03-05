@@ -11,10 +11,11 @@ import { NotificationTemplateRepository } from "../repositories/notification-tem
 import { WebhookConfigRepository } from "../repositories/webhook-config.repository";
 import { NotificationService } from "../services/notification.service";
 import { WebhookService } from "../services/webhook.service";
-import { NotificationChannel } from "../entities/notification-template.entity";
+import { NotificationChannel, NotificationTemplate } from "../entities/notification-template.entity";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
+import { WebhookConfig } from "../entities/webhook-config.entity";
 
 @Controller()
 export class NotificationSubscriber {
@@ -64,9 +65,9 @@ export class NotificationSubscriber {
    * Cache-aside lookup: retrieve templates for an event trigger.
    * TTL is MEDIUM since templates change infrequently but we want reasonably fresh data.
    */
-  private async getTemplatesForEvent(eventName: string, tenantId: string): Promise<Record<string, any>[]> {
+  private async getTemplatesForEvent(eventName: string, tenantId: string): Promise<NotificationTemplate[]> {
     const cacheKey = CacheKeys.notifTemplates(tenantId, eventName);
-    const cached = await this.redis.get<Record<string, any>[]>(cacheKey);
+    const cached = await this.redis.get<NotificationTemplate[]>(cacheKey);
     if (cached) return cached;
 
     const templates = await this.templateRepository.findActiveByEventTrigger(eventName, tenantId);
@@ -78,9 +79,9 @@ export class NotificationSubscriber {
    * Cache-aside lookup: retrieve webhook configs for an event name.
    * TTL is MEDIUM since webhook configs change infrequently.
    */
-  private async getActiveWebhooks(eventName: string, tenantId: string): Promise<Record<string, any>[]> {
+  private async getActiveWebhooks(eventName: string, tenantId: string): Promise<WebhookConfig[]> {
     const cacheKey = CacheKeys.notifWebhooks(tenantId, eventName);
-    const cached = await this.redis.get<Record<string, any>[]>(cacheKey);
+    const cached = await this.redis.get<WebhookConfig[]>(cacheKey);
     if (cached) return cached;
 
     const webhooks = await this.webhookConfigRepository.findActiveByEventName(eventName, tenantId);

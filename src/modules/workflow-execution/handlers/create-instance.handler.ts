@@ -1,16 +1,16 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AppErrors } from '@app/shared/constants/app-errors.enum';
-import { generateUUID } from '@app/shared/utils/uuid.util';
+import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
+import { Inject, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import { AppErrors } from "@app/shared/constants/app-errors.enum";
+import { generateUUID } from "@app/shared/utils/uuid.util";
 import {
   IWorkflowQueryContract,
   WORKFLOW_QUERY_CONTRACT,
-} from '@app/shared/interfaces/contracts/workflow-query.contract';
-import { WorkflowInstanceRepository } from '../repositories/workflow-instance.repository';
-import { WorkflowInstanceStatus } from '../entities/workflow-instance.entity';
-import { ExecutionPublisher } from '../publishers/execution.publisher';
-import { CreateInstanceCommand } from '../commands/create-instance.command';
-import { WorkflowInstance } from '../entities/workflow-instance.entity';
+} from "@app/shared/interfaces/contracts/workflow-query.contract";
+import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
+import { ExecutionPublisher } from "../publishers/execution.publisher";
+import { CreateInstanceCommand } from "../commands/create-instance.command";
+import { WorkflowInstance } from "../entities/workflow-instance.entity";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 @CommandHandler(CreateInstanceCommand)
 export class CreateInstanceHandler implements ICommandHandler<CreateInstanceCommand> {
@@ -18,7 +18,7 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
     private readonly instanceRepo: WorkflowInstanceRepository,
     @Inject(WORKFLOW_QUERY_CONTRACT)
     private readonly workflowQuery: IWorkflowQueryContract,
-    private readonly publisher: ExecutionPublisher,
+    private readonly publisher: ExecutionPublisher
   ) {}
 
   async execute(command: CreateInstanceCommand): Promise<WorkflowInstance> {
@@ -27,18 +27,18 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
 
     const definition = await this.workflowQuery.findDefinitionById(workflowDefinitionId, tenantId);
     if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
-    if (definition.status !== 'published') {
+    if (definition.status !== "published") {
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_DEFINITION_NOT_PUBLISHED);
     }
 
     const snapshot = await this.workflowQuery.getVersionSnapshot(
       workflowDefinitionId,
       definition.currentVersion - 1, // currentVersion was bumped after publish
-      tenantId,
+      tenantId
     );
     if (!snapshot) throw new NotFoundException(AppErrors.DEFINITION_VERSION_NOT_FOUND);
 
-    const states = (snapshot['states'] as any[]) ?? [];
+    const states = (snapshot["states"] as any[]) ?? [];
     const initialState = states.find((s) => s.isInitial === true);
     if (!initialState) {
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_INITIAL_STATE_REQUIRED);
@@ -71,4 +71,3 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
     return saved;
   }
 }
-

@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WorkflowInstance, WorkflowInstanceStatus } from '../entities/workflow-instance.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { WorkflowInstance } from "../entities/workflow-instance.entity";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 @Injectable()
 export class WorkflowInstanceRepository {
   constructor(
     @InjectRepository(WorkflowInstance)
-    private readonly repo: Repository<WorkflowInstance>,
+    private readonly repo: Repository<WorkflowInstance>
   ) {}
 
   create(data: Partial<WorkflowInstance>): WorkflowInstance {
@@ -29,7 +30,7 @@ export class WorkflowInstanceRepository {
       workflowDefinitionId?: string;
       page: number;
       limit: number;
-    },
+    }
   ): Promise<[WorkflowInstance[], number]> {
     const where: Record<string, unknown> = { tenantId };
     if (options.status) where.status = options.status;
@@ -37,10 +38,9 @@ export class WorkflowInstanceRepository {
 
     return this.repo.findAndCount({
       where: where as any,
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (options.page - 1) * options.limit,
       take: options.limit,
     });
   }
 }
-

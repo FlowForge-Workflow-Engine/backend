@@ -4,6 +4,4 @@ export * from "./nats.config";
 export * from "./redis.service";
 export * from "./cache-keys";
 export * from "./cache-ttl";
-export * from "./rate-limit.constants";
 export * from "./infra.module";
-export * from "./middlewares/rate-limit.middleware";

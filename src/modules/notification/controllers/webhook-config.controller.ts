@@ -47,8 +47,8 @@ export class WebhookConfigController {
     const updated = await this.webhookConfigRepository.update(id, tenantId, dto);
     if (!updated) throw new NotFoundException(AppErrors.WEBHOOK_CONFIG_NOT_FOUND);
     // Invalidate webhook cache for this event name
-    if (updated.eventName) {
-      await this.redis.del(CacheKeys.notifWebhooks(tenantId, updated.eventName));
+    if (updated.name) {
+      await this.redis.del(CacheKeys.notifWebhooks(tenantId, updated.name));
     }
     return updated;
   }
@@ -60,7 +60,7 @@ export class WebhookConfigController {
     if (!config) throw new NotFoundException(AppErrors.WEBHOOK_CONFIG_NOT_FOUND);
     await this.webhookConfigRepository.remove(id, tenantId);
     // Invalidate webhook cache for this event name
-    await this.redis.del(CacheKeys.notifWebhooks(tenantId, config.eventName));
+    await this.redis.del(CacheKeys.notifWebhooks(tenantId, config.name));
     return { message: "Webhook configuration deleted" };
   }
 }

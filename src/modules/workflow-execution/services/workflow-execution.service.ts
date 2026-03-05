@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
-import { WorkflowInstance, WorkflowInstanceStatus } from "../entities/workflow-instance.entity";
+import { WorkflowInstance } from "../entities/workflow-instance.entity";
 import { CreateInstanceCommand } from "../commands/create-instance.command";
 import { ExecuteTransitionCommand } from "../commands/execute-transition.command";
 import { CancelInstanceCommand } from "../commands/cancel-instance.command";
@@ -11,6 +11,7 @@ import {
   GetAllowedTransitionsQuery,
   GetAllowedTransitionsResult,
 } from "../queries/get-allowed-transitions.query";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 /**
  * Thin facade service — dispatches all operations to CommandBus / QueryBus.

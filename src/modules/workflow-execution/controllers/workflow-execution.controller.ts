@@ -4,10 +4,10 @@ import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
-import { WorkflowInstanceStatus } from "../entities/workflow-instance.entity";
 import { WorkflowExecutionService } from "../services/workflow-execution.service";
 import { CreateInstanceDto } from "../dto/create-instance.dto";
 import { ExecuteTransitionDto } from "../dto/execute-transition.dto";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 @ApiTags("Workflow Instances")
 @ApiBearerAuth()

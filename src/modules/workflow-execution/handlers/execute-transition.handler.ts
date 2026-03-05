@@ -16,12 +16,13 @@ import {
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { RuleEngineService } from "../../rule-engine/services/rule-engine.service";
 import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
-import { WorkflowInstance, WorkflowInstanceStatus } from "../entities/workflow-instance.entity";
+import { WorkflowInstance } from "../entities/workflow-instance.entity";
 import { ExecutionPublisher } from "../publishers/execution.publisher";
 import { ExecuteTransitionCommand } from "../commands/execute-transition.command";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 @CommandHandler(ExecuteTransitionCommand)
 export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransitionCommand> {

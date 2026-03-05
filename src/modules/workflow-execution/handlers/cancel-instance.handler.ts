@@ -8,11 +8,12 @@ import {
   WORKFLOW_QUERY_CONTRACT,
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
-import { WorkflowInstance, WorkflowInstanceStatus } from "../entities/workflow-instance.entity";
+import { WorkflowInstance } from "../entities/workflow-instance.entity";
 import { ExecutionPublisher } from "../publishers/execution.publisher";
 import { CancelInstanceCommand } from "../commands/cancel-instance.command";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 @CommandHandler(CancelInstanceCommand)
 export class CancelInstanceHandler implements ICommandHandler<CancelInstanceCommand> {

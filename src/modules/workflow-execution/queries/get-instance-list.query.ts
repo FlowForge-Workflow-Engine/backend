@@ -1,5 +1,6 @@
-import { IQuery } from '@nestjs/cqrs';
-import { WorkflowInstance, WorkflowInstanceStatus } from '../entities/workflow-instance.entity';
+import { IQuery } from "@nestjs/cqrs";
+import { WorkflowInstance } from "../entities/workflow-instance.entity";
+import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
 export class GetInstanceListQuery implements IQuery {
   constructor(
@@ -7,7 +8,7 @@ export class GetInstanceListQuery implements IQuery {
     public readonly page: number,
     public readonly limit: number,
     public readonly status?: WorkflowInstanceStatus,
-    public readonly workflowDefinitionId?: string,
+    public readonly workflowDefinitionId?: string
   ) {}
 }
 
@@ -17,4 +18,3 @@ export interface GetInstanceListResult {
   page: number;
   limit: number;
 }
-
