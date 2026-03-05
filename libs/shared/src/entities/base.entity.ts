@@ -1,17 +1,20 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity()
-export class BaseEntity {
-  @PrimaryGeneratedColumn()
+/**
+ * Abstract base entity. All tenant-scoped entities must extend this.
+ * Provides: id (UUID PK), tenantId (UUID indexed), createdAt, updatedAt.
+ */
+export abstract class BaseEntity {
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: "uuid" })
+  @Column({ type: "uuid", nullable: false })
   tenantId: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamptz" })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: "timestamptz" })
   updatedAt: Date;
 }

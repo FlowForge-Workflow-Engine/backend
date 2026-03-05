@@ -1,6 +1,7 @@
 // import configuration from "./configs/app.config";
 import { ClassSerializerInterceptor, ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory, Reflector } from "@nestjs/core";
+import { MicroserviceOptions, Transport } from "@nestjs/microservices";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import * as cookieParser from "cookie-parser";
 import * as compression from "compression";
@@ -175,6 +176,14 @@ async function bootstrap() {
   // FIXME:
   // Session Management
   // expressSession(app);
+
+  // NATS hybrid microservice — receives @MessagePattern events from all modules
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.NATS,
+    options: { servers: [process.env.NATS_URL ?? "nats://localhost:4222"] },
+  });
+
+  await app.startAllMicroservices();
 
   const port = configService.get<string>("PORT") || 3000;
   await app.listen(port, () => {

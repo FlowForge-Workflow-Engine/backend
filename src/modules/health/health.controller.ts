@@ -4,52 +4,67 @@ import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import {
   HealthCheck,
   HealthCheckService,
-  MemoryHealthIndicator,
+  MicroserviceHealthIndicator,
   TypeOrmHealthIndicator,
 } from "@nestjs/terminus";
+import { Transport } from "@nestjs/microservices";
+import { Public } from "@app/shared/decorators/public.decorator";
 
+/**
+ * Health check controller.
+ * Both endpoints are @Public() — skips global JwtAuthGuard.
+ *
+ * GET /health       → { status, details: { db, redis, nats } }
+ * GET /health/ready → 200 when the service is ready to serve traffic
+ */
 @Controller("health")
-@ApiTags("Health Check")
+@ApiTags("Health")
 export class HealthController {
   constructor(
-    private health: HealthCheckService,
-    private dbSQL: TypeOrmHealthIndicator,
-    private memory: MemoryHealthIndicator,
-    private configService: ConfigService
+    private readonly health: HealthCheckService,
+    private readonly db: TypeOrmHealthIndicator,
+    private readonly microservice: MicroserviceHealthIndicator,
+    private readonly configService: ConfigService
   ) {}
 
-  @Get("database")
+  /**
+   * Liveness probe — checks database, Redis, and NATS connectivity.
+   * Returns 200 when all indicators are healthy, 503 when any fail.
+   */
+  @Get()
+  @Public()
   @HealthCheck()
-  @ApiOperation({
-    summary: "Check Database Connection",
-    description: "Performs a health check to verify the database connection is active and responsive.",
-  })
-  checkDatabase() {
-    return this.health.check([() => this.dbSQL.pingCheck(this.configService.get<string>("DATABASE"))]);
-  }
-
-  @Get("memory")
-  @HealthCheck()
-  @ApiOperation({
-    summary: "Check Memory Usage",
-    description:
-      "Performs a health check to monitor memory usage, including heap memory and RSS (Resident Set Size).",
-  })
-  checkMemory() {
-    const memSize = 250 * 1024 * 1024; // 250MB
-
-    const memoryUsage = process.memoryUsage();
-
-    console.debug({
-      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`, // Resident Set Size
-      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`, // Total V8 heap
-      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`, // Actual heap in use
-      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`, // C++ objects
-    });
+  @ApiOperation({ summary: "Liveness probe: db, redis, nats" })
+  check() {
+    const redisUrl = this.configService.get<string>("REDIS_URL", "redis://localhost:6379");
+    const parsedRedis = new URL(redisUrl);
+    const natsUrl = this.configService.get<string>("NATS_URL", "nats://localhost:4222");
 
     return this.health.check([
-      () => this.memory.checkHeap("memory_heap", memSize),
-      () => this.memory.checkRSS("memory_rss", memSize),
+      () => this.db.pingCheck("db"),
+      () =>
+        this.microservice.pingCheck("redis", {
+          transport: Transport.REDIS,
+          options: {
+            host: parsedRedis.hostname || "localhost",
+            port: parsedRedis.port ? parseInt(parsedRedis.port, 10) : 6379,
+          },
+        }),
+      () =>
+        this.microservice.pingCheck("nats", {
+          transport: Transport.NATS,
+          options: { servers: [natsUrl] },
+        }),
     ]);
+  }
+
+  /**
+   * Readiness probe — returns 200 when service is ready to serve traffic.
+   */
+  @Get("ready")
+  @Public()
+  @ApiOperation({ summary: "Readiness probe" })
+  ready() {
+    return { status: "ok" };
   }
 }

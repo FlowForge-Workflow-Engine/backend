@@ -1,4 +1,11 @@
-import { MiddlewareConsumer, Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from "@nestjs/common";
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ClientsModule, Transport } from "@nestjs/microservices";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { WinstonModule } from "nest-winston";
+import { ClassSerializerInterceptor } from "@nestjs/common";
+
 import { AuthModule } from "./modules/auth/auth.module";
 import { TenantModule } from "./modules/tenant/tenant.module";
 import { AuditModule } from "./modules/audit/audit.module";
@@ -8,11 +15,15 @@ import { WorkflowDefinitionModule } from "./modules/workflow-definition/workflow
 import { WorkflowExecutionModule } from "./modules/workflow-execution/workflow-execution.module";
 import { PostgreSQLDatabaseModule } from "./modules/database/database.module";
 import { HealthModule } from "./modules/health/health.module";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { APP_GUARD } from "@nestjs/core";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
-import { WinstonModule } from "nest-winston";
+
 import { winstonLoggerConfig } from "./infra/configs/winston.config";
+import { NATS_CLIENT } from "./infra/nats.config";
+import { InfraModule } from "./infra/infra.module";
+import { RateLimitMiddleware } from "./infra/middlewares/rate-limit.middleware";
+
+import { JwtAuthGuard, TenantIsolationGuard, RolesGuard } from "@app/shared/guards";
+import { GlobalExceptionFilter } from "@app/shared/filters";
+import { LoggingInterceptor, TenantContextInterceptor } from "@app/shared/interceptors";
 import { LoggerMiddleware } from "@app/shared/middlewares";
 
 @Module({
@@ -20,8 +31,6 @@ import { LoggerMiddleware } from "@app/shared/middlewares";
     ConfigModule.forRoot({
       envFilePath: [`.env.stage.${process.env.STAGE}`],
       isGlobal: true,
-      // validationSchema: envSchema,
-      // validationOptions: { allowUnknown: false, abortEarly: true },
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -33,7 +42,20 @@ import { LoggerMiddleware } from "@app/shared/middlewares";
         },
       ],
     }),
+    // Global NATS ClientProxy — publishers across all modules inject NATS_CLIENT
+    ClientsModule.registerAsync([
+      {
+        name: NATS_CLIENT,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.NATS,
+          options: { servers: [configService.get<string>("NATS_URL", "nats://localhost:4222")] },
+        }),
+      },
+    ]),
     WinstonModule.forRoot(winstonLoggerConfig),
+    InfraModule,
     AuthModule,
     TenantModule,
     WorkflowExecutionModule,
@@ -46,14 +68,29 @@ import { LoggerMiddleware } from "@app/shared/middlewares";
   ],
   controllers: [],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // Rate limiting
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Global auth guards (order matters: JWT → Tenant → Roles)
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: TenantIsolationGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    // Global exception filter
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    // Global interceptors
+    { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
   ],
 })
-export class AppModule {
+export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes("/**");
+    consumer
+      .apply(RateLimitMiddleware)
+      .exclude(
+        { path: "health", method: RequestMethod.GET },
+        { path: "health/ready", method: RequestMethod.GET }
+      )
+      .forRoutes("/**");
   }
 }
