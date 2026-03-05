@@ -71,7 +71,7 @@ export class UserService {
       if (roles.length) {
         // Create user-role associations with audit trail (assignedBy)
         const userRoles = roles.map((role) =>
-          this.userRoleRepo.create({ userId: saved.id, roleId: role.id, assignedBy: actorId })
+          this.userRoleRepo.create({ userId: saved.id, roleId: role.id, assignedBy: actorId, tenantId })
         );
         await this.userRoleRepo.save(userRoles);
         roleNames = roles.map((r) => r.name);
