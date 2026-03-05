@@ -21,7 +21,7 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
     username: configService.get<string>("DB_USER"),
     password: configService.get<string>("DB_PASSWORD"),
     database: configService.get<string>("DATABASE"),
-    entities: [join(__dirname, "..", "**", "**", "*.entity{.ts,.js}")],
+    entities: [join(__dirname, "..", "..", "**", "**", "*.entity{.ts,.js}")],
     //   autoLoadEntities: true,
     synchronize: false,
     // dropSchema: true,
@@ -29,7 +29,7 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
     retryDelay: 3000,
     connectTimeoutMS: 10000,
     maxQueryExecutionTime: 1000,
-    migrations: [join(__dirname, "..", "database", "migrations", "*{.ts,.js}")],
+    migrations: [join(__dirname, "..", "..", "modules", "database", "migrations", "*{.ts,.js}")],
     //   cli: {
     //     migrationsDir: join(__dirname, "migrations"),
     //   },

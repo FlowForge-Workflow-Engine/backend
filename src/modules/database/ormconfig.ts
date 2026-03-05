@@ -21,7 +21,7 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
     username: configService.get<string>("DB_USER"),
     password: configService.get<string>("DB_PASSWORD"),
     database: configService.get<string>("DATABASE"),
-    entities: [join(__dirname, "..", "**", "**", "*.entity{.ts,.js}")],
+    entities: [join(__dirname, "..", "..", "**", "**", "*.entity{.ts,.js}")],
     //   autoLoadEntities: true,
     synchronize: false,
     // dropSchema: true,
