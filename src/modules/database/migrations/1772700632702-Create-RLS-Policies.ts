@@ -47,7 +47,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  * ============================================================================
  * TABLES PROTECTED (All with tenant_id column):
  * ============================================================================
- * Auth Module: users, roles, permissions, user_roles, role_permissions, refresh_tokens
+ * Auth Module: users, roles, user_roles (via FK), refresh_tokens
  * Tenant Module: tenant_settings, tenant_feature_flags
  * Workflow Definition: workflow_definitions, workflow_definition_versions, workflow_states,
  *                      workflow_transitions, transition_rules, instance_form_schemas
@@ -55,20 +55,21 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  * Audit Module: audit_logs
  * Notification Module: notification_templates, notification_logs, webhook_configs,
  *                      webhook_delivery_logs
- * Rule Engine Module: rule_templates
  *
- * NOTE: "tenants" table has NO tenant_id (it IS the root), so no RLS needed for it.
+ * EXCLUDED TABLES:
+ * - "tenants" table has NO tenant_id (it IS the root), so no RLS needed
+ * - "permissions" table is global/system-wide, not tenant-scoped
+ * - No "role_permissions" join table found in entities
+ * - No "rule_templates" entity found in rule-engine module
  */
-export class CreateRlsPolicies1709559600000 implements MigrationInterface {
+export class CreateRlsPolicies1772700632702 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // All tenant-scoped tables (all except "tenants" which has no tenant_id column)
     const tenantScopedTables = [
       // Auth Module
       "users",
       "roles",
-      "permissions",
       "user_roles",
-      "role_permissions",
       "refresh_tokens",
       // Tenant Module
       "tenant_settings",
@@ -90,14 +91,12 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
       "notification_logs",
       "webhook_configs",
       "webhook_delivery_logs",
-      // Rule Engine Module
-      "rule_templates",
     ];
 
     console.log("\n╔════════════════════════════════════════════════════════════════╗");
-    console.log("║  Row Level Security (RLS) Migration Starting                  ║");
-    console.log("║  Protecting all tenant-scoped tables with database-level      ║");
-    console.log("║  isolation policies.                                          ║");
+    console.log("║  Row Level Security (RLS) Migration Starting                   ║");
+    console.log("║  Protecting all tenant-scoped tables with database-level       ║");
+    console.log("║  isolation policies.                                           ║");
     console.log("╚════════════════════════════════════════════════════════════════╝\n");
 
     // ─── Step 1: Enable RLS on all tables ───────────────────────────────────────
@@ -137,12 +136,6 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
         policyName: "user_roles_tenant_isolation",
         joinTable: "users",
         joinColumn: "user_id",
-      },
-      {
-        table: "role_permissions",
-        policyName: "role_permissions_tenant_isolation",
-        joinTable: "roles",
-        joinColumn: "role_id",
       },
       {
         table: "refresh_tokens",
@@ -213,16 +206,11 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
         table: "webhook_delivery_logs",
         policyName: "webhook_delivery_logs_tenant_isolation",
       },
-      // Rule Engine Module
-      {
-        table: "rule_templates",
-        policyName: "rule_templates_tenant_isolation",
-      },
     ];
 
     for (const def of policyDefinitions) {
       // Skip global tables without tenant_id
-      if (def.skip) {
+      if ("skip" in def && def.skip) {
         console.log(`  ⊘ Skipped (no tenant_id): ${def.table}`);
         continue;
       }
@@ -231,7 +219,7 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
         let policySql: string;
 
         // For join tables, create policy that checks tenant_id via FK
-        if (def.joinTable && def.joinColumn) {
+        if ("joinTable" in def && "joinColumn" in def && def.joinTable && def.joinColumn) {
           policySql = `
             CREATE POLICY ${def.policyName} ON ${def.table}
               FOR ALL
@@ -240,17 +228,20 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
                 = (current_setting('app.tenant_id'))::uuid
               );
           `;
+          const comment = "comment" in def && def.comment ? ` - ${def.comment}` : "";
+          console.log(`  ✓ Policy created (via FK): ${def.policyName}${comment}`);
         } else {
-          // For direct tenant_id column, simple policy
+          // For direct tenant_id column - BaseEntity always uses tenant_id in DB
+          const columnName = "columnName" in def && def.columnName ? def.columnName : "tenant_id";
           policySql = `
             CREATE POLICY ${def.policyName} ON ${def.table}
               FOR ALL
-              USING (tenant_id = (current_setting('app.tenant_id'))::uuid);
+              USING (${columnName} = (current_setting('app.tenant_id'))::uuid);
           `;
+          console.log(`  ✓ Policy created: ${def.policyName} (column: ${columnName})`);
         }
 
         await queryRunner.query(policySql);
-        console.log(`  ✓ Policy created: ${def.policyName}`);
       } catch (error) {
         console.error(`  ✗ Failed to create policy for ${def.table}:`, error.message);
         throw error;
@@ -270,25 +261,23 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
       }
     }
 
-    console.log("\n╔════════════════════════════════════════════════════════════════╗");
-    console.log("║  ✅ Row Level Security Migration Complete!                     ║");
-    console.log("║                                                                ║");
-    console.log("║  NEXT STEPS:                                                  ║");
-    console.log("║  1. Application must set tenant context in interceptor:        ║");
-    console.log("║     SELECT set_config('app.tenant_id', tenantId, false)        ║");
-    console.log("║  2. This must happen BEFORE any database queries               ║");
-    console.log("║  3. Use DatabaseContextInterceptor in AppModule                ║");
-    console.log("║  4. If context not set, RLS denies all access (safe default)   ║");
-    console.log("╚════════════════════════════════════════════════════════════════╝\n");
+    console.log("\n╔═════════════════════════════════════════════════════════════════╗");
+    console.log("║  ✅ Row Level Security Migration Complete!                      ║");
+    console.log("║                                                                 ║");
+    console.log("║  NEXT STEPS:                                                    ║");
+    console.log("║  1. Application must set tenant context in interceptor:         ║");
+    console.log("║     SELECT set_config('app.tenant_id', tenantId, false)         ║");
+    console.log("║  2. This must happen BEFORE any database queries                ║");
+    console.log("║  3. Use DatabaseContextInterceptor in AppModule                 ║");
+    console.log("║  4. If context not set, RLS denies all access (safe default)    ║");
+    console.log("╚═════════════════════════════════════════════════════════════════╝\n");
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const tenantScopedTables = [
       "users",
       "roles",
-      "permissions",
       "user_roles",
-      "role_permissions",
       "refresh_tokens",
       "tenant_settings",
       "tenant_feature_flags",
@@ -305,7 +294,6 @@ export class CreateRlsPolicies1709559600000 implements MigrationInterface {
       "notification_logs",
       "webhook_configs",
       "webhook_delivery_logs",
-      "rule_templates",
     ];
 
     console.log("\n╔════════════════════════════════════════════════════════════════╗");
