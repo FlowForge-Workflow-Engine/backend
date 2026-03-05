@@ -27,6 +27,7 @@ import { LoggingInterceptor, TenantContextInterceptor } from "@app/shared/interc
 import { LoggerMiddleware } from "@app/shared/middlewares";
 import { envSchema } from "@app/shared";
 import { DatabaseContextInterceptor } from "./modules/database/interceptors/database-context.interceptor";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { DatabaseContextInterceptor } from "./modules/database/interceptors/data
         }),
       },
     ]),
+    ScheduleModule.forRoot(),
     WinstonModule.forRoot(winstonLoggerConfig),
     InfraModule,
     AuthModule,

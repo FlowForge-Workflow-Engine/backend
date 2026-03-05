@@ -25,6 +25,7 @@ import { AuthService } from "./services/auth.service";
 import { UserService } from "./services/user.service";
 import { UserQueryService } from "./services/user-query.service";
 import { OnboardingService } from "./services/onboarding.service";
+import { RefreshTokenCleanupService } from "./services/refresh-token-cleanup.service";
 
 // Strategy & Guard
 import { JwtStrategy } from "./strategies/jwt.strategy";
@@ -75,6 +76,7 @@ import { UserController } from "./controllers/user.controller";
     UserService,
     UserQueryService,
     OnboardingService,
+    RefreshTokenCleanupService,
 
     // Strategy
     JwtStrategy,

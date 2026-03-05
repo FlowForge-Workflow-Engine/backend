@@ -1,5 +1,5 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, HttpCode, HttpStatus, ParseUUIDPipe, Post } from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Public } from "@app/shared/decorators/public.decorator";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -83,8 +83,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Rotate refresh token and receive a new token pair" })
   @ApiSuccessResponse(RefreshTokenResponseDto, "Token refreshed successfully")
+  @ApiBody({ schema: { example: { refreshToken: "550e8400-e29b-41d4-a716-446655440000" } } })
   async refresh(
-    @Body("refreshToken") refreshToken: string
+    @Body("refreshToken", ParseUUIDPipe) refreshToken: string
   ): Promise<ApiResponseDto<RefreshTokenResponseDto>> {
     const data = await this.authService.refresh(refreshToken);
     return { status: "success", data };

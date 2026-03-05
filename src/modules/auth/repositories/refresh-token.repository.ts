@@ -34,4 +34,18 @@ export class RefreshTokenRepository {
       { revokedAt: new Date() }
     );
   }
+
+  /**
+   * Delete refresh tokens that are older than the specified hours.
+   * Used by the cleanup cron job to remove stale tokens.
+   * @param hoursOld - Number of hours to consider a token as old (e.g., 36 hours)
+   * @returns Number of tokens deleted
+   */
+  async deleteOldTokens(hoursOld: number): Promise<number> {
+    const cutoffTime = new Date(Date.now() - hoursOld * 60 * 60 * 1000);
+    const result = await this.repo.delete({
+      createdAt: { $lt: cutoffTime },
+    } as any);
+    return result.affected || 0;
+  }
 }
