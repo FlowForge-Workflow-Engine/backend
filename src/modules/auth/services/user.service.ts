@@ -41,10 +41,14 @@ export class UserService {
    * @throws ConflictException - If email already exists in the tenant
    */
   async create(dto: CreateUserDto, tenantId: string, actorId: string): Promise<User> {
+    // Step 1: Validate email uniqueness within tenant (prevent duplicate accounts)
     const existing = await this.userRepository.findByEmailAndTenant(dto.email, tenantId);
     if (existing) throw new ConflictException(AppErrors.EMAIL_ALREADY_EXISTS);
 
+    // Step 2: Hash password using Argon2 (memory-hard, resistant to GPU/ASIC attacks)
     const passwordHash = await argon2hash(dto.password);
+
+    // Step 3: Create user entity with initial state (active, email not yet verified)
     const user = this.userRepository.create({
       email: dto.email,
       firstName: dto.firstName,
@@ -54,13 +58,18 @@ export class UserService {
       isActive: true,
       isEmailVerified: false,
     });
+
+    // Step 4: Persist user to database
     const saved = await this.userRepository.save(user);
 
+    // Step 5: Assign initial roles if provided in request
     let roleNames: string[] = [];
 
     if (dto.roleNames?.length) {
+      // Lookup roles by name within tenant (validates roles exist)
       const roles = await this.roleRepository.findByNames(dto.roleNames, tenantId);
       if (roles.length) {
+        // Create user-role associations with audit trail (assignedBy)
         const userRoles = roles.map((role) =>
           this.userRoleRepo.create({ userId: saved.id, roleId: role.id, assignedBy: actorId })
         );
@@ -69,6 +78,7 @@ export class UserService {
       }
     }
 
+    // Step 6: Publish USER_CREATED domain event for audit trail and downstream systems
     this.publisher.publishUserCreated({
       eventId: generateUUID(),
       tenantId,
@@ -80,9 +90,10 @@ export class UserService {
       occurredAt: new Date().toISOString(),
     });
 
-    // Invalidate tenant user list so it refreshes on next read
+    // Step 7: Invalidate tenant user list cache (new user added, list is stale)
     await this.redis.del(CacheKeys.usersByTenant(tenantId));
 
+    // Step 8: Log creation for operational monitoring and debugging
     this.logger.log(`User created: ${saved.id} [tenant=${tenantId}]`);
     return saved;
   }
