@@ -35,7 +35,7 @@ export class HealthController {
   @Public()
   @HealthCheck()
   @ApiOperation({ summary: "Liveness probe: db, redis, nats" })
-  check() {
+  async check(): Promise<unknown> {
     const redisUrl = this.configService.get<string>("REDIS_URL", "redis://localhost:6379");
     const parsedRedis = new URL(redisUrl);
     const natsUrl = this.configService.get<string>("NATS_URL", "nats://localhost:4222");
@@ -64,7 +64,7 @@ export class HealthController {
   @Get("ready")
   @Public()
   @ApiOperation({ summary: "Readiness probe" })
-  ready() {
+  async ready(): Promise<{ status: string }> {
     return { status: "ok" };
   }
 }

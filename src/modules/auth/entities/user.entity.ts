@@ -1,6 +1,7 @@
 import { Column, Entity, Index, OneToMany } from "typeorm";
 import { BaseEntity } from "@app/shared/entities/base.entity";
 import { UserRole } from "./user-role.entity";
+import { Exclude } from "class-transformer";
 
 /**
  * User entity — scoped per tenant.
@@ -16,6 +17,7 @@ export class User extends BaseEntity {
 
   /** Hashed password for authentication - never store plain text passwords */
   @Column({ type: "varchar", length: 255, name: "password_hash" })
+  @Exclude()
   passwordHash: string;
 
   /** User's first name - for personalization and display purposes */

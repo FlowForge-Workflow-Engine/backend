@@ -4,11 +4,19 @@ import { Public } from "@app/shared/decorators/public.decorator";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
+import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
+import { ApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { AuthService } from "../services/auth.service";
 import { OnboardingService } from "../services/onboarding.service";
 import { LoginDto } from "../dto/login.dto";
 import { RegisterDto } from "../dto/register.dto";
 import { RegisterTenantDto } from "../dto/register-tenant.dto";
+import {
+  RegisterTenantResponseDto,
+  RegisterUserResponseDto,
+  LoginResponseDto,
+  RefreshTokenResponseDto,
+} from "../dto/dto-response/auth-response.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -27,8 +35,12 @@ export class AuthController {
   @Post("register/tenant")
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: "Register a new company (tenant) and its first admin user" })
-  registerTenant(@Body() dto: RegisterTenantDto) {
-    return this.onboardingService.registerTenant(dto);
+  @ApiSuccessResponse(RegisterTenantResponseDto, "Tenant and admin user registered successfully", {
+    created: true,
+  })
+  async registerTenant(@Body() dto: RegisterTenantDto): Promise<ApiResponseDto<RegisterTenantResponseDto>> {
+    const data = await this.onboardingService.registerTenant(dto);
+    return { status: "success", data };
   }
 
   /**
@@ -40,8 +52,10 @@ export class AuthController {
   @Post("register")
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: "Self-register as an employee of an existing company" })
-  register(@Body() dto: RegisterDto) {
-    return this.onboardingService.registerUser(dto);
+  @ApiSuccessResponse(RegisterUserResponseDto, "User registered successfully", { created: true })
+  async register(@Body() dto: RegisterDto): Promise<ApiResponseDto<RegisterUserResponseDto>> {
+    const data = await this.onboardingService.registerUser(dto);
+    return { status: "success", data };
   }
 
   /**
@@ -54,8 +68,13 @@ export class AuthController {
   @Post("login")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Authenticate and receive token pair" })
-  login(@Body() dto: LoginDto, @Body("tenantId") tenantId: string) {
-    return this.authService.login(dto, tenantId);
+  @ApiSuccessResponse(LoginResponseDto, "User authenticated successfully")
+  async login(
+    @Body() dto: LoginDto,
+    @Body("tenantId") tenantId: string
+  ): Promise<ApiResponseDto<LoginResponseDto>> {
+    const data = await this.authService.login(dto, tenantId);
+    return { status: "success", data };
   }
 
   /**
@@ -66,8 +85,12 @@ export class AuthController {
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Rotate refresh token and receive a new token pair" })
-  refresh(@Body("refreshToken") refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  @ApiSuccessResponse(RefreshTokenResponseDto, "Token refreshed successfully")
+  async refresh(
+    @Body("refreshToken") refreshToken: string
+  ): Promise<ApiResponseDto<RefreshTokenResponseDto>> {
+    const data = await this.authService.refresh(refreshToken);
+    return { status: "success", data };
   }
 
   /**
@@ -78,11 +101,11 @@ export class AuthController {
   @Post("logout")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Revoke the current refresh token" })
-  logout(
+  async logout(
     @Body("refreshToken") refreshToken: string,
     @CurrentUser() _user: IJwtPayload,
     @TenantId() _tenantId: string
-  ) {
-    return this.authService.logout(refreshToken);
+  ): Promise<void> {
+    await this.authService.logout(refreshToken);
   }
 }

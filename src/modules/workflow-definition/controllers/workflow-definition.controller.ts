@@ -4,8 +4,17 @@ import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
+import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
+import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { WorkflowDefinitionService } from "../services/workflow-definition.service";
 import { CreateWorkflowDefinitionDto } from "../dto/create-workflow-definition.dto";
+import {
+  WorkflowDefinitionListResponseDto,
+  WorkflowDefinitionDetailResponseDto,
+  WorkflowDefinitionCreatedResponseDto,
+  WorkflowDefinitionPublishedResponseDto,
+  WorkflowDefinitionDeprecatedResponseDto,
+} from "../dto/dto-response/workflow-definition-response.dto";
 
 @ApiTags("Workflow Definitions")
 @ApiBearerAuth()
@@ -15,42 +24,71 @@ export class WorkflowDefinitionController {
 
   @Get()
   @ApiOperation({ summary: "List all workflow definitions for the tenant" })
-  findAll(@TenantId() tenantId: string) {
-    return this.service.findAll(tenantId);
+  @ApiSuccessResponse(WorkflowDefinitionListResponseDto, "Workflow definitions retrieved successfully", {
+    isArray: true,
+  })
+  async findAll(
+    @TenantId() tenantId: string
+  ): Promise<CountApiResponseDto<WorkflowDefinitionListResponseDto[]>> {
+    const data = await this.service.findAll(tenantId);
+    return { status: "success", data, count: data.length };
   }
 
   @Post()
   @ApiOperation({ summary: "Create a new workflow definition (draft)" })
-  create(
+  @ApiSuccessResponse(WorkflowDefinitionCreatedResponseDto, "Workflow definition created successfully", {
+    created: true,
+  })
+  async create(
     @Body() dto: CreateWorkflowDefinitionDto,
     @TenantId() tenantId: string,
     @CurrentUser() actor: IJwtPayload
-  ) {
-    return this.service.create(dto, tenantId, actor.sub);
+  ): Promise<ApiResponseDto<WorkflowDefinitionCreatedResponseDto>> {
+    const data = await this.service.create(dto, tenantId, actor.sub);
+    return { status: "success", data };
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Get a workflow definition by ID" })
-  findOne(@Param() { id }: IdParamDto, @TenantId() tenantId: string) {
-    return this.service.findById(id, tenantId);
+  @ApiSuccessResponse(WorkflowDefinitionDetailResponseDto, "Workflow definition retrieved successfully")
+  async findOne(
+    @Param() { id }: IdParamDto,
+    @TenantId() tenantId: string
+  ): Promise<ApiResponseDto<WorkflowDefinitionDetailResponseDto>> {
+    const data = await this.service.findById(id, tenantId);
+    return { status: "success", data };
   }
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Delete a draft workflow definition" })
-  remove(@Param() { id }: IdParamDto, @TenantId() tenantId: string) {
-    return this.service.remove(id, tenantId);
+  async remove(@Param() { id }: IdParamDto, @TenantId() tenantId: string): Promise<void> {
+    await this.service.remove(id, tenantId);
   }
 
   @Post(":id/publish")
   @ApiOperation({ summary: "Publish a workflow definition — creates an immutable version snapshot" })
-  publish(@Param() { id }: IdParamDto, @TenantId() tenantId: string, @CurrentUser() actor: IJwtPayload) {
-    return this.service.publish(id, tenantId, actor.sub);
+  @ApiSuccessResponse(WorkflowDefinitionPublishedResponseDto, "Workflow definition published successfully", {
+    created: true,
+  })
+  async publish(
+    @Param() { id }: IdParamDto,
+    @TenantId() tenantId: string,
+    @CurrentUser() actor: IJwtPayload
+  ): Promise<ApiResponseDto<WorkflowDefinitionPublishedResponseDto>> {
+    const data = await this.service.publish(id, tenantId, actor.sub);
+    return { status: "success", data };
   }
 
   @Post(":id/deprecate")
   @ApiOperation({ summary: "Deprecate a published workflow definition" })
-  deprecate(@Param() { id }: IdParamDto, @TenantId() tenantId: string, @CurrentUser() actor: IJwtPayload) {
-    return this.service.deprecate(id, tenantId, actor.sub);
+  @ApiSuccessResponse(WorkflowDefinitionDeprecatedResponseDto, "Workflow definition deprecated successfully")
+  async deprecate(
+    @Param() { id }: IdParamDto,
+    @TenantId() tenantId: string,
+    @CurrentUser() actor: IJwtPayload
+  ): Promise<ApiResponseDto<WorkflowDefinitionDeprecatedResponseDto>> {
+    const data = await this.service.deprecate(id, tenantId, actor.sub);
+    return { status: "success", data };
   }
 }
