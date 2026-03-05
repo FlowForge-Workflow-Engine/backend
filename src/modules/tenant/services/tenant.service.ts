@@ -16,6 +16,18 @@ import { UpdateFeatureFlagDto } from "../dto/update-feature-flag.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
+/**
+ * Internal tenant management service — NOT exported from TenantModule.
+ * Provides full CRUD operations for tenants, settings, and feature flags.
+ * Consuming modules must use ITenantQueryContract via TENANT_QUERY_CONTRACT token.
+ *
+ * Responsibilities:
+ * - Create, read, update, deactivate tenants
+ * - Manage tenant settings (maxUsers, maxWorkflows, timezone, etc.)
+ * - Manage feature flags (enable/disable features per tenant)
+ * - Publish domain events (TENANT_CREATED, TENANT_DEACTIVATED, etc.)
+ * - Invalidate caches on mutations
+ */
 @Injectable()
 export class TenantService {
   private readonly logger = new Logger(TenantService.name);
@@ -28,6 +40,14 @@ export class TenantService {
     private readonly redis: RedisService
   ) {}
 
+  /**
+   * Creates a new tenant.
+   * Validates slug uniqueness, creates tenant record, bootstraps default settings, and publishes event.
+   *
+   * @param dto - Tenant creation data (name, slug, plan)
+   * @returns Promise<Tenant> - The created tenant entity
+   * @throws ConflictException - If slug already exists
+   */
   async create(dto: CreateTenantDto): Promise<Tenant> {
     const slugTaken = await this.tenantRepository.existsBySlug(dto.slug);
     if (slugTaken) throw new ConflictException(AppErrors.TENANT_SLUG_TAKEN);
@@ -50,16 +70,37 @@ export class TenantService {
     return saved;
   }
 
+  /**
+   * Retrieves all tenants.
+   *
+   * @returns Promise<Tenant[]> - Array of all tenants
+   */
   findAll(): Promise<Tenant[]> {
     return this.tenantRepository.findAll();
   }
 
+  /**
+   * Retrieves a single tenant by ID.
+   *
+   * @param id - The tenant ID
+   * @returns Promise<Tenant> - The tenant entity
+   * @throws NotFoundException - If tenant not found
+   */
   async findById(id: string): Promise<Tenant> {
     const tenant = await this.tenantRepository.findById(id);
     if (!tenant) throw new NotFoundException(AppErrors.TENANT_NOT_FOUND);
     return tenant;
   }
 
+  /**
+   * Updates a tenant's properties.
+   * Invalidates caches and publishes events for plan changes or deactivation.
+   *
+   * @param id - The tenant ID to update
+   * @param dto - Partial tenant update data (name, plan, isActive, etc.)
+   * @returns Promise<Tenant> - The updated tenant entity
+   * @throws NotFoundException - If tenant not found
+   */
   async update(id: string, dto: UpdateTenantDto): Promise<Tenant> {
     const tenant = await this.findById(id);
     const oldPlan = tenant.plan;
@@ -91,6 +132,14 @@ export class TenantService {
     return saved;
   }
 
+  /**
+   * Deactivates a tenant, preventing further access.
+   * Invalidates caches and publishes TENANT_DEACTIVATED event.
+   *
+   * @param id - The tenant ID to deactivate
+   * @returns Promise<Tenant> - The deactivated tenant entity
+   * @throws NotFoundException - If tenant not found
+   */
   async deactivate(id: string): Promise<Tenant> {
     const tenant = await this.findById(id);
     tenant.isActive = false;
@@ -108,11 +157,28 @@ export class TenantService {
     return saved;
   }
 
+  /**
+   * Retrieves tenant settings (maxUsers, maxWorkflows, timezone, etc.).
+   * Creates default settings if they don't exist.
+   *
+   * @param tenantId - The tenant ID
+   * @returns Promise<TenantSettings> - The tenant settings entity
+   * @throws NotFoundException - If tenant not found
+   */
   async getSettings(tenantId: string): Promise<TenantSettings> {
     await this.findById(tenantId);
     return this.settingsRepository.upsert(tenantId, {});
   }
 
+  /**
+   * Updates tenant settings.
+   * Invalidates settings cache after update.
+   *
+   * @param tenantId - The tenant ID
+   * @param dto - Partial settings update data
+   * @returns Promise<TenantSettings> - The updated settings entity
+   * @throws NotFoundException - If tenant not found
+   */
   async updateSettings(tenantId: string, dto: UpdateTenantSettingsDto): Promise<TenantSettings> {
     await this.findById(tenantId);
     const result = await this.settingsRepository.upsert(tenantId, dto);
@@ -120,11 +186,29 @@ export class TenantService {
     return result;
   }
 
+  /**
+   * Retrieves all feature flags for a tenant.
+   *
+   * @param tenantId - The tenant ID
+   * @returns Promise<TenantFeatureFlag[]> - Array of feature flags
+   * @throws NotFoundException - If tenant not found
+   */
   async getFeatureFlags(tenantId: string): Promise<TenantFeatureFlag[]> {
     await this.findById(tenantId);
     return this.featureFlagRepository.findByTenantId(tenantId);
   }
 
+  /**
+   * Creates a new feature flag for a tenant.
+   * Validates that the flag key doesn't already exist.
+   * Invalidates feature flags cache after creation.
+   *
+   * @param tenantId - The tenant ID
+   * @param dto - Feature flag creation data (flagKey, isEnabled, config)
+   * @returns Promise<TenantFeatureFlag> - The created feature flag
+   * @throws NotFoundException - If tenant not found
+   * @throws ConflictException - If flag key already exists for this tenant
+   */
   async createFeatureFlag(tenantId: string, dto: CreateFeatureFlagDto): Promise<TenantFeatureFlag> {
     await this.findById(tenantId);
     const existing = await this.featureFlagRepository.findByTenantIdAndKey(tenantId, dto.flagKey);
@@ -137,6 +221,16 @@ export class TenantService {
     return flag;
   }
 
+  /**
+   * Updates an existing feature flag for a tenant.
+   * Invalidates feature flags cache after update.
+   *
+   * @param tenantId - The tenant ID
+   * @param flagKey - The feature flag key to update
+   * @param dto - Partial feature flag update data (isEnabled, config)
+   * @returns Promise<TenantFeatureFlag> - The updated feature flag
+   * @throws NotFoundException - If tenant or flag not found
+   */
   async updateFeatureFlag(
     tenantId: string,
     flagKey: string,
@@ -150,6 +244,15 @@ export class TenantService {
     return flag;
   }
 
+  /**
+   * Deletes a feature flag for a tenant.
+   * Invalidates feature flags cache after deletion.
+   *
+   * @param tenantId - The tenant ID
+   * @param flagKey - The feature flag key to delete
+   * @returns Promise<void>
+   * @throws NotFoundException - If tenant or flag not found
+   */
   async deleteFeatureFlag(tenantId: string, flagKey: string): Promise<void> {
     await this.findById(tenantId);
     const existing = await this.featureFlagRepository.findByTenantIdAndKey(tenantId, flagKey);

@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TenantSettings } from '../entities/tenant-settings.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TenantSettings } from "../entities/tenant-settings.entity";
 
 @Injectable()
 export class TenantSettingsRepository {
   constructor(
     @InjectRepository(TenantSettings)
-    private readonly repo: Repository<TenantSettings>,
+    private readonly repo: Repository<TenantSettings>
   ) {}
 
   findByTenantId(tenantId: string): Promise<TenantSettings | null> {
@@ -27,7 +27,7 @@ export class TenantSettingsRepository {
         maxWorkflowDefinitions: 10,
         maxUsers: 50,
         branding: null,
-        timezone: 'UTC',
+        timezone: "UTC",
         ...data,
       });
     } else {
@@ -37,4 +37,3 @@ export class TenantSettingsRepository {
     return this.repo.save(settings);
   }
 }
-

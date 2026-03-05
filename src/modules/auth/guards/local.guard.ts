@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Injectable } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
 
 /**
  * Stub guard for the local (username/password) strategy.
@@ -10,5 +10,4 @@ import { AuthGuard } from '@nestjs/passport';
  * in a future phase without changing the controller decorator.
  */
 @Injectable()
-export class LocalGuard extends AuthGuard('local') {}
-
+export class LocalGuard extends AuthGuard("local") {}

@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TenantFeatureFlag } from '../entities/tenant-feature-flag.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TenantFeatureFlag } from "../entities/tenant-feature-flag.entity";
 
 @Injectable()
 export class TenantFeatureFlagRepository {
   constructor(
     @InjectRepository(TenantFeatureFlag)
-    private readonly repo: Repository<TenantFeatureFlag>,
+    private readonly repo: Repository<TenantFeatureFlag>
   ) {}
 
   findByTenantId(tenantId: string): Promise<TenantFeatureFlag[]> {
-    return this.repo.find({ where: { tenantId }, order: { flagKey: 'ASC' } });
+    return this.repo.find({ where: { tenantId }, order: { flagKey: "ASC" } });
   }
 
   findByTenantIdAndKey(tenantId: string, flagKey: string): Promise<TenantFeatureFlag | null> {
@@ -26,7 +26,7 @@ export class TenantFeatureFlagRepository {
   async upsert(
     tenantId: string,
     flagKey: string,
-    data: Partial<Pick<TenantFeatureFlag, 'isEnabled' | 'config'>>,
+    data: Partial<Pick<TenantFeatureFlag, "isEnabled" | "config">>
   ): Promise<TenantFeatureFlag> {
     let flag = await this.findByTenantIdAndKey(tenantId, flagKey);
 
@@ -46,4 +46,3 @@ export class TenantFeatureFlagRepository {
     }
   }
 }
-

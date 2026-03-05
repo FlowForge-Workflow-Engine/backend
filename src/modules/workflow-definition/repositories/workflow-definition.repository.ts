@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WorkflowDefinition } from '../entities/workflow-definition.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { WorkflowDefinition } from "../entities/workflow-definition.entity";
 
 @Injectable()
 export class WorkflowDefinitionRepository {
   constructor(
     @InjectRepository(WorkflowDefinition)
-    private readonly repo: Repository<WorkflowDefinition>,
+    private readonly repo: Repository<WorkflowDefinition>
   ) {}
 
   create(data: Partial<WorkflowDefinition>): WorkflowDefinition {
@@ -18,17 +18,14 @@ export class WorkflowDefinitionRepository {
     return this.repo.save(entity);
   }
 
-  async findByIdAndTenant(
-    id: string,
-    tenantId: string,
-  ): Promise<WorkflowDefinition | null> {
+  async findByIdAndTenant(id: string, tenantId: string): Promise<WorkflowDefinition | null> {
     return this.repo.findOne({ where: { id, tenantId } });
   }
 
   async findAllByTenant(tenantId: string): Promise<WorkflowDefinition[]> {
     return this.repo.find({
       where: { tenantId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -36,4 +33,3 @@ export class WorkflowDefinitionRepository {
     await this.repo.remove(entity);
   }
 }
-

@@ -1,12 +1,12 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { JSONCodec, NatsConnection } from 'nats';
-import { NATS_CLIENT } from '../../../infra';
-import { NatsEvents } from '@app/shared/constants/nats-events.enum';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { JSONCodec, NatsConnection } from "nats";
+import { NATS_CLIENT } from "../../../infra";
+import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IUserCreatedEvent,
   IUserDeactivatedEvent,
   IUserRolesUpdatedEvent,
-} from '@app/shared/interfaces/events/auth-events.interface';
+} from "@app/shared/interfaces/events/auth-events.interface";
 
 /**
  * Publishes auth/user domain events to NATS.
@@ -18,9 +18,7 @@ export class AuthPublisher {
   private readonly logger = new Logger(AuthPublisher.name);
   private readonly jc = JSONCodec();
 
-  constructor(
-    @Inject(NATS_CLIENT) private readonly natsClient: NatsConnection,
-  ) {}
+  constructor(@Inject(NATS_CLIENT) private readonly natsClient: NatsConnection) {}
 
   publishUserCreated(payload: IUserCreatedEvent): void {
     try {
@@ -49,4 +47,3 @@ export class AuthPublisher {
     }
   }
 }
-

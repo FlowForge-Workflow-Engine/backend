@@ -1,10 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  Logger,
-  NestInterceptor,
-} from "@nestjs/common";
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from "@nestjs/common";
 import { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
 import { Request, Response } from "express";
@@ -25,9 +19,7 @@ export class LoggingInterceptor implements NestInterceptor {
    * @returns Observable continuing the request pipeline
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const request = context
-      .switchToHttp()
-      .getRequest<Request & { user?: IJwtPayload }>();
+    const request = context.switchToHttp().getRequest<Request & { user?: IJwtPayload }>();
     const response = context.switchToHttp().getResponse<Response>();
 
     const { method, url } = request;
@@ -47,7 +39,7 @@ export class LoggingInterceptor implements NestInterceptor {
               userId,
               tenantId,
               durationMs: duration,
-            }),
+            })
           );
         },
         error: (err: unknown) => {
@@ -61,11 +53,10 @@ export class LoggingInterceptor implements NestInterceptor {
               tenantId,
               durationMs: duration,
               error: err instanceof Error ? err.message : String(err),
-            }),
+            })
           );
         },
-      }),
+      })
     );
   }
 }
-

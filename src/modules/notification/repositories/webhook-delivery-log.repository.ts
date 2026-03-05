@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WebhookDeliveryLog } from '../entities/webhook-delivery-log.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { WebhookDeliveryLog } from "../entities/webhook-delivery-log.entity";
 
 @Injectable()
 export class WebhookDeliveryLogRepository {
   constructor(
     @InjectRepository(WebhookDeliveryLog)
-    private readonly repo: Repository<WebhookDeliveryLog>,
+    private readonly repo: Repository<WebhookDeliveryLog>
   ) {}
 
   insert(data: Partial<WebhookDeliveryLog>): Promise<WebhookDeliveryLog> {
@@ -15,4 +15,3 @@ export class WebhookDeliveryLogRepository {
     return this.repo.save(entity);
   }
 }
-

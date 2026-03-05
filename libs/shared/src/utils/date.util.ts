@@ -14,4 +14,3 @@ export function now(): string {
 export function toISOString(date: Date): string {
   return date.toISOString();
 }
-

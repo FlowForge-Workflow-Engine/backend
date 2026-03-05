@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WeUserShadow } from '../entities/we-user-shadow.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { WeUserShadow } from "../entities/we-user-shadow.entity";
 
 @Injectable()
 export class UserShadowRepository {
   constructor(
     @InjectRepository(WeUserShadow)
-    private readonly repo: Repository<WeUserShadow>,
+    private readonly repo: Repository<WeUserShadow>
   ) {}
 
   async findById(id: string): Promise<WeUserShadow | null> {
@@ -24,7 +24,7 @@ export class UserShadowRepository {
       .insert()
       .into(WeUserShadow)
       .values(data)
-      .orUpdate(['email', 'full_name', 'roles', 'is_active', 'synced_at'], ['id'])
+      .orUpdate(["email", "full_name", "roles", "is_active", "synced_at"], ["id"])
       .execute();
   }
 
@@ -36,4 +36,3 @@ export class UserShadowRepository {
     await this.repo.update({ id }, { isActive: false, syncedAt });
   }
 }
-

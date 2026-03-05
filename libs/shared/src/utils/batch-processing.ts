@@ -14,13 +14,13 @@
 export function batchArray<T>(array: T[], batchSize: number): T[][] {
   // Initialize empty array to store the batches
   const batches: T[][] = [];
-  
+
   // Iterate through the array in steps of batchSize
   for (let i = 0; i < array.length; i += batchSize) {
     // Extract a slice from current position to current position + batchSize
     // slice() handles the case where i + batchSize exceeds array length
     batches.push(array.slice(i, i + batchSize));
   }
-  
+
   return batches;
 }

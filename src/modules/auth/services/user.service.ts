@@ -30,6 +30,16 @@ export class UserService {
     private readonly redis: RedisService
   ) {}
 
+  /**
+   * Creates a new user within a tenant.
+   * Hashes the password, assigns initial roles, publishes USER_CREATED event, and invalidates caches.
+   *
+   * @param dto - User creation data (email, password, firstName, lastName, roleNames)
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @param actorId - The user ID of the actor performing the creation (for audit trail)
+   * @returns Promise<User> - The created user entity
+   * @throws ConflictException - If email already exists in the tenant
+   */
   async create(dto: CreateUserDto, tenantId: string, actorId: string): Promise<User> {
     const existing = await this.userRepository.findByEmailAndTenant(dto.email, tenantId);
     if (existing) throw new ConflictException(AppErrors.EMAIL_ALREADY_EXISTS);
@@ -77,16 +87,39 @@ export class UserService {
     return saved;
   }
 
+  /**
+   * Retrieves all users in a tenant.
+   *
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<User[]> - Array of all users in the tenant
+   */
   async findAll(tenantId: string): Promise<User[]> {
     return this.userRepository.findByTenantId(tenantId);
   }
 
+  /**
+   * Retrieves a single user by ID within a tenant.
+   *
+   * @param id - The user ID to retrieve
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<User> - The user entity
+   * @throws NotFoundException - If user not found in the tenant
+   */
   async findById(id: string, tenantId: string): Promise<User> {
     const user = await this.userRepository.findByIdAndTenant(id, tenantId);
     if (!user) throw new NotFoundException(AppErrors.USER_NOT_FOUND);
     return user;
   }
 
+  /**
+   * Deactivates a user, preventing them from logging in.
+   * Invalidates all user-related caches and publishes USER_DEACTIVATED event.
+   *
+   * @param id - The user ID to deactivate
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<User> - The deactivated user entity
+   * @throws NotFoundException - If user not found in the tenant
+   */
   async deactivate(id: string, tenantId: string): Promise<User> {
     const user = await this.findById(id, tenantId);
     user.isActive = false;
@@ -110,6 +143,18 @@ export class UserService {
     return saved;
   }
 
+  /**
+   * Assigns a role to a user.
+   * Validates both user and role exist, prevents duplicate assignments, invalidates caches, and publishes event.
+   *
+   * @param userId - The user ID to assign the role to
+   * @param roleId - The role ID to assign
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @param actorId - The user ID of the actor performing the assignment (for audit trail)
+   * @returns Promise<void>
+   * @throws NotFoundException - If user or role not found in the tenant
+   * @throws ConflictException - If role is already assigned to the user
+   */
   async assignRole(userId: string, roleId: string, tenantId: string, actorId: string): Promise<void> {
     await this.findById(userId, tenantId);
     const role = await this.roleRepository.findByIdAndTenant(roleId, tenantId);

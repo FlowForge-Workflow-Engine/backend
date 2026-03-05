@@ -20,6 +20,15 @@ export class UserQueryService implements IUserQueryContract {
     private readonly redis: RedisService
   ) {}
 
+  /**
+   * Retrieves a user summary by ID with cache-aside pattern.
+   * Returns only non-sensitive user data (no password hash).
+   * Caches result in Redis with MEDIUM TTL.
+   *
+   * @param userId - The user ID to retrieve
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<UserSummary | null> - User summary or null if not found
+   */
   async findById(userId: string, tenantId: string): Promise<UserSummary | null> {
     const key = CacheKeys.userSummary(tenantId, userId);
     const cached = await this.redis.get<UserSummary>(key);
@@ -33,6 +42,15 @@ export class UserQueryService implements IUserQueryContract {
     return summary;
   }
 
+  /**
+   * Retrieves multiple user summaries by IDs with cache-aside pattern.
+   * Checks cache first, then queries database for cache misses.
+   * Populates cache for newly fetched users.
+   *
+   * @param userIds - Array of user IDs to retrieve
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<UserSummary[]> - Array of user summaries (may be smaller if some users not found)
+   */
   async findManyByIds(userIds: string[], tenantId: string): Promise<UserSummary[]> {
     const results: UserSummary[] = [];
     const missedIds: string[] = [];
@@ -58,12 +76,28 @@ export class UserQueryService implements IUserQueryContract {
     return results;
   }
 
+  /**
+   * Checks if a user exists and has a specific role.
+   * Uses findById internally, so benefits from caching.
+   *
+   * @param userId - The user ID to check
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @param role - The role name to check for
+   * @returns Promise<boolean> - True if user exists and has the role, false otherwise
+   */
   async existsWithRole(userId: string, tenantId: string, role: string): Promise<boolean> {
     const summary = await this.findById(userId, tenantId);
     if (!summary) return false;
     return summary.roles.includes(role);
   }
 
+  /**
+   * Converts a full User entity to a UserSummary (read-only facade).
+   * Extracts only non-sensitive fields and role names.
+   *
+   * @param user - The full user entity
+   * @returns UserSummary - Sanitized user summary for cross-module consumption
+   */
   private toSummary(user: import("../entities/user.entity").User): UserSummary {
     const roles = user.userRoles?.map((ur) => ur.role?.name).filter(Boolean) ?? [];
     return {

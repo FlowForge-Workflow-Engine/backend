@@ -23,4 +23,3 @@ export interface IUserRolesUpdatedEvent {
   readonly roles: string[];
   readonly occurredAt: string;
 }
-

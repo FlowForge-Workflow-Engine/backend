@@ -1,11 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import * as Handlebars from 'handlebars';
-import { NotificationTemplate } from '../entities/notification-template.entity';
-import { NotificationLogRepository } from '../repositories/notification-log.repository';
-import { NotificationStatus } from '../entities/notification-log.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as nodemailer from "nodemailer";
+import * as Handlebars from "handlebars";
+import { NotificationTemplate } from "../entities/notification-template.entity";
+import { NotificationLogRepository } from "../repositories/notification-log.repository";
+import { NotificationStatus } from "../entities/notification-log.entity";
 
+/**
+ * Service for sending email notifications.
+ * Renders Handlebars templates with context data, sends emails via SMTP/SES,
+ * and logs all notification attempts with their delivery status.
+ * Integrates with NotificationSubscriber to handle workflow events.
+ */
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
@@ -13,31 +19,40 @@ export class NotificationService {
 
   constructor(
     private readonly notificationLogRepository: NotificationLogRepository,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('SMTP_HOST', 'smtp.mailhog.local'),
-      port: this.configService.get<number>('SMTP_PORT', 1025),
-      secure: this.configService.get<boolean>('SMTP_SECURE', false),
-      auth: this.configService.get<string>('SMTP_USER')
+      host: this.configService.get<string>("SMTP_HOST", "smtp.mailhog.local"),
+      port: this.configService.get<number>("SMTP_PORT", 1025),
+      secure: this.configService.get<boolean>("SMTP_SECURE", false),
+      auth: this.configService.get<string>("SMTP_USER")
         ? {
-            user: this.configService.get<string>('SMTP_USER'),
-            pass: this.configService.get<string>('SMTP_PASS'),
+            user: this.configService.get<string>("SMTP_USER"),
+            pass: this.configService.get<string>("SMTP_PASS"),
           }
         : undefined,
     });
   }
 
   /**
-   * Renders a Handlebars template, sends the email via SMTP/SES, and writes
-   * a notification_log entry with the resulting status.
+   * Sends an email notification using a template.
+   * Renders Handlebars template with provided context, sends via SMTP, and logs the attempt.
+   * Creates a notification log entry before sending and updates status after completion.
+   * Gracefully handles failures by logging them without throwing.
+   *
+   * @param template - The notification template containing subject and body templates
+   * @param recipientEmail - The email address to send to
+   * @param recipientUserId - The user ID of the recipient (optional, for audit trail)
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @param context - Object containing variables for Handlebars template rendering
+   * @returns Promise<void>
    */
   async sendEmail(
     template: NotificationTemplate,
     recipientEmail: string,
     recipientUserId: string | null,
     tenantId: string,
-    context: Record<string, unknown>,
+    context: Record<string, unknown>
   ): Promise<void> {
     const log = await this.notificationLogRepository.insert({
       tenantId,
@@ -49,11 +64,11 @@ export class NotificationService {
     });
 
     try {
-      const subjectFn = Handlebars.compile(template.subjectTemplate ?? '');
+      const subjectFn = Handlebars.compile(template.subjectTemplate ?? "");
       const bodyFn = Handlebars.compile(template.bodyTemplate);
 
       await this.transporter.sendMail({
-        from: this.configService.get<string>('SMTP_FROM', 'noreply@workflow-engine.local'),
+        from: this.configService.get<string>("SMTP_FROM", "noreply@workflow-engine.local"),
         to: recipientEmail,
         subject: subjectFn(context),
         html: bodyFn(context),
@@ -67,10 +82,9 @@ export class NotificationService {
         log.id,
         NotificationStatus.FAILED,
         undefined,
-        message,
+        message
       );
       this.logger.error(`Email failed to ${recipientEmail} [logId=${log.id}]: ${message}`);
     }
   }
 }
-

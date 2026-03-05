@@ -39,4 +39,3 @@ export class TenantIsolationGuard implements CanActivate {
     return true;
   }
 }
-

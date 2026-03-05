@@ -10,11 +10,22 @@ import { UserRepository } from "../repositories/user.repository";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 import { LoginDto } from "../dto/login.dto";
 
+/**
+ * Represents the authentication token pair returned after successful login or refresh.
+ * Contains both access token (short-lived JWT) and refresh token (long-lived opaque token).
+ */
 export interface AuthTokens {
+  /** JWT access token for API authentication (short-lived, typically 15 minutes) */
   accessToken: string;
+  /** Opaque refresh token for obtaining new token pairs (long-lived, typically 7 days) */
   refreshToken: string;
 }
 
+/**
+ * Core authentication service handling login, logout, and token refresh flows.
+ * Manages JWT access tokens and opaque refresh tokens with rotation on refresh.
+ * Integrates with UserRepository for credential validation and RefreshTokenRepository for token lifecycle.
+ */
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -26,6 +37,15 @@ export class AuthService {
     private readonly configService: ConfigService
   ) {}
 
+  /**
+   * Authenticates a user with email and password credentials.
+   * Validates credentials, loads user roles, updates lastLoginAt timestamp, and issues token pair.
+   *
+   * @param dto - Login credentials (email and password)
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<AuthTokens> - Access token and refresh token on successful authentication
+   * @throws UnauthorizedException - If user not found, inactive, or password is invalid
+   */
   async login(dto: LoginDto, tenantId: string): Promise<AuthTokens> {
     const user = await this.userRepository.findByEmailAndTenant(dto.email, tenantId);
     if (!user || !user.isActive) {
@@ -47,6 +67,15 @@ export class AuthService {
     return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, roles);
   }
 
+  /**
+   * Refreshes an expired access token using a valid refresh token.
+   * Implements token rotation: revokes the consumed refresh token and issues a new pair.
+   * Validates that the user is still active before issuing new tokens.
+   *
+   * @param rawRefreshToken - The opaque refresh token from the client
+   * @returns Promise<AuthTokens> - New access token and refresh token
+   * @throws UnauthorizedException - If refresh token is invalid, expired, or user is inactive
+   */
   async refresh(rawRefreshToken: string): Promise<AuthTokens> {
     const tokenHash = this.hashToken(rawRefreshToken);
     const stored = await this.refreshTokenRepository.findByHash(tokenHash);
@@ -74,6 +103,13 @@ export class AuthService {
     );
   }
 
+  /**
+   * Logs out a user by revoking their refresh token.
+   * Gracefully handles cases where the token is already revoked or doesn't exist.
+   *
+   * @param rawRefreshToken - The opaque refresh token to revoke
+   * @returns Promise<void>
+   */
   async logout(rawRefreshToken: string): Promise<void> {
     const tokenHash = this.hashToken(rawRefreshToken);
     const stored = await this.refreshTokenRepository.findByHash(tokenHash);
@@ -82,6 +118,18 @@ export class AuthService {
     }
   }
 
+  /**
+   * Issues a new access token and refresh token pair.
+   * Creates a JWT access token with user claims and stores a hashed refresh token in the database.
+   * The refresh token is opaque to the client and used only for token rotation.
+   *
+   * @param userId - The user ID to include in the token payload
+   * @param email - The user email to include in the token payload
+   * @param firstName - The user first name to include in the token payload
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @param roles - Array of role names assigned to the user
+   * @returns Promise<AuthTokens> - Access token (JWT) and refresh token (opaque)
+   */
   async issueTokenPair(
     userId: string,
     email: string,
@@ -112,6 +160,13 @@ export class AuthService {
     return { accessToken, refreshToken: rawRefreshToken };
   }
 
+  /**
+   * Hashes a refresh token using SHA-256.
+   * Only the hash is stored in the database; the raw token is never persisted.
+   *
+   * @param token - The raw refresh token to hash
+   * @returns string - SHA-256 hex digest of the token
+   */
   private hashToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
   }

@@ -41,8 +41,12 @@ export class RlsContextService {
   constructor(private readonly dataSource: DataSource) {}
 
   /**
-   * Sets the tenant context in PostgreSQL session for RLS
+   * Sets the tenant context in PostgreSQL session for RLS.
+   * This session variable is used by RLS policies to filter data by tenant.
+   *
    * @param tenantId - The tenant ID to set as context
+   * @returns Promise<void>
+   * @throws Error - If unable to connect to database or set session variable
    */
   async setTenantContext(tenantId: string): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -63,8 +67,12 @@ export class RlsContextService {
   }
 
   /**
-   * Clears the tenant context from PostgreSQL session
-   * This will cause RLS to deny all access (fail-secure)
+   * Clears the tenant context from PostgreSQL session.
+   * This will cause RLS to deny all access (fail-secure principle).
+   * Used when exiting a request context or bypassing RLS for admin operations.
+   *
+   * @returns Promise<void>
+   * @throws Error - If unable to connect to database or clear session variable
    */
   async clearTenantContext(): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -85,8 +93,11 @@ export class RlsContextService {
   }
 
   /**
-   * Gets the current tenant context from PostgreSQL session
-   * @returns The current tenant ID or null if not set
+   * Retrieves the current tenant context from PostgreSQL session.
+   * Returns null if context is not set or is empty string.
+   * Gracefully handles database errors by returning null.
+   *
+   * @returns Promise<string | null> - The current tenant ID or null if not set
    */
   async getCurrentTenantContext(): Promise<string | null> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -107,12 +118,14 @@ export class RlsContextService {
   }
 
   /**
-   * Executes a function with a specific tenant context
-   * Automatically restores the previous context after execution
+   * Executes a function with a specific tenant context.
+   * Automatically saves and restores the previous context after execution.
+   * Ensures context isolation for nested operations.
    *
-   * @param tenantId - Tenant ID to set (null to clear context)
-   * @param fn - Function to execute with the tenant context
-   * @returns The result of the function execution
+   * @param tenantId - Tenant ID to set (null to clear context and bypass RLS)
+   * @param fn - Async function to execute with the tenant context
+   * @returns Promise<T> - The result of the function execution
+   * @throws Error - If unable to set/restore context or if fn throws
    */
   async withTenantContext<T>(tenantId: string | null, fn: () => Promise<T>): Promise<T> {
     // Save current context
@@ -139,11 +152,14 @@ export class RlsContextService {
   }
 
   /**
-   * Bypasses RLS by temporarily clearing tenant context
-   * USE WITH EXTREME CAUTION - Only for admin operations
+   * Bypasses RLS by temporarily clearing tenant context.
+   * USE WITH EXTREME CAUTION - Only for authorized admin operations.
+   * Logs a warning when invoked for audit trail purposes.
+   * Automatically restores previous context after execution.
    *
-   * @param fn - Function to execute without RLS filtering
-   * @returns The result of the function execution
+   * @param fn - Async function to execute without RLS filtering
+   * @returns Promise<T> - The result of the function execution
+   * @throws Error - If unable to set/restore context or if fn throws
    */
   async bypassRls<T>(fn: () => Promise<T>): Promise<T> {
     this.logger.warn("RLS bypass requested - ensure this is authorized");
@@ -151,8 +167,12 @@ export class RlsContextService {
   }
 
   /**
-   * Validates that the current session has proper tenant context
-   * Throws error if context is missing or invalid
+   * Validates that the current session has proper tenant context.
+   * Checks that context is set and matches valid UUID format.
+   * Used as a safety check before executing tenant-scoped operations.
+   *
+   * @returns Promise<string> - The validated tenant ID
+   * @throws Error - If context is missing, empty, or invalid UUID format
    */
   async validateTenantContext(): Promise<string> {
     const currentContext = await this.getCurrentTenantContext();

@@ -1,12 +1,12 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from "@nestjs/common";
 import {
   ITenantProvisioningContract,
   TenantProvisioningResult,
-} from '@app/shared/interfaces/contracts/tenant-provisioning.contract';
-import { AppErrors } from '@app/shared/constants/app-errors.enum';
-import { TenantRepository } from '../repositories/tenant.repository';
-import { TenantSettingsRepository } from '../repositories/tenant-settings.repository';
-import { TenantPlan } from '../entities/tenant.entity';
+} from "@app/shared/interfaces/contracts/tenant-provisioning.contract";
+import { AppErrors } from "@app/shared/constants/app-errors.enum";
+import { TenantRepository } from "../repositories/tenant.repository";
+import { TenantSettingsRepository } from "../repositories/tenant-settings.repository";
+import { TenantPlan } from "../entities/tenant.entity";
 
 /**
  * Implements ITenantProvisioningContract — the write-side counterpart to TenantQueryService.
@@ -23,14 +23,19 @@ export class TenantProvisioningService implements ITenantProvisioningContract {
 
   constructor(
     private readonly tenantRepository: TenantRepository,
-    private readonly tenantSettingsRepository: TenantSettingsRepository,
+    private readonly tenantSettingsRepository: TenantSettingsRepository
   ) {}
 
-  async provision(dto: {
-    name: string;
-    slug: string;
-    plan?: string;
-  }): Promise<TenantProvisioningResult> {
+  /**
+   * Provisions a new tenant during onboarding.
+   * Validates slug uniqueness, creates tenant record, and bootstraps default settings.
+   * Called exclusively by OnboardingService during tenant registration.
+   *
+   * @param dto - Provisioning data containing name, slug, and optional plan
+   * @returns Promise<TenantProvisioningResult> - The provisioned tenant summary
+   * @throws ConflictException - If slug already exists
+   */
+  async provision(dto: { name: string; slug: string; plan?: string }): Promise<TenantProvisioningResult> {
     const slugTaken = await this.tenantRepository.existsBySlug(dto.slug);
     if (slugTaken) {
       throw new ConflictException(AppErrors.TENANT_SLUG_TAKEN);
@@ -57,4 +62,3 @@ export class TenantProvisioningService implements ITenantProvisioningContract {
     };
   }
 }
-

@@ -58,4 +58,3 @@ export interface IWorkflowDefinitionDeprecatedEvent {
   readonly definitionId: string;
   readonly occurredAt: string;
 }
-

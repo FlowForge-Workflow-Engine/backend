@@ -58,4 +58,3 @@ export function createRedisConfig(configService: ConfigService): RedisConnection
 export function getRedisUrl(configService: ConfigService): string {
   return configService.get<string>("REDIS_URL", "redis://localhost:6379");
 }
-

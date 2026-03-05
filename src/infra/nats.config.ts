@@ -66,4 +66,3 @@ export function getNatsClientAsyncOptions(configService: ConfigService): {
     options: createNatsOptions(configService),
   };
 }
-

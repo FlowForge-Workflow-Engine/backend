@@ -14,10 +14,7 @@ export interface IWorkflowQueryContract {
    * @param tenantId - UUID of the tenant
    * @returns WorkflowDefinitionSummary or null if not found
    */
-  findDefinitionById(
-    definitionId: string,
-    tenantId: string,
-  ): Promise<WorkflowDefinitionSummary | null>;
+  findDefinitionById(definitionId: string, tenantId: string): Promise<WorkflowDefinitionSummary | null>;
 
   /**
    * Get a version snapshot of a workflow definition.
@@ -29,7 +26,6 @@ export interface IWorkflowQueryContract {
   getVersionSnapshot(
     definitionId: string,
     version: number,
-    tenantId: string,
+    tenantId: string
   ): Promise<Record<string, unknown> | null>;
 }
-

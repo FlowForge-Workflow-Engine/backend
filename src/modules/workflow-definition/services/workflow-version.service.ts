@@ -11,6 +11,18 @@ import { WorkflowDefinitionVersion } from "../entities/workflow-definition-versi
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
+/**
+ * Service for publishing workflow definition versions.
+ * Creates immutable snapshots of workflow structure (states, transitions, rules).
+ * Snapshots are used by WorkflowExecutionModule to execute workflow instances.
+ *
+ * Responsibilities:
+ * - Build complete workflow snapshot from current definition state
+ * - Create version records with immutable snapshots
+ * - Manage version activation (only one active version per definition)
+ * - Publish WORKFLOW_DEFINITION_PUBLISHED events
+ * - Invalidate mutable caches (snapshots are immutable and cached indefinitely)
+ */
 @Injectable()
 export class WorkflowVersionService {
   private readonly logger = new Logger(WorkflowVersionService.name);
@@ -26,13 +38,23 @@ export class WorkflowVersionService {
   ) {}
 
   /**
-   * Publish logic (Constraint 10):
-   * 1. Load all states + transitions + rules for this definition
-   * 2. Serialize to snapshot JSONB
-   * 3. Create WorkflowDefinitionVersion record with snapshot + version number
-   * 4. Set is_active = true on new version, is_active = false on all previous
-   * 5. Update workflow_definitions.current_version and status = 'published'
-   * 6. Publish WORKFLOW_DEFINITION_PUBLISHED event
+   * Publishes a workflow definition, creating an immutable version snapshot.
+   *
+   * Process:
+   * 1. Load all states, transitions, and rules for the definition
+   * 2. Serialize complete structure into a snapshot JSONB object
+   * 3. Create WorkflowDefinitionVersion record with snapshot and version number
+   * 4. Deactivate all previous versions (only one active version per definition)
+   * 5. Update definition status to PUBLISHED and bump currentVersion for next publish
+   * 6. Invalidate mutable caches (definition, states, transitions)
+   * 7. Publish WORKFLOW_DEFINITION_PUBLISHED domain event
+   *
+   * The snapshot is immutable and cached indefinitely for performance.
+   * WorkflowExecutionModule uses snapshots to execute workflow instances.
+   *
+   * @param definition - The workflow definition to publish
+   * @param publishedBy - The user ID who published the definition
+   * @returns Promise<WorkflowDefinitionVersion> - The created version record with snapshot
    */
   async publish(definition: WorkflowDefinition, publishedBy: string): Promise<WorkflowDefinitionVersion> {
     const tenantId = definition.tenantId;

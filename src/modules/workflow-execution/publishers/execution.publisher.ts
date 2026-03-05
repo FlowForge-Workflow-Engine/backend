@@ -1,13 +1,13 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { JSONCodec, NatsConnection } from 'nats';
-import { NATS_CLIENT } from '../../../infra';
-import { NatsEvents } from '@app/shared/constants/nats-events.enum';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { JSONCodec, NatsConnection } from "nats";
+import { NATS_CLIENT } from "../../../infra";
+import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IWorkflowInstanceCreatedEvent,
   IWorkflowTransitionCompletedEvent,
   IWorkflowInstanceCompletedEvent,
   IWorkflowInstanceCancelledEvent,
-} from '@app/shared/interfaces/events/workflow-events.interface';
+} from "@app/shared/interfaces/events/workflow-events.interface";
 
 @Injectable()
 export class ExecutionPublisher {
@@ -41,4 +41,3 @@ export class ExecutionPublisher {
     }
   }
 }
-

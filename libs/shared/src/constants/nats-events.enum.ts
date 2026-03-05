@@ -23,4 +23,3 @@ export enum NatsEvents {
   NOTIFICATION_SEND_EMAIL = "notification.send.email",
   NOTIFICATION_WEBHOOK_TRIGGER = "notification.webhook.trigger",
 }
-

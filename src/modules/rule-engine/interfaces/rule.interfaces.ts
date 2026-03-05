@@ -48,4 +48,3 @@ export interface RuleEvaluationResult {
     readonly reason: string;
   }>;
 }
-

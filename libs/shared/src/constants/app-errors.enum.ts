@@ -63,4 +63,3 @@ export enum AppErrors {
   CONFLICT = "CONFLICT",
   TENANT_MISMATCH = "TENANT_MISMATCH",
 }
-

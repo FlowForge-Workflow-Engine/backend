@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
-import { RefreshToken } from '../entities/refresh-token.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { IsNull, Repository } from "typeorm";
+import { RefreshToken } from "../entities/refresh-token.entity";
 
 @Injectable()
 export class RefreshTokenRepository {
   constructor(
     @InjectRepository(RefreshToken)
-    private readonly repo: Repository<RefreshToken>,
+    private readonly repo: Repository<RefreshToken>
   ) {}
 
   findByHash(tokenHash: string): Promise<RefreshToken | null> {
@@ -31,8 +31,7 @@ export class RefreshTokenRepository {
   async revokeAllForUser(userId: string, tenantId: string): Promise<void> {
     await this.repo.update(
       { userId, tenantId, revokedAt: IsNull() as unknown as Date },
-      { revokedAt: new Date() },
+      { revokedAt: new Date() }
     );
   }
 }
-

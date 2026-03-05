@@ -1,9 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { NotificationChannel } from '../entities/notification-template.entity';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { NotificationChannel } from "../entities/notification-template.entity";
 
 export class CreateNotificationTemplateDto {
-  @ApiProperty({ example: 'workflow-execution.transition.completed' })
+  @ApiProperty({ example: "workflow-execution.transition.completed" })
   @IsString()
   @IsNotEmpty()
   readonly eventTrigger: string;
@@ -12,12 +12,12 @@ export class CreateNotificationTemplateDto {
   @IsEnum(NotificationChannel)
   readonly channel: NotificationChannel;
 
-  @ApiPropertyOptional({ example: 'Your request has been {{action}}' })
+  @ApiPropertyOptional({ example: "Your request has been {{action}}" })
   @IsString()
   @IsOptional()
   readonly subjectTemplate?: string;
 
-  @ApiProperty({ example: 'Hello {{actorEmail}}, the transition {{transitionName}} was completed.' })
+  @ApiProperty({ example: "Hello {{actorEmail}}, the transition {{transitionName}} was completed." })
   @IsString()
   @IsNotEmpty()
   readonly bodyTemplate: string;
@@ -27,4 +27,3 @@ export class CreateNotificationTemplateDto {
   @IsOptional()
   readonly isActive?: boolean;
 }
-

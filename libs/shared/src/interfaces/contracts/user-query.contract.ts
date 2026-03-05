@@ -36,4 +36,3 @@ export interface IUserQueryContract {
    */
   existsWithRole(userId: string, tenantId: string, role: string): Promise<boolean>;
 }
-

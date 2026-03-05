@@ -1,4 +1,4 @@
-import { IQuery } from '@nestjs/cqrs';
+import { IQuery } from "@nestjs/cqrs";
 
 export interface AllowedTransition {
   id: string;
@@ -13,9 +13,8 @@ export class GetAllowedTransitionsQuery implements IQuery {
     public readonly instanceId: string,
     public readonly tenantId: string,
     /** Role names from the actor's JWT payload */
-    public readonly userRoles: string[],
+    public readonly userRoles: string[]
   ) {}
 }
 
 export type GetAllowedTransitionsResult = AllowedTransition[];
-

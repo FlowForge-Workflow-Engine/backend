@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotificationLog, NotificationStatus } from '../entities/notification-log.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { NotificationLog, NotificationStatus } from "../entities/notification-log.entity";
 
 @Injectable()
 export class NotificationLogRepository {
   constructor(
     @InjectRepository(NotificationLog)
-    private readonly repo: Repository<NotificationLog>,
+    private readonly repo: Repository<NotificationLog>
   ) {}
 
   insert(data: Partial<NotificationLog>): Promise<NotificationLog> {
@@ -19,7 +19,7 @@ export class NotificationLogRepository {
     id: string,
     status: NotificationStatus,
     sentAt?: Date,
-    errorMessage?: string,
+    errorMessage?: string
   ): Promise<void> {
     await this.repo.update(id, {
       status,
@@ -32,9 +32,8 @@ export class NotificationLogRepository {
     await this.repo
       .createQueryBuilder()
       .update(NotificationLog)
-      .set({ retryCount: () => 'retry_count + 1' })
-      .where('id = :id', { id })
+      .set({ retryCount: () => "retry_count + 1" })
+      .where("id = :id", { id })
       .execute();
   }
 }
-

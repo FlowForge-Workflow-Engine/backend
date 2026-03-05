@@ -7,7 +7,7 @@ export const winstonLoggerConfig: WinstonModuleOptions = {
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.json(),
     winston.format.prettyPrint(),
-    winston.format.splat(),
+    winston.format.splat()
   ),
   transports:
     // Simple for Non-Prod Environments
@@ -21,7 +21,7 @@ export const winstonLoggerConfig: WinstonModuleOptions = {
                 return `[${timestamp}] ${level}: ${message} ${
                   Object.keys(meta).length ? JSON.stringify(meta) : ""
                 }`;
-              }),
+              })
             ),
           }),
         ]

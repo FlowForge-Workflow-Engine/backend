@@ -1,11 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from "@nestjs/common";
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from "@nestjs/common";
 import { Request, Response } from "express";
 
 interface ErrorResponse {
@@ -62,7 +55,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       this.logger.error(
         `Unhandled exception on ${request.method} ${request.url}`,
-        exception instanceof Error ? exception.stack : String(exception),
+        exception instanceof Error ? exception.stack : String(exception)
       );
     }
 
@@ -77,4 +70,3 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     response.status(statusCode).json(errorResponse);
   }
 }
-

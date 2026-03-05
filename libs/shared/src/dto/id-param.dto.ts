@@ -9,4 +9,3 @@ export class IdParamDto {
   @IsUUID("4")
   readonly id: string;
 }
-

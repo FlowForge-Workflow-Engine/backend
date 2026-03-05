@@ -8,6 +8,16 @@ import { CreateWorkflowStateDto } from "../dto/create-workflow-state.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
+/**
+ * Service for managing workflow states within a definition.
+ * States represent the different stages a workflow instance can be in.
+ * Only DRAFT definitions can be modified; published definitions are immutable.
+ *
+ * Responsibilities:
+ * - Create, read, remove workflow states
+ * - Enforce business rules (only one initial state per definition)
+ * - Invalidate caches on mutations
+ */
 @Injectable()
 export class WorkflowStateService {
   private readonly logger = new Logger(WorkflowStateService.name);
@@ -18,6 +28,19 @@ export class WorkflowStateService {
     private readonly redis: RedisService
   ) {}
 
+  /**
+   * Creates a new workflow state within a definition.
+   * Only DRAFT definitions can have states added.
+   * Enforces business rule: only one initial state per definition.
+   * Invalidates definition and states caches after creation.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param dto - State creation data (name, description, isInitial, isTerminal, position, metadata)
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowState> - The created state entity
+   * @throws NotFoundException - If definition not found
+   * @throws BadRequestException - If definition is not DRAFT or multiple initial states
+   */
   async create(definitionId: string, dto: CreateWorkflowStateDto, tenantId: string): Promise<WorkflowState> {
     const definition = await this.definitionRepository.findByIdAndTenant(definitionId, tenantId);
     if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
@@ -54,16 +77,40 @@ export class WorkflowStateService {
     return saved;
   }
 
+  /**
+   * Retrieves all states for a workflow definition.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowState[]> - Array of all states for the definition
+   */
   async findAll(definitionId: string, tenantId: string): Promise<WorkflowState[]> {
     return this.stateRepository.findByDefinitionAndTenant(definitionId, tenantId);
   }
 
+  /**
+   * Retrieves a single workflow state by ID.
+   *
+   * @param id - The workflow state ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowState> - The state entity
+   * @throws NotFoundException - If state not found
+   */
   async findById(id: string, tenantId: string): Promise<WorkflowState> {
     const state = await this.stateRepository.findByIdAndTenant(id, tenantId);
     if (!state) throw new NotFoundException(AppErrors.WORKFLOW_STATE_NOT_FOUND);
     return state;
   }
 
+  /**
+   * Removes a workflow state from a definition.
+   * Invalidates definition, states, and transitions caches since transitions depend on states.
+   *
+   * @param id - The workflow state ID to remove
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<void>
+   * @throws NotFoundException - If state not found
+   */
   async remove(id: string, tenantId: string): Promise<void> {
     const state = await this.findById(id, tenantId);
     const definitionId = state.workflowDefinitionId;

@@ -1,4 +1,4 @@
-export const TENANT_PROVISIONING_CONTRACT = Symbol('TENANT_PROVISIONING_CONTRACT');
+export const TENANT_PROVISIONING_CONTRACT = Symbol("TENANT_PROVISIONING_CONTRACT");
 
 export interface TenantProvisioningResult {
   readonly id: string;
@@ -17,4 +17,3 @@ export interface ITenantProvisioningContract {
    */
   provision(dto: { name: string; slug: string; plan?: string }): Promise<TenantProvisioningResult>;
 }
-

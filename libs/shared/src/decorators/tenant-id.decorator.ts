@@ -10,10 +10,7 @@ import { IJwtPayload } from "../interfaces/jwt-payload.interface";
  * async myEndpoint(@TenantId() tenantId: string) { ... }
  * ```
  */
-export const TenantId = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): string => {
-    const request = ctx.switchToHttp().getRequest<{ user: IJwtPayload }>();
-    return request.user.tenantId;
-  },
-);
-
+export const TenantId = createParamDecorator((_data: unknown, ctx: ExecutionContext): string => {
+  const request = ctx.switchToHttp().getRequest<{ user: IJwtPayload }>();
+  return request.user.tenantId;
+});

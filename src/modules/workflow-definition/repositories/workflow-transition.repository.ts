@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WorkflowTransition } from '../entities/workflow-transition.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { WorkflowTransition } from "../entities/workflow-transition.entity";
 
 @Injectable()
 export class WorkflowTransitionRepository {
   constructor(
     @InjectRepository(WorkflowTransition)
-    private readonly repo: Repository<WorkflowTransition>,
+    private readonly repo: Repository<WorkflowTransition>
   ) {}
 
   create(data: Partial<WorkflowTransition>): WorkflowTransition {
@@ -18,27 +18,21 @@ export class WorkflowTransitionRepository {
     return this.repo.save(entity);
   }
 
-  async findByIdAndTenant(
-    id: string,
-    tenantId: string,
-  ): Promise<WorkflowTransition | null> {
+  async findByIdAndTenant(id: string, tenantId: string): Promise<WorkflowTransition | null> {
     return this.repo.findOne({ where: { id, tenantId } });
   }
 
   async findByDefinitionAndTenant(
     workflowDefinitionId: string,
-    tenantId: string,
+    tenantId: string
   ): Promise<WorkflowTransition[]> {
     return this.repo.find({
       where: { workflowDefinitionId, tenantId },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: "ASC" },
     });
   }
 
-  async findByFromStateId(
-    fromStateId: string,
-    tenantId: string,
-  ): Promise<WorkflowTransition[]> {
+  async findByFromStateId(fromStateId: string, tenantId: string): Promise<WorkflowTransition[]> {
     return this.repo.find({ where: { fromStateId, tenantId } });
   }
 
@@ -46,4 +40,3 @@ export class WorkflowTransitionRepository {
     await this.repo.remove(entity);
   }
 }
-

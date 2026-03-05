@@ -23,6 +23,14 @@ export class TenantQueryService implements ITenantQueryContract {
     private readonly redis: RedisService
   ) {}
 
+  /**
+   * Retrieves a tenant summary by ID using cache-aside pattern.
+   * Returns only essential tenant data (id, name, slug, plan, isActive).
+   * Caches result with MEDIUM TTL for performance.
+   *
+   * @param tenantId - The tenant ID to retrieve
+   * @returns Promise<TenantSummary | null> - Tenant summary or null if not found
+   */
   async findById(tenantId: string): Promise<TenantSummary | null> {
     const key = CacheKeys.tenantById(tenantId);
     const cached = await this.redis.get<TenantSummary>(key);
@@ -42,6 +50,14 @@ export class TenantQueryService implements ITenantQueryContract {
     return summary;
   }
 
+  /**
+   * Retrieves a tenant summary by slug using cache-aside pattern.
+   * Used for tenant lookup during onboarding and login flows.
+   * Caches result with MEDIUM TTL for performance.
+   *
+   * @param slug - The tenant slug to retrieve
+   * @returns Promise<TenantSummary | null> - Tenant summary or null if not found
+   */
   async findBySlug(slug: string): Promise<TenantSummary | null> {
     const key = CacheKeys.tenantBySlug(slug);
     const cached = await this.redis.get<TenantSummary>(key);
@@ -61,6 +77,15 @@ export class TenantQueryService implements ITenantQueryContract {
     return summary;
   }
 
+  /**
+   * Checks if a feature flag is enabled for a tenant.
+   * Loads all flags for the tenant and caches them as a map for efficient lookups.
+   * Returns false if flag doesn't exist (safe default).
+   *
+   * @param tenantId - The tenant ID
+   * @param flagKey - The feature flag key to check
+   * @returns Promise<boolean> - true if flag is enabled, false otherwise
+   */
   async isFeatureEnabled(tenantId: string, flagKey: string): Promise<boolean> {
     const key = CacheKeys.tenantFeatureFlags(tenantId);
     const cached = await this.redis.get<Record<string, boolean>>(key);
@@ -73,6 +98,14 @@ export class TenantQueryService implements ITenantQueryContract {
     return flagMap[flagKey] ?? false;
   }
 
+  /**
+   * Retrieves the plan for a tenant using cache-aside pattern.
+   * Returns "free" as default if tenant not found.
+   * Caches result with MEDIUM TTL for performance.
+   *
+   * @param tenantId - The tenant ID
+   * @returns Promise<string> - The tenant's plan (e.g., "free", "pro", "enterprise")
+   */
   async getPlan(tenantId: string): Promise<string> {
     const key = CacheKeys.tenantPlan(tenantId);
     const cached = await this.redis.get<string>(key);

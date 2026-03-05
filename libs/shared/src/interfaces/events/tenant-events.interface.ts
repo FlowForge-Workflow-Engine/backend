@@ -20,4 +20,3 @@ export interface ITenantPlanUpdatedEvent {
   readonly newPlan: string;
   readonly occurredAt: string;
 }
-

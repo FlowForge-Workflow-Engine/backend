@@ -12,6 +12,17 @@ import { CreateTransitionRuleDto } from "../dto/create-transition-rule.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 
+/**
+ * Service for managing workflow transitions and transition rules.
+ * Transitions define allowed state changes within a workflow definition.
+ * Only DRAFT definitions can be modified; published definitions are immutable.
+ *
+ * Responsibilities:
+ * - Create, read, remove workflow transitions
+ * - Add, manage transition rules (conditions for state transitions)
+ * - Validate state references and definition status
+ * - Invalidate caches on mutations
+ */
 @Injectable()
 export class WorkflowTransitionService {
   private readonly logger = new Logger(WorkflowTransitionService.name);
@@ -24,6 +35,19 @@ export class WorkflowTransitionService {
     private readonly redis: RedisService
   ) {}
 
+  /**
+   * Creates a new workflow transition within a definition.
+   * Only DRAFT definitions can have transitions added.
+   * Validates that both fromState and toState exist and belong to the definition.
+   * Invalidates definition and transitions caches after creation.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param dto - Transition creation data (name, fromStateId, toStateId, allowedRoleIds, requiresComment)
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowTransition> - The created transition entity
+   * @throws NotFoundException - If definition or states not found
+   * @throws BadRequestException - If definition is not DRAFT
+   */
   async create(
     definitionId: string,
     dto: CreateWorkflowTransitionDto,
@@ -61,16 +85,41 @@ export class WorkflowTransitionService {
     return saved;
   }
 
+  /**
+   * Retrieves all transitions for a workflow definition.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowTransition[]> - Array of all transitions for the definition
+   */
   async findAll(definitionId: string, tenantId: string): Promise<WorkflowTransition[]> {
     return this.transitionRepository.findByDefinitionAndTenant(definitionId, tenantId);
   }
 
+  /**
+   * Retrieves a single workflow transition by ID.
+   *
+   * @param id - The workflow transition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowTransition> - The transition entity
+   * @throws NotFoundException - If transition not found
+   */
   async findById(id: string, tenantId: string): Promise<WorkflowTransition> {
     const transition = await this.transitionRepository.findByIdAndTenant(id, tenantId);
     if (!transition) throw new NotFoundException(AppErrors.WORKFLOW_TRANSITION_NOT_FOUND);
     return transition;
   }
 
+  /**
+   * Removes a workflow transition from a definition.
+   * Cascades to remove all associated transition rules.
+   * Invalidates definition and transitions caches.
+   *
+   * @param id - The workflow transition ID to remove
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<void>
+   * @throws NotFoundException - If transition not found
+   */
   async remove(id: string, tenantId: string): Promise<void> {
     const transition = await this.findById(id, tenantId);
     const definitionId = transition.workflowDefinitionId;
@@ -83,6 +132,17 @@ export class WorkflowTransitionService {
     );
   }
 
+  /**
+   * Adds a transition rule to a workflow transition.
+   * Rules are evaluated in order (evaluationOrder) during workflow execution.
+   * Invalidates transitions cache since rules are part of transition data.
+   *
+   * @param transitionId - The workflow transition ID
+   * @param dto - Rule creation data (ruleName, ruleDefinition, evaluationOrder)
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<TransitionRule> - The created transition rule
+   * @throws NotFoundException - If transition not found
+   */
   async addRule(
     transitionId: string,
     dto: CreateTransitionRuleDto,

@@ -1,12 +1,12 @@
-import { Controller, Logger, OnModuleInit } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { NatsEvents } from '@app/shared/constants/nats-events.enum';
+import { Controller, Logger, OnModuleInit } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
+import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IUserCreatedEvent,
   IUserDeactivatedEvent,
   IUserRolesUpdatedEvent,
-} from '@app/shared/interfaces/events/auth-events.interface';
-import { UserShadowRepository } from '../repositories/user-shadow.repository';
+} from "@app/shared/interfaces/events/auth-events.interface";
+import { UserShadowRepository } from "../repositories/user-shadow.repository";
 
 /**
  * Subscribes to Auth domain events to keep the `we_user_shadows` table
@@ -21,7 +21,7 @@ export class AuthEventsSubscriber implements OnModuleInit {
   constructor(private readonly shadowRepo: UserShadowRepository) {}
 
   onModuleInit() {
-    this.logger.log('AuthEventsSubscriber initialized — listening to auth events');
+    this.logger.log("AuthEventsSubscriber initialized — listening to auth events");
   }
 
   @MessagePattern(NatsEvents.USER_CREATED)
@@ -62,4 +62,3 @@ export class AuthEventsSubscriber implements OnModuleInit {
     }
   }
 }
-

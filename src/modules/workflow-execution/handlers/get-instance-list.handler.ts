@@ -1,14 +1,9 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { WorkflowInstanceRepository } from '../repositories/workflow-instance.repository';
-import {
-  GetInstanceListQuery,
-  GetInstanceListResult,
-} from '../queries/get-instance-list.query';
+import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
+import { GetInstanceListQuery, GetInstanceListResult } from "../queries/get-instance-list.query";
 
 @QueryHandler(GetInstanceListQuery)
-export class GetInstanceListHandler
-  implements IQueryHandler<GetInstanceListQuery, GetInstanceListResult>
-{
+export class GetInstanceListHandler implements IQueryHandler<GetInstanceListQuery, GetInstanceListResult> {
   constructor(private readonly instanceRepo: WorkflowInstanceRepository) {}
 
   async execute(query: GetInstanceListQuery): Promise<GetInstanceListResult> {
@@ -22,4 +17,3 @@ export class GetInstanceListHandler
     return { data, total, page: query.page, limit: query.limit };
   }
 }
-

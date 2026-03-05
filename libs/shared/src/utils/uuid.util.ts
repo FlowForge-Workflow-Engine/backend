@@ -16,4 +16,3 @@ export function generateUUID(): string {
 export function isValidUUID(value: string): boolean {
   return uuidValidate(value);
 }
-

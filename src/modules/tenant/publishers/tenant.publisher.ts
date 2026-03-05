@@ -1,12 +1,12 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { JSONCodec, NatsConnection } from 'nats';
-import { NATS_CLIENT } from '../../../infra';
-import { NatsEvents } from '@app/shared/constants/nats-events.enum';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { JSONCodec, NatsConnection } from "nats";
+import { NATS_CLIENT } from "../../../infra";
+import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   ITenantCreatedEvent,
   ITenantDeactivatedEvent,
   ITenantPlanUpdatedEvent,
-} from '@app/shared/interfaces/events/tenant-events.interface';
+} from "@app/shared/interfaces/events/tenant-events.interface";
 
 /**
  * Publishes tenant domain events to NATS.
@@ -18,9 +18,7 @@ export class TenantPublisher {
   private readonly logger = new Logger(TenantPublisher.name);
   private readonly jc = JSONCodec();
 
-  constructor(
-    @Inject(NATS_CLIENT) private readonly natsClient: NatsConnection,
-  ) {}
+  constructor(@Inject(NATS_CLIENT) private readonly natsClient: NatsConnection) {}
 
   publishTenantCreated(payload: ITenantCreatedEvent): void {
     try {
@@ -49,4 +47,3 @@ export class TenantPublisher {
     }
   }
 }
-

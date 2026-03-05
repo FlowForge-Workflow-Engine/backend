@@ -1,13 +1,13 @@
-import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { NatsEvents } from '@app/shared/constants/nats-events.enum';
+import { Controller, Logger } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
+import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IWorkflowInstanceCreatedEvent,
   IWorkflowTransitionCompletedEvent,
   IWorkflowInstanceCancelledEvent,
-} from '@app/shared/interfaces/events/workflow-events.interface';
-import { AuditLogRepository } from '../repositories/audit-log.repository';
-import { AuditActionType } from '../entities/audit-log.entity';
+} from "@app/shared/interfaces/events/workflow-events.interface";
+import { AuditLogRepository } from "../repositories/audit-log.repository";
+import { AuditActionType } from "../entities/audit-log.entity";
 
 /**
  * Listens to workflow execution NATS events and persists immutable audit log entries.
@@ -32,8 +32,8 @@ export class AuditSubscriber {
         tenantId: data.tenantId,
         instanceId: data.instanceId,
         actorId: data.createdByUserId,
-        actorEmail: '',   // not available in this event — populated by execution module on sync writes
-        actorRole: '',
+        actorEmail: "", // not available in this event — populated by execution module on sync writes
+        actorRole: "",
         actionType: AuditActionType.INSTANCE_CREATED,
         transitionId: null,
         transitionName: null,
@@ -90,13 +90,13 @@ export class AuditSubscriber {
         tenantId: data.tenantId,
         instanceId: data.instanceId,
         actorId: data.cancelledByUserId,
-        actorEmail: '',
-        actorRole: '',
+        actorEmail: "",
+        actorRole: "",
         actionType: AuditActionType.INSTANCE_CANCELLED,
         transitionId: null,
         transitionName: null,
         fromState: null,
-        toState: 'cancelled',
+        toState: "cancelled",
         comment: null,
         ipAddress: null,
         userAgent: null,
@@ -109,4 +109,3 @@ export class AuditSubscriber {
     }
   }
 }
-

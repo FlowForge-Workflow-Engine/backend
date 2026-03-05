@@ -1,19 +1,19 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty, PickType } from "@nestjs/swagger";
 
 export class ApiResponseDto<T = any> {
-  @ApiProperty({ example: 'success' })
+  @ApiProperty({ example: "success" })
   status: string;
 
-  @ApiProperty({ description: 'Response data', required: true })
+  @ApiProperty({ description: "Response data", required: true })
   data: T;
 }
 
 export class CountApiResponseDto<T = any> extends ApiResponseDto<T> {
-  @ApiProperty({ description: 'Response Count', required: true })
+  @ApiProperty({ description: "Response Count", required: true })
   count: number;
 }
 
-export class MessageResponseDto extends PickType(ApiResponseDto, ['status']) {
-  @ApiProperty({ example: 'Data loaded successfully' })
+export class MessageResponseDto extends PickType(ApiResponseDto, ["status"]) {
+  @ApiProperty({ example: "Data loaded successfully" })
   message: string;
 }

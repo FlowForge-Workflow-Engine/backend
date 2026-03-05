@@ -234,7 +234,7 @@ function sanitizeUrl(url?: string): string {
 
   // Remove control characters and trim the URL
   const ctrlCharactersRegex = /[\u0000-\u001F\u007F-\u009F\u2000-\u200D\uFEFF]/gim;
-  let sanitizedUrl = url.replace(ctrlCharactersRegex, "").trim();
+  const sanitizedUrl = url.replace(ctrlCharactersRegex, "").trim();
 
   // If the URL is relative, no further processing is necessary
   if (isRelativeUrlWithoutProtocol(sanitizedUrl)) {

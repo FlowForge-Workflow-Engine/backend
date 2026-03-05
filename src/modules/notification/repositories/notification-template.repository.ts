@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotificationTemplate } from '../entities/notification-template.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { NotificationTemplate } from "../entities/notification-template.entity";
 
 @Injectable()
 export class NotificationTemplateRepository {
   constructor(
     @InjectRepository(NotificationTemplate)
-    private readonly repo: Repository<NotificationTemplate>,
+    private readonly repo: Repository<NotificationTemplate>
   ) {}
 
   findById(id: string, tenantId: string): Promise<NotificationTemplate | null> {
@@ -15,16 +15,13 @@ export class NotificationTemplateRepository {
   }
 
   findAllByTenant(tenantId: string): Promise<NotificationTemplate[]> {
-    return this.repo.find({ where: { tenantId }, order: { createdAt: 'DESC' } });
+    return this.repo.find({ where: { tenantId }, order: { createdAt: "DESC" } });
   }
 
   /**
    * Returns all active templates for a given NATS event trigger, scoped to a tenant.
    */
-  findActiveByEventTrigger(
-    eventTrigger: string,
-    tenantId: string,
-  ): Promise<NotificationTemplate[]> {
+  findActiveByEventTrigger(eventTrigger: string, tenantId: string): Promise<NotificationTemplate[]> {
     return this.repo.find({ where: { eventTrigger, tenantId, isActive: true } });
   }
 
@@ -36,7 +33,7 @@ export class NotificationTemplateRepository {
   async update(
     id: string,
     tenantId: string,
-    data: Partial<NotificationTemplate>,
+    data: Partial<NotificationTemplate>
   ): Promise<NotificationTemplate | null> {
     await this.repo.update({ id, tenantId }, data);
     return this.findById(id, tenantId);
@@ -46,4 +43,3 @@ export class NotificationTemplateRepository {
     await this.repo.delete({ id, tenantId });
   }
 }
-

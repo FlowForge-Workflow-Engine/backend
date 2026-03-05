@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Engine, RuleProperties } from 'json-rules-engine';
-import { RuleDefinition, RuleEvaluationResult } from '../interfaces/rule.interfaces';
+import { Injectable, Logger } from "@nestjs/common";
+import { Engine, RuleProperties } from "json-rules-engine";
+import { RuleDefinition, RuleEvaluationResult } from "../interfaces/rule.interfaces";
 
 /**
  * Wraps the json-rules-engine `Engine` to evaluate a batch of rules
@@ -13,24 +13,19 @@ import { RuleDefinition, RuleEvaluationResult } from '../interfaces/rule.interfa
 export class ConditionEvaluator {
   private readonly logger = new Logger(ConditionEvaluator.name);
 
-  async evaluate(
-    rules: RuleDefinition[],
-    facts: Record<string, unknown>,
-  ): Promise<RuleEvaluationResult> {
+  async evaluate(rules: RuleDefinition[], facts: Record<string, unknown>): Promise<RuleEvaluationResult> {
     if (rules.length === 0) {
       return { passed: true, failedRules: [] };
     }
 
     const engine = new Engine([], { allowUndefinedFacts: false });
 
-    const sorted = [...rules].sort(
-      (a, b) => (a.evaluationOrder ?? 0) - (b.evaluationOrder ?? 0),
-    );
+    const sorted = [...rules].sort((a, b) => (a.evaluationOrder ?? 0) - (b.evaluationOrder ?? 0));
 
     for (const rule of sorted) {
       const ruleProps: RuleProperties = {
         name: rule.ruleName,
-        conditions: rule.conditions as RuleProperties['conditions'],
+        conditions: rule.conditions as RuleProperties["conditions"],
         event: { type: rule.ruleName },
         priority: sorted.length - (rule.evaluationOrder ?? 0),
       };
@@ -41,8 +36,8 @@ export class ConditionEvaluator {
       const { failureResults } = await engine.run(facts);
 
       const failedRules = failureResults.map((result) => ({
-        ruleName: result.name ?? 'unknown',
-        reason: `Rule "${result.name ?? 'unknown'}" conditions were not satisfied`,
+        ruleName: result.name ?? "unknown",
+        reason: `Rule "${result.name ?? "unknown"}" conditions were not satisfied`,
       }));
 
       return {
@@ -56,4 +51,3 @@ export class ConditionEvaluator {
     }
   }
 }
-

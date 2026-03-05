@@ -35,10 +35,18 @@ const DEFAULT_SYSTEM_ROLES = [
   { name: "Requestor", description: "Can initiate and track workflow instances", isSystemRole: true },
 ] as const;
 
+/**
+ * Result of a successful onboarding flow (tenant or user registration).
+ * Contains authentication tokens and user/tenant information.
+ */
 export interface OnboardingTokenResult {
+  /** JWT access token for API authentication */
   accessToken: string;
+  /** Opaque refresh token for token rotation */
   refreshToken: string;
+  /** Created user information */
   user: { id: string; email: string; firstName: string; lastName: string };
+  /** Created tenant information (only present in tenant registration flow) */
   tenant?: { id: string; name: string; slug: string };
 }
 
@@ -64,7 +72,15 @@ export class OnboardingService {
     private readonly redis: RedisService
   ) {}
 
-  /** POST /auth/register/tenant — full company onboarding */
+  /**
+   * Registers a new tenant and its founding admin user (full company onboarding).
+   * Uses distributed lock to prevent concurrent registrations of the same tenant slug.
+   * Provisions tenant, seeds default system roles, creates admin user, and issues tokens.
+   *
+   * @param dto - Tenant and admin user registration data
+   * @returns Promise<OnboardingTokenResult> - Tokens and created tenant/user info
+   * @throws ConflictException - If tenant slug already exists or registration is in progress
+   */
   async registerTenant(dto: RegisterTenantDto): Promise<OnboardingTokenResult> {
     const lockKey = `register:tenant:${dto.tenantSlug}`;
     const acquired = await this.redis.setNX(lockKey, "1", 60);
@@ -146,7 +162,17 @@ export class OnboardingService {
     }
   }
 
-  /** POST /auth/register — employee self-registration under an existing tenant */
+  /**
+   * Registers a new user under an existing tenant (employee self-registration).
+   * Uses distributed lock to prevent concurrent registrations of the same email.
+   * Validates tenant is active, creates user with Requestor role, and issues tokens.
+   *
+   * @param dto - User registration data (email, password, firstName, lastName, tenantSlug)
+   * @returns Promise<OnboardingTokenResult> - Tokens and created user info
+   * @throws NotFoundException - If tenant not found
+   * @throws ForbiddenException - If tenant is inactive
+   * @throws ConflictException - If email already exists or registration is in progress
+   */
   async registerUser(dto: RegisterDto): Promise<OnboardingTokenResult> {
     const lockKey = `register:user:${dto.email}:${dto.tenantSlug}`;
     const acquired = await this.redis.setNX(lockKey, "1", 60);

@@ -14,4 +14,3 @@ export interface IJwtPayload {
   /** User first name */
   readonly firstName: string;
 }
-

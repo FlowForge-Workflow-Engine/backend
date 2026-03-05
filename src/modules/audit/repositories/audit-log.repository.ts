@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { AuditLog } from '../entities/audit-log.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { AuditLog } from "../entities/audit-log.entity";
 
 @Injectable()
 export class AuditLogRepository {
   constructor(
     @InjectRepository(AuditLog)
-    private readonly repo: Repository<AuditLog>,
+    private readonly repo: Repository<AuditLog>
   ) {}
 
   /**
@@ -26,11 +26,11 @@ export class AuditLogRepository {
     instanceId: string,
     tenantId: string,
     page: number,
-    limit: number,
+    limit: number
   ): Promise<[AuditLog[], number]> {
     return this.repo.findAndCount({
       where: { instanceId, tenantId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -41,4 +41,3 @@ export class AuditLogRepository {
     return this.repo.save(entity);
   }
 }
-

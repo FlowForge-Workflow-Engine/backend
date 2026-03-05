@@ -1,16 +1,8 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, MaxLength } from "class-validator";
 
 export class CreateWorkflowStateDto {
-  @ApiProperty({ example: 'Pending Approval' })
+  @ApiProperty({ example: "Pending Approval" })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -41,9 +33,8 @@ export class CreateWorkflowStateDto {
   @IsOptional()
   readonly positionY?: number;
 
-  @ApiPropertyOptional({ example: { color: '#FF5733', icon: 'clock' } })
+  @ApiPropertyOptional({ example: { color: "#FF5733", icon: "clock" } })
   @IsObject()
   @IsOptional()
   readonly metadata?: Record<string, unknown>;
 }
-

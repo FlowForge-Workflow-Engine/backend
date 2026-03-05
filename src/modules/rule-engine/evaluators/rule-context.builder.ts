@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { RuleContext } from '../interfaces/rule.interfaces';
+import { Injectable } from "@nestjs/common";
+import { RuleContext } from "../interfaces/rule.interfaces";
 
 /**
  * Transforms a RuleContext into a flat facts map consumed by json-rules-engine.
@@ -27,4 +27,3 @@ export class RuleContextBuilder {
     };
   }
 }
-
