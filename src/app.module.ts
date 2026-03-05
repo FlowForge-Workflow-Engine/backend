@@ -17,7 +17,7 @@ import { PostgreSQLDatabaseModule } from "./modules/database/database.module";
 import { HealthModule } from "./modules/health/health.module";
 
 import { winstonLoggerConfig } from "./infra/configs/winston.config";
-import { NATS_CLIENT } from "./infra/nats.config";
+import { createNatsOptions, NATS_CLIENT } from "./infra/nats.config";
 import { InfraModule } from "./infra/infra.module";
 import { EnhancedRateLimitMiddleware } from "./infra/middlewares/enhanced-rate-limit.middleware";
 
@@ -57,7 +57,7 @@ import { DatabaseContextInterceptor } from "./modules/database/interceptors/data
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.NATS,
-          options: { servers: [configService.get<string>("NATS_URL", "nats://localhost:4222")] },
+          options: createNatsOptions(configService),
         }),
       },
     ]),

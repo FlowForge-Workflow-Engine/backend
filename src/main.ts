@@ -20,6 +20,7 @@ import { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.int
 // import { loadSecretsFromAWS } from "./configs/app.config";
 import { createDataSource } from "./infra/configs/ormconfig";
 import { runMigrations } from "./migration-runner";
+import { createNatsOptions } from "./infra";
 
 /**
  * function for bootstraping the nest application
@@ -180,7 +181,7 @@ async function bootstrap() {
   // NATS hybrid microservice — receives @MessagePattern events from all modules
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.NATS,
-    options: { servers: [process.env.NATS_URL ?? "nats://localhost:4222"] },
+    options: createNatsOptions(configService),
   });
 
   await app.startAllMicroservices();
