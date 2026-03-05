@@ -25,6 +25,7 @@ import { JwtAuthGuard, TenantIsolationGuard, RolesGuard } from "@app/shared/guar
 import { GlobalExceptionFilter } from "@app/shared/filters";
 import { LoggingInterceptor, TenantContextInterceptor } from "@app/shared/interceptors";
 import { LoggerMiddleware } from "@app/shared/middlewares";
+import { DatabaseContextInterceptor } from "./modules/database/interceptors/database-context.interceptor";
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { LoggerMiddleware } from "@app/shared/middlewares";
     { provide: APP_INTERCEPTOR, useClass: ClassSerializerInterceptor },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: DatabaseContextInterceptor },
   ],
 })
 export class AppModule implements NestModule {
