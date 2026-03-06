@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull, Repository } from "typeorm";
+import { IsNull, LessThan, Repository } from "typeorm";
 import { RefreshToken } from "../entities/refresh-token.entity";
 
 @Injectable()
@@ -44,8 +44,8 @@ export class RefreshTokenRepository {
   async deleteOldTokens(hoursOld: number): Promise<number> {
     const cutoffTime = new Date(Date.now() - hoursOld * 60 * 60 * 1000);
     const result = await this.repo.delete({
-      createdAt: { $lt: cutoffTime },
-    } as any);
+      createdAt: LessThan(cutoffTime),
+    });
     return result.affected || 0;
   }
 }
