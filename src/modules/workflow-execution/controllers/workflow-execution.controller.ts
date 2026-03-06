@@ -80,7 +80,7 @@ export class WorkflowExecutionController {
     const data = await this.executionService.executeTransition(
       id,
       dto.transitionId,
-      dto.expectedVersion,
+      dto.lastKnownVersion,
       dto.comment,
       actor,
       dto.idempotencyKey

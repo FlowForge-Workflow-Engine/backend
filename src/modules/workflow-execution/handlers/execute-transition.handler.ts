@@ -40,7 +40,7 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
   ) {}
 
   async execute(command: ExecuteTransitionCommand): Promise<WorkflowInstance> {
-    const { instanceId, transitionId, expectedVersion, comment, actor, idempotencyKey } = command;
+    const { instanceId, transitionId, lastKnownVersion, comment, actor, idempotencyKey } = command;
     const tenantId = actor.tenantId;
 
     // ─── IDEMPOTENCY CHECK ────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
 
     // Step 8: Perform the state change atomically with optimistic locking and audit logging
     await this.dataSource.transaction(async (em) => {
-      // Update the instance only if the caller's expected version still matches.
+      // Update the instance only if the caller's last known version still matches.
       const result = await em.query(
         `UPDATE workflow_instances
          SET current_state_id = $1, current_state_name = $2, version = version + 1,
@@ -133,7 +133,7 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
           newStatus,
           isTerminal ? new Date() : null,
           instanceId,
-          expectedVersion,
+          lastKnownVersion,
           tenantId,
         ]
       );

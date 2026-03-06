@@ -14,16 +14,16 @@ export class ExecuteTransitionDto {
   readonly transitionId: string;
 
   @ApiProperty({
-    description: "Current optimistic lock version of the instance — prevents concurrent transitions",
+    description: "Last known optimistic lock version of the instance — prevents concurrent transitions",
     example: 1,
     minimum: 1,
     required: true,
   })
-  @Max(2147483647, { message: "Expected version must not exceed maximum integer value" })
-  @Min(1, { message: "Expected version must be at least 1" })
-  @IsInt({ message: "Expected version must be an integer" })
-  @IsNotEmpty({ message: "Expected version is required" })
-  readonly expectedVersion: number;
+  @Max(2147483647, { message: "Last known version must not exceed maximum integer value" })
+  @Min(1, { message: "Last known version must be at least 1" })
+  @IsInt({ message: "Last known version must be an integer" })
+  @IsNotEmpty({ message: "Last known version is required" })
+  readonly lastKnownVersion: number;
 
   @ApiPropertyOptional({
     description: "Optional comment explaining the transition (max 1000 characters)",

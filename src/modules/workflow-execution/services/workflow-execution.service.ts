@@ -58,13 +58,13 @@ export class WorkflowExecutionService {
   /**
    * Executes a state transition on a workflow instance.
    * Evaluates transition rules, checks user permissions, and updates instance state.
-   * Supports optimistic locking via expectedVersion to prevent concurrent modifications.
+   * Supports optimistic locking via lastKnownVersion to prevent concurrent modifications.
    * Supports idempotency via idempotencyKey for safe retries.
    * Publishes WORKFLOW_INSTANCE_TRANSITIONED domain event.
    *
    * @param instanceId - The workflow instance ID
    * @param transitionId - The transition to execute
-   * @param expectedVersion - Expected current version (for optimistic locking)
+   * @param lastKnownVersion - The version value last read by the client (for optimistic locking)
    * @param comment - Optional comment explaining the transition
    * @param actor - The user executing the transition (id, email, roles, tenantId)
    * @param idempotencyKey - Optional key for idempotent retries
@@ -76,13 +76,13 @@ export class WorkflowExecutionService {
   executeTransition(
     instanceId: string,
     transitionId: string,
-    expectedVersion: number,
+    lastKnownVersion: number,
     comment: string | undefined,
     actor: IJwtPayload,
     idempotencyKey?: string
   ): Promise<WorkflowInstance> {
     return this.commandBus.execute(
-      new ExecuteTransitionCommand(instanceId, transitionId, expectedVersion, comment, actor, idempotencyKey)
+      new ExecuteTransitionCommand(instanceId, transitionId, lastKnownVersion, comment, actor, idempotencyKey)
     );
   }
 
