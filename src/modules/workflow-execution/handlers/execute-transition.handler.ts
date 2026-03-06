@@ -64,6 +64,9 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
     if (instance.status !== WorkflowInstanceStatus.ACTIVE) {
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_INSTANCE_NOT_ACTIVE);
     }
+    if (instance.version !== lastKnownVersion) {
+      throw new ConflictException(AppErrors.TRANSITION_CONFLICT);
+    }
 
     // Step 2: Load the immutable definition snapshot used by this instance version
     const snapshot = await this.workflowQuery.getVersionSnapshot(
