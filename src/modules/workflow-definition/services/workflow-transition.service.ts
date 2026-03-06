@@ -2,6 +2,9 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import {
   CustomRuleDefinition,
+  CustomRuleStrategy,
+  RuleFactNamespace,
+  RuleType,
   WorkflowRuleDefinition,
 } from "@app/shared/interfaces/contracts/rule-engine.contract";
 import {
@@ -383,7 +386,7 @@ export class WorkflowTransitionService {
     if (!node || typeof node !== "object") return;
 
     const candidate = node as Record<string, unknown>;
-    if (candidate["fact"] === "payload") {
+    if (candidate["fact"] === RuleFactNamespace.PAYLOAD) {
       // Normalize JSON-path-like references before storing them as schema keys.
       const key = this.normalizePayloadFieldKey(candidate["path"]);
       if (key) {
@@ -406,7 +409,7 @@ export class WorkflowTransitionService {
     const params = definition.params ?? {};
 
     switch (definition.strategy) {
-      case "date-range-matches-days": {
+      case CustomRuleStrategy.DATE_RANGE_MATCHES_DAYS: {
         const keys = [
           this.normalizePayloadFieldKey(params["startDateField"]) ?? "startDate",
           this.normalizePayloadFieldKey(params["endDateField"]) ?? "endDate",
@@ -415,7 +418,7 @@ export class WorkflowTransitionService {
 
         return Array.from(new Set(keys));
       }
-      case "user-has-any-role":
+      case CustomRuleStrategy.USER_HAS_ANY_ROLE:
         return [];
       default:
         return [];
@@ -451,7 +454,7 @@ export class WorkflowTransitionService {
    * @returns boolean - True when the definition is a custom rule
    */
   private isCustomRuleDefinition(definition: WorkflowRuleDefinition): definition is CustomRuleDefinition {
-    return definition["type"] === "custom" && typeof definition["strategy"] === "string";
+    return definition["type"] === RuleType.CUSTOM && typeof definition["strategy"] === "string";
   }
 
   /**

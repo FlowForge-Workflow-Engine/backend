@@ -1,6 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, Type } from "class-transformer";
 import {
+  RuleFactNamespace,
+  RULE_PAYLOAD_PATH_SOURCE,
+  RuleType,
+} from "@app/shared/interfaces/contracts/rule-engine.contract";
+import {
   IsArray,
   IsBoolean,
   IsInt,
@@ -77,12 +82,9 @@ export class CreateTransitionRuleDto {
   readonly ruleName: string;
 
   @ApiProperty({
-    description: "json-rules-engine conditions AST for rule evaluation",
+    description: `Rule definition JSON AST for evaluation. Discover fixed facts, rule types, strategies, operators, and system paths from GET /workflow-rules/metadata. Discover workflow-specific payload keys from ${RULE_PAYLOAD_PATH_SOURCE}. For custom rules, set type to \"${RuleType.CUSTOM}\" and choose a supported strategy from the metadata endpoint.`,
     example: {
-      all: [{ fact: "payload", path: "$.amount", operator: "greaterThan", value: 1000 }],
-      type: "`custom` only when you define a custom rule, else leave it empty", // This is not part of the JSON schema but is used to determine the type of rule
-      strategy:
-        "The name of the custom rule strategy to use. Only required when type is `custom`, example `date-range-matches-days`",
+      all: [{ fact: RuleFactNamespace.PAYLOAD, path: "$.amount", operator: "greaterThan", value: 1000 }],
     },
     required: true,
   })
@@ -101,7 +103,8 @@ export class CreateTransitionRuleDto {
   readonly evaluationOrder?: number;
 
   @ApiPropertyOptional({
-    description: "Optional instance form fields to merge into the workflow definition schema",
+    description:
+      "Optional instance form fields to merge into the workflow definition schema. Required when ruleDefinition references payload fields.",
     type: [TransitionSchemaFieldDto],
   })
   @IsArray({ message: "Schema fields must be an array" })

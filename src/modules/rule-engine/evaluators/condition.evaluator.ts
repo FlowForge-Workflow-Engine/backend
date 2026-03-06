@@ -4,6 +4,7 @@ import {
   CustomRuleDefinition,
   RuleDefinition,
   RuleEvaluationResult,
+  RuleType,
   WorkflowRuleDefinition,
 } from "../interfaces/rule.interfaces";
 
@@ -69,6 +70,6 @@ export class ConditionEvaluator {
   }
 
   private isCustomRuleDefinition(definition: WorkflowRuleDefinition): definition is CustomRuleDefinition {
-    return definition["type"] === "custom";
+    return definition["type"] === RuleType.CUSTOM;
   }
 }

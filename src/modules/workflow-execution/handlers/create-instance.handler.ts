@@ -101,6 +101,8 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
     payload: Record<string, unknown>,
     fields: readonly WorkflowInstanceFormField[]
   ): string[] {
+    // console.log("fields", fields);
+    // console.log("payload", payload);
     return fields
       .filter((field) => field.required)
       .map((field) => field.key)

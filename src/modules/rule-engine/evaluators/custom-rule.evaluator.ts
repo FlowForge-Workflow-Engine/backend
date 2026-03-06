@@ -1,9 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import {
   CustomRuleDefinition,
+  CustomRuleStrategy,
   RuleContext,
   RuleDefinition,
   RuleEvaluationResult,
+  RuleType,
   WorkflowRuleDefinition,
 } from "../interfaces/rule.interfaces";
 
@@ -14,9 +16,10 @@ type CustomStrategyHandler = (
 
 @Injectable()
 export class CustomRuleEvaluator {
-  private readonly strategies: Record<string, CustomStrategyHandler> = {
-    "date-range-matches-days": (params, context) => this.evaluateDateRangeMatchesDays(params, context),
-    "user-has-any-role": (params, context) => this.evaluateUserHasAnyRole(params, context),
+  private readonly strategies: Readonly<Record<CustomRuleStrategy, CustomStrategyHandler>> = {
+    [CustomRuleStrategy.DATE_RANGE_MATCHES_DAYS]: (params, context) =>
+      this.evaluateDateRangeMatchesDays(params, context),
+    [CustomRuleStrategy.USER_HAS_ANY_ROLE]: (params, context) => this.evaluateUserHasAnyRole(params, context),
   };
 
   isCustomRule(rule: RuleDefinition): boolean {
@@ -30,7 +33,7 @@ export class CustomRuleEvaluator {
       return { passed: true, failedRules: [] };
     }
 
-    const strategy = this.strategies[definition.strategy];
+    const strategy = this.strategies[definition.strategy as CustomRuleStrategy];
     if (!strategy) {
       return {
         passed: false,
@@ -63,7 +66,7 @@ export class CustomRuleEvaluator {
       : [];
 
     if (roles.length === 0) {
-      return 'Custom strategy "user-has-any-role" requires a non-empty "roles" array';
+      return `Custom strategy "${CustomRuleStrategy.USER_HAS_ANY_ROLE}" requires a non-empty "roles" array`;
     }
 
     const allowed = roles.some((role) => context.user.roles.includes(role));
@@ -87,7 +90,7 @@ export class CustomRuleEvaluator {
     const days = this.toNumber(daysValue);
 
     if (!startDate || !endDate || days === null) {
-      return `Custom strategy \"date-range-matches-days\" requires payload fields \"${startField}\", \"${endField}\", and \"${daysField}\"`;
+      return `Custom strategy \"${CustomRuleStrategy.DATE_RANGE_MATCHES_DAYS}\" requires payload fields \"${startField}\", \"${endField}\", and \"${daysField}\"`;
     }
 
     const expectedDays = this.calculateInclusiveDays(startDate, endDate);
@@ -155,6 +158,6 @@ export class CustomRuleEvaluator {
   }
 
   private isCustomRuleDefinition(definition: WorkflowRuleDefinition): definition is CustomRuleDefinition {
-    return definition["type"] === "custom" && typeof definition["strategy"] === "string";
+    return definition["type"] === RuleType.CUSTOM && typeof definition["strategy"] === "string";
   }
 }

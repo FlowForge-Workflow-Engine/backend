@@ -1,4 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
+import {
+  RuleFactNamespace,
+  RULE_PAYLOAD_PATH_SOURCE,
+} from "@app/shared/interfaces/contracts/rule-engine.contract";
 
 /**
  * Workflow Transition Response DTO
@@ -79,8 +83,10 @@ export class WorkflowTransitionRuleResponseDto {
   ruleName: string;
 
   @ApiProperty({
-    example: { all: [{ fact: "payload", path: "$.amount", operator: "greaterThan", value: 10000 }] },
-    description: "json-rules-engine conditions AST",
+    example: {
+      all: [{ fact: RuleFactNamespace.PAYLOAD, path: "$.amount", operator: "greaterThan", value: 10000 }],
+    },
+    description: `json-rules-engine conditions AST. Fixed rule vocabulary is available from GET /workflow-rules/metadata. Workflow-specific payload keys come from ${RULE_PAYLOAD_PATH_SOURCE}.`,
   })
   ruleDefinition: Record<string, unknown>;
 

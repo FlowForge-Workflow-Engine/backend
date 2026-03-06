@@ -3,7 +3,9 @@ import { RULE_ENGINE_CONTRACT } from "@app/shared/interfaces/contracts/rule-engi
 import { RuleContextBuilder } from "./evaluators/rule-context.builder";
 import { ConditionEvaluator } from "./evaluators/condition.evaluator";
 import { CustomRuleEvaluator } from "./evaluators/custom-rule.evaluator";
+import { RuleMetadataController } from "./controllers/rule-metadata.controller";
 import { RuleEngineService } from "./services/rule-engine.service";
+import { RuleMetadataService } from "./services/rule-metadata.service";
 
 /**
  * Stateless module wrapping json-rules-engine.
@@ -13,10 +15,12 @@ import { RuleEngineService } from "./services/rule-engine.service";
  * the module boundary so consumers stay decoupled from the concrete service.
  */
 @Module({
+  controllers: [RuleMetadataController],
   providers: [
     RuleContextBuilder,
     ConditionEvaluator,
     CustomRuleEvaluator,
+    RuleMetadataService,
     RuleEngineService,
     { provide: RULE_ENGINE_CONTRACT, useClass: RuleEngineService },
   ],

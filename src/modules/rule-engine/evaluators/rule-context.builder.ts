@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { RuleContext } from "../interfaces/rule.interfaces";
+import { RuleContext, RuleFactNamespace } from "../interfaces/rule.interfaces";
 
 /**
  * Transforms a RuleContext into a flat facts map consumed by json-rules-engine.
@@ -14,13 +14,13 @@ import { RuleContext } from "../interfaces/rule.interfaces";
 export class RuleContextBuilder {
   build(context: RuleContext): Record<string, unknown> {
     return {
-      payload: context.payload,
-      user: {
+      [RuleFactNamespace.PAYLOAD]: context.payload,
+      [RuleFactNamespace.USER]: {
         id: context.user.id,
         role: context.user.role,
         roles: context.user.roles,
       },
-      instance: {
+      [RuleFactNamespace.INSTANCE]: {
         currentState: context.instance.currentState,
         createdAt: context.instance.createdAt,
       },
