@@ -37,6 +37,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.USER_CREATED)
   async onUserCreated(@Payload() data: IUserCreatedEvent): Promise<void> {
+    // Persist a user creation event as an immutable audit record scoped to the tenant.
     await this.persistEvent(NatsEvents.USER_CREATED, data.eventId, data.tenantId, data.userId, {
       tenantId: data.tenantId,
       instanceId: null,
@@ -61,6 +62,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.USER_DEACTIVATED)
   async onUserDeactivated(@Payload() data: IUserDeactivatedEvent): Promise<void> {
+    // Persist user deactivation so replayed auth events still produce a single audit row.
     await this.persistEvent(NatsEvents.USER_DEACTIVATED, data.eventId, data.tenantId, data.userId, {
       tenantId: data.tenantId,
       instanceId: null,
@@ -85,6 +87,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.USER_ROLES_UPDATED)
   async onUserRolesUpdated(@Payload() data: IUserRolesUpdatedEvent): Promise<void> {
+    // Capture role changes as audit events for traceability of authorization changes.
     await this.persistEvent(NatsEvents.USER_ROLES_UPDATED, data.eventId, data.tenantId, data.userId, {
       tenantId: data.tenantId,
       instanceId: null,
@@ -109,6 +112,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.TENANT_CREATED)
   async onTenantCreated(@Payload() data: ITenantCreatedEvent): Promise<void> {
+    // Tenant lifecycle events are audited against the tenant resource itself.
     await this.persistEvent(NatsEvents.TENANT_CREATED, data.eventId, data.tenantId, data.tenantId, {
       tenantId: data.tenantId,
       instanceId: null,
@@ -133,6 +137,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.TENANT_DEACTIVATED)
   async onTenantDeactivated(@Payload() data: ITenantDeactivatedEvent): Promise<void> {
+    // Record tenant deactivation in the audit stream for compliance and operational reviews.
     await this.persistEvent(NatsEvents.TENANT_DEACTIVATED, data.eventId, data.tenantId, data.tenantId, {
       tenantId: data.tenantId,
       instanceId: null,
@@ -157,6 +162,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.TENANT_PLAN_UPDATED)
   async onTenantPlanUpdated(@Payload() data: ITenantPlanUpdatedEvent): Promise<void> {
+    // Plan changes are persisted as tenant-level audit entries with the full event snapshot.
     await this.persistEvent(NatsEvents.TENANT_PLAN_UPDATED, data.eventId, data.tenantId, data.tenantId, {
       tenantId: data.tenantId,
       instanceId: null,
@@ -181,6 +187,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.WORKFLOW_DEFINITION_PUBLISHED)
   async onWorkflowDefinitionPublished(@Payload() data: IWorkflowDefinitionPublishedEvent): Promise<void> {
+    // Persist workflow definition publication so version releases can be reconstructed later.
     await this.persistEvent(
       NatsEvents.WORKFLOW_DEFINITION_PUBLISHED,
       data.eventId,
@@ -211,6 +218,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.WORKFLOW_DEFINITION_DEPRECATED)
   async onWorkflowDefinitionDeprecated(@Payload() data: IWorkflowDefinitionDeprecatedEvent): Promise<void> {
+    // Persist definition deprecation to explain why new instances stopped using this definition.
     await this.persistEvent(
       NatsEvents.WORKFLOW_DEFINITION_DEPRECATED,
       data.eventId,
@@ -241,6 +249,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CREATED)
   async onInstanceCreated(@Payload() data: IWorkflowInstanceCreatedEvent): Promise<void> {
+    // Persist workflow instance creation with the initial state captured as the destination state.
     await this.persistEvent(
       NatsEvents.WORKFLOW_INSTANCE_CREATED,
       data.eventId,
@@ -271,6 +280,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.WORKFLOW_TRANSITION_COMPLETED)
   async onTransitionCompleted(@Payload() data: IWorkflowTransitionCompletedEvent): Promise<void> {
+    // Persist the executed transition so auditors can trace who moved the instance between states.
     await this.persistEvent(
       NatsEvents.WORKFLOW_TRANSITION_COMPLETED,
       data.eventId,
@@ -301,6 +311,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_COMPLETED)
   async onInstanceCompleted(@Payload() data: IWorkflowInstanceCompletedEvent): Promise<void> {
+    // Record terminal completion as a separate audit event in addition to the transition event.
     await this.persistEvent(
       NatsEvents.WORKFLOW_INSTANCE_COMPLETED,
       data.eventId,
@@ -331,6 +342,7 @@ export class AuditSubscriber {
 
   @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CANCELLED)
   async onInstanceCancelled(@Payload() data: IWorkflowInstanceCancelledEvent): Promise<void> {
+    // Persist cancellation as a workflow instance audit entry with the synthetic cancelled state.
     await this.persistEvent(
       NatsEvents.WORKFLOW_INSTANCE_CANCELLED,
       data.eventId,
@@ -359,6 +371,17 @@ export class AuditSubscriber {
     );
   }
 
+  /**
+   * Persists a single audit entry for an incoming business event.
+   * Performs an idempotency check using the event ID before inserting.
+   *
+   * @param eventName - NATS event name used for logging
+   * @param eventId - Unique event identifier for idempotency
+   * @param tenantId - Tenant scope for the audit entry
+   * @param resourceIdForLog - Resource identifier used in operational log messages
+   * @param entry - Audit log payload to persist
+   * @returns Promise<void>
+   */
   private async persistEvent(
     eventName: NatsEvents,
     eventId: string,
@@ -367,16 +390,25 @@ export class AuditSubscriber {
     entry: Partial<AuditLog>
   ): Promise<void> {
     try {
+      // Skip inserts when this event was already processed to keep audit writes idempotent.
       const existing = await this.auditLogRepository.findByEventId(eventId, tenantId);
       if (existing) return;
 
+      // Persist the immutable audit row and emit a lightweight operational log entry.
       await this.auditLogRepository.insert(entry);
       this.logger.log(`Audit: ${eventName} [resourceId=${resourceIdForLog}]`);
     } catch (err) {
+      // Subscriber errors are logged but not re-thrown so event consumption can continue safely.
       this.logger.error(`Audit failed: ${eventName} [resourceId=${resourceIdForLog}]`, err);
     }
   }
 
+  /**
+   * Creates a shallow serializable snapshot of the incoming event payload.
+   *
+   * @param data - Event payload received from NATS
+   * @returns Record<string, unknown> - Snapshot stored in the audit record
+   */
   private snapshot<T extends object>(data: T): Record<string, unknown> {
     return { ...(data as Record<string, unknown>) };
   }
