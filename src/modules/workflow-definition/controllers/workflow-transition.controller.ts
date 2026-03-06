@@ -1,5 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
@@ -57,8 +68,9 @@ export class WorkflowTransitionController {
   @Get(":transitionId")
   @ApiOperation({ summary: "Get a specific transition by ID" })
   @ApiSuccessResponse(WorkflowTransitionDetailResponseDto, "Workflow transition retrieved successfully")
+  @ApiParam({ name: "transitionId", description: "Workflow transition UUID", format: "uuid" })
   async findOne(
-    @Param("transitionId") transitionId: string,
+    @Param("transitionId", ParseUUIDPipe) transitionId: string,
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<WorkflowTransitionDetailResponseDto>> {
     const data = await this.service.findById(transitionId, tenantId);
@@ -68,7 +80,11 @@ export class WorkflowTransitionController {
   @Delete(":transitionId")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Remove a transition and its rules" })
-  async remove(@Param("transitionId") transitionId: string, @TenantId() tenantId: string): Promise<void> {
+  @ApiParam({ name: "transitionId", description: "Workflow transition UUID", format: "uuid" })
+  async remove(
+    @Param("transitionId", ParseUUIDPipe) transitionId: string,
+    @TenantId() tenantId: string
+  ): Promise<void> {
     await this.service.remove(transitionId, tenantId);
   }
 
@@ -79,8 +95,9 @@ export class WorkflowTransitionController {
     "Workflow transition rule created successfully",
     { created: true }
   )
+  @ApiParam({ name: "transitionId", description: "Workflow transition UUID", format: "uuid" })
   async addRule(
-    @Param("transitionId") transitionId: string,
+    @Param("transitionId", ParseUUIDPipe) transitionId: string,
     @Body() dto: CreateTransitionRuleDto,
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<WorkflowTransitionRuleCreatedResponseDto>> {
@@ -91,8 +108,9 @@ export class WorkflowTransitionController {
   @Get(":transitionId/rules")
   @ApiOperation({ summary: "List all rules of a workflow transition" })
   @ApiSuccessResponse(TransitionRuleDto, "Workflow transition rules fetched successfully", { isArray: true })
+  @ApiParam({ name: "transitionId", description: "Workflow transition UUID", format: "uuid" })
   async getAllRules(
-    @Param("transitionId") transitionId: string,
+    @Param("transitionId", ParseUUIDPipe) transitionId: string,
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<TransitionRuleDto[]>> {
     const data = await this.service.getAllRules(transitionId, tenantId);

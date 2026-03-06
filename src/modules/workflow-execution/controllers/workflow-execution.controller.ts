@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
@@ -52,6 +52,7 @@ export class WorkflowExecutionController {
   @Get(":id")
   @ApiOperation({ summary: "Get workflow instance details" })
   @ApiSuccessResponse(WorkflowExecutionDetailResponseDto, "Workflow instance retrieved successfully")
+  @ApiParam({ name: "id", description: "Workflow instance UUID", format: "uuid" })
   async getOne(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
@@ -62,6 +63,7 @@ export class WorkflowExecutionController {
 
   @Get(":id/allowed-transitions")
   @ApiOperation({ summary: "List transitions available to the current user for this instance" })
+  @ApiParam({ name: "id", description: "Workflow instance UUID", format: "uuid" })
   async getAllowedTransitions(
     @Param() { id }: IdParamDto,
     @CurrentUser() actor: IJwtPayload
@@ -72,6 +74,7 @@ export class WorkflowExecutionController {
   @Post(":id/transitions")
   @ApiOperation({ summary: "Execute a transition on a workflow instance" })
   @ApiSuccessResponse(WorkflowExecutionTransitionedResponseDto, "Workflow instance transitioned successfully")
+  @ApiParam({ name: "id", description: "Workflow instance UUID", format: "uuid" })
   async executeTransition(
     @Param() { id }: IdParamDto,
     @Body() dto: ExecuteTransitionDto,
@@ -90,6 +93,7 @@ export class WorkflowExecutionController {
 
   @Post(":id/cancel")
   @ApiOperation({ summary: "Cancel an active workflow instance" })
+  @ApiParam({ name: "id", description: "Workflow instance UUID", format: "uuid" })
   async cancel(
     @Param() { id }: IdParamDto,
     @CurrentUser() actor: IJwtPayload
