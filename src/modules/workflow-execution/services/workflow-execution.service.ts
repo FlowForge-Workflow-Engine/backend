@@ -11,7 +11,7 @@ import {
   GetAllowedTransitionsQuery,
   GetAllowedTransitionsResult,
 } from "../queries/get-allowed-transitions.query";
-import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
+import { FindWorkflowInstanceDto } from "../dto/find-workflow-instance.dto";
 
 /**
  * Thin facade service for workflow execution operations.
@@ -118,20 +118,13 @@ export class WorkflowExecutionService {
    * Retrieves a paginated list of workflow instances for a tenant.
    * Supports filtering by status and workflow definition.
    *
+   * @param dto - Pagination and filter parameters
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @param page - Page number (1-based)
-   * @param limit - Number of instances per page
-   * @param status - Optional filter by instance status (RUNNING, COMPLETED, CANCELLED, etc.)
-   * @param workflowDefinitionId - Optional filter by workflow definition
    * @returns Promise<GetInstanceListResult> - Paginated list of instances with total count
    */
-  getInstanceList(
-    tenantId: string,
-    page: number,
-    limit: number,
-    status?: WorkflowInstanceStatus,
-    workflowDefinitionId?: string
-  ): Promise<GetInstanceListResult> {
+  getInstanceList(dto: FindWorkflowInstanceDto, tenantId: string): Promise<GetInstanceListResult> {
+    const { page, limit, status, workflowDefinitionId } = dto;
+
     return this.queryBus.execute(
       new GetInstanceListQuery(tenantId, page, limit, status, workflowDefinitionId)
     );

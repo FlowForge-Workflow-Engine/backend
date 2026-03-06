@@ -2,12 +2,6 @@ import { Column, Entity, Index } from "typeorm";
 import { BaseEntity } from "@app/shared/entities/base.entity";
 import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
 
-// export enum WorkflowInstanceStatus {
-//   ACTIVE = "active",
-//   COMPLETED = "completed",
-//   CANCELLED = "cancelled",
-// }
-
 /**
  * A running instance of a published workflow definition.
  *

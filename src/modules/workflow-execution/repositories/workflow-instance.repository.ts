@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { WorkflowInstance } from "../entities/workflow-instance.entity";
 import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
@@ -28,10 +29,13 @@ export class WorkflowInstanceRepository {
     options: {
       status?: WorkflowInstanceStatus;
       workflowDefinitionId?: string;
-      page: number;
-      limit: number;
+      page?: number;
+      limit?: number;
     }
   ): Promise<[WorkflowInstance[], number]> {
+    const { page, limit } = options;
+    const { skip, take } = pagination(page, limit);
+
     const where: Record<string, unknown> = { tenantId };
     if (options.status) where.status = options.status;
     if (options.workflowDefinitionId) where.workflowDefinitionId = options.workflowDefinitionId;
@@ -39,8 +43,8 @@ export class WorkflowInstanceRepository {
     return this.repo.findAndCount({
       where: where as any,
       order: { createdAt: "DESC" },
-      skip: (options.page - 1) * options.limit,
-      take: options.limit,
+      skip,
+      take,
     });
   }
 }

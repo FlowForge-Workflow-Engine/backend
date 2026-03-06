@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
@@ -9,7 +9,7 @@ import { ApiResponseDto, CountApiResponseDto } from "@app/shared/dto/base-respon
 import { WorkflowExecutionService } from "../services/workflow-execution.service";
 import { CreateInstanceDto } from "../dto/create-instance.dto";
 import { ExecuteTransitionDto } from "../dto/execute-transition.dto";
-import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
+import { FindWorkflowInstanceDto } from "../dto/find-workflow-instance.dto";
 import {
   WorkflowExecutionListResponseDto,
   WorkflowExecutionDetailResponseDto,
@@ -42,28 +42,15 @@ export class WorkflowExecutionController {
 
   @Get()
   @ApiOperation({ summary: "List workflow instances (paginated)" })
-  @ApiQuery({ name: "page", required: false, type: Number })
-  @ApiQuery({ name: "limit", required: false, type: Number })
-  @ApiQuery({ name: "status", required: false, enum: WorkflowInstanceStatus })
-  @ApiQuery({ name: "workflowDefinitionId", required: false, type: String })
   @ApiSuccessResponse(WorkflowExecutionListResponseDto, "Workflow instances retrieved successfully", {
     isArray: true,
   })
   async list(
-    @TenantId() tenantId: string,
-    @Query("page") page = 1,
-    @Query("limit") limit = 20,
-    @Query("status") status?: WorkflowInstanceStatus,
-    @Query("workflowDefinitionId") workflowDefinitionId?: string
+    @Body() dto: FindWorkflowInstanceDto,
+    @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowExecutionListResponseDto[]>> {
-    const result = await this.executionService.getInstanceList(
-      tenantId,
-      Number(page),
-      Number(limit),
-      status,
-      workflowDefinitionId
-    );
-    return { status: "success", data: result.data, count: result.total };
+    const result = await this.executionService.getInstanceList(dto, tenantId);
+    return { status: "success", count: result.data.length, data: result.data };
   }
 
   @Get(":id")
