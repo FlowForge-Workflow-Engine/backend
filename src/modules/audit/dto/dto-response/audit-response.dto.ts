@@ -13,16 +13,20 @@ export class AuditLogResponseDto {
   tenantId: string;
 
   @ApiProperty({ description: "Workflow instance ID this log belongs to", format: "uuid" })
-  instanceId: string;
+  instanceId: string | null;
 
-  @ApiProperty({ description: "ID of the actor who performed the action", format: "uuid" })
-  actorId: string;
+  @ApiProperty({ description: "ID of the actor who performed the action", format: "uuid", nullable: true })
+  actorId: string | null;
 
-  @ApiProperty({ example: "john@example.com", description: "Snapshot of actor email at time of action" })
-  actorEmail: string;
+  @ApiProperty({
+    example: "john@example.com",
+    description: "Snapshot of actor email at time of action",
+    nullable: true,
+  })
+  actorEmail: string | null;
 
-  @ApiProperty({ example: "admin", description: "Snapshot of actor role at time of action" })
-  actorRole: string;
+  @ApiProperty({ example: "admin", description: "Snapshot of actor role at time of action", nullable: true })
+  actorRole: string | null;
 
   @ApiProperty({
     enum: AuditActionType,
@@ -48,8 +52,8 @@ export class AuditLogResponseDto {
   })
   fromState: string | null;
 
-  @ApiProperty({ example: "approved", description: "State after the action" })
-  toState: string;
+  @ApiProperty({ example: "approved", description: "State after the action", nullable: true })
+  toState: string | null;
 
   @ApiProperty({
     example: "Approved as per manager review",
@@ -66,6 +70,18 @@ export class AuditLogResponseDto {
 
   @ApiProperty({ description: "Idempotency NATS event UUID", format: "uuid" })
   eventId: string;
+
+  @ApiProperty({ example: "workflow_instance", description: "Logical resource type affected by the event" })
+  resourceType: string;
+
+  @ApiProperty({ description: "Logical resource identifier affected by the event", format: "uuid" })
+  resourceId: string;
+
+  @ApiProperty({
+    example: "2026-03-05T10:30:00Z",
+    description: "Timestamp carried by the original domain event",
+  })
+  occurredAt: Date;
 
   @ApiProperty({ example: "2026-03-05T10:30:00Z", description: "Audit log creation timestamp (immutable)" })
   createdAt: Date;

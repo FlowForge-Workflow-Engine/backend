@@ -62,7 +62,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
  * - No "role_permissions" join table found in entities
  * - No "rule_templates" entity found in rule-engine module
  */
-export class CreateRlsPolicies1772700632702 implements MigrationInterface {
+export class CreateRlsPolicies1772830604496 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // All tenant-scoped tables (all except "tenants" which has no tenant_id column)
     const tenantScopedTables = [

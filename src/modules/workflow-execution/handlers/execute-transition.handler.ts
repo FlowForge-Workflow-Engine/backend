@@ -123,7 +123,7 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
     const newStatus = isTerminal ? WorkflowInstanceStatus.COMPLETED : WorkflowInstanceStatus.ACTIVE;
     const eventId = generateUUID();
 
-    // Step 8: Perform the state change atomically with optimistic locking and audit logging
+    // Step 8: Perform the state change atomically with optimistic locking
     await this.dataSource.transaction(async (em) => {
       // Update the instance only if the caller's last known version still matches.
       const result = await em.query(
@@ -146,29 +146,6 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
       if (result[1] === 0) {
         throw new ConflictException(AppErrors.TRANSITION_CONFLICT);
       }
-
-      // Record the transition in the audit log for traceability.
-      await em.query(
-        `INSERT INTO audit_logs
-           (id, tenant_id, instance_id, actor_id, actor_email, actor_role,
-            action_type, transition_id, transition_name, from_state, to_state,
-            comment, event_id, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,'transition_executed',$7,$8,$9,$10,$11,$12,NOW())`,
-        [
-          generateUUID(),
-          tenantId,
-          instanceId,
-          actor.sub,
-          actor.email,
-          actor.roles[0] ?? "",
-          transitionId,
-          transition.name,
-          instance.currentStateName,
-          toState.name,
-          comment ?? null,
-          eventId,
-        ]
-      );
     });
 
     // Step 9: Invalidate caches whose values changed because of the transition
