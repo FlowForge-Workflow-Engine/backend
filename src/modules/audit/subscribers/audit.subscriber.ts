@@ -7,7 +7,7 @@ import {
   IWorkflowInstanceCancelledEvent,
 } from "@app/shared/interfaces/events/workflow-events.interface";
 import { AuditLogRepository } from "../repositories/audit-log.repository";
-import { AuditActionType } from "../entities/audit-log.entity";
+import { AuditActionType } from "../enum/audit-action-type.enum";
 
 /**
  * Listens to workflow execution NATS events and persists immutable audit log entries.
@@ -25,7 +25,7 @@ export class AuditSubscriber {
   @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CREATED)
   async onInstanceCreated(@Payload() data: IWorkflowInstanceCreatedEvent): Promise<void> {
     try {
-      const existing = await this.auditLogRepository.findByEventId(data.eventId);
+      const existing = await this.auditLogRepository.findByEventId(data.eventId, data.tenantId);
       if (existing) return;
 
       await this.auditLogRepository.insert({
@@ -54,7 +54,7 @@ export class AuditSubscriber {
   @MessagePattern(NatsEvents.WORKFLOW_TRANSITION_COMPLETED)
   async onTransitionCompleted(@Payload() data: IWorkflowTransitionCompletedEvent): Promise<void> {
     try {
-      const existing = await this.auditLogRepository.findByEventId(data.eventId);
+      const existing = await this.auditLogRepository.findByEventId(data.eventId, data.tenantId);
       if (existing) return; // already written within the execution transaction
 
       await this.auditLogRepository.insert({
@@ -83,7 +83,7 @@ export class AuditSubscriber {
   @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CANCELLED)
   async onInstanceCancelled(@Payload() data: IWorkflowInstanceCancelledEvent): Promise<void> {
     try {
-      const existing = await this.auditLogRepository.findByEventId(data.eventId);
+      const existing = await this.auditLogRepository.findByEventId(data.eventId, data.tenantId);
       if (existing) return; // already written within the execution transaction
 
       await this.auditLogRepository.insert({

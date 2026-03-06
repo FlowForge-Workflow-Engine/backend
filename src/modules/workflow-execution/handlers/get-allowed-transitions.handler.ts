@@ -35,6 +35,7 @@ export class GetAllowedTransitionsHandler implements IQueryHandler<
     const instance = await this.instanceRepo.findByIdAndTenant(instanceId, tenantId);
     if (!instance) throw new NotFoundException(AppErrors.WORKFLOW_INSTANCE_NOT_FOUND);
     if (instance.status !== WorkflowInstanceStatus.ACTIVE) return [];
+    console.log({ instance });
 
     // Step 2: Use a cache-aside strategy for all transitions from the current state
     // Role filtering remains a cheap read-time operation after cache retrieval.
@@ -70,6 +71,8 @@ export class GetAllowedTransitionsHandler implements IQueryHandler<
       // Step 5: Cache the transition list with a short TTL because it changes after transitions
       await this.redis.set(cacheKey, allTransitions, CacheTTL.SHORT);
     }
+
+    console.log({ userRoleIds, allTransitions });
 
     // Step 6: Filter the cached transition set by the current user's roles
     return (allTransitions as (AllowedTransition & { allowedRoleIds?: string[] })[]).filter((t) => {

@@ -1,10 +1,5 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
-
-export enum AuditActionType {
-  INSTANCE_CREATED = "instance_created",
-  TRANSITION_EXECUTED = "transition_executed",
-  INSTANCE_CANCELLED = "instance_cancelled",
-}
+import { AuditActionType } from "../enum/audit-action-type.enum";
 
 /**
  * Immutable append-only audit record.

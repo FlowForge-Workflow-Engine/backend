@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { AuditActionType } from "../../entities/audit-log.entity";
+import { AuditActionType } from "../../enum/audit-action-type.enum";
 
 /**
  * Audit Log Response DTO

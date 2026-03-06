@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { AuditLogRepository } from "../repositories/audit-log.repository";
 import { AuditLog } from "../entities/audit-log.entity";
+import { FindAuditLogDto } from "../dto/find-audit-log.dto";
 
 /**
  * Represents a paginated response of audit logs.
@@ -38,12 +39,9 @@ export class AuditService {
    * @returns Promise<AuditLogPage> - Paginated audit logs with metadata
    * @throws NotFoundException - If no logs exist for the instance on page 1 (instance not found)
    */
-  async getAuditLogs(
-    instanceId: string,
-    tenantId: string,
-    page: number,
-    limit: number
-  ): Promise<AuditLogPage> {
+  async getAuditLogs(instanceId: string, tenantId: string, dto: FindAuditLogDto): Promise<AuditLogPage> {
+    const { page, limit } = dto;
+
     const [data, total] = await this.auditLogRepository.findByInstanceId(instanceId, tenantId, page, limit);
 
     if (total === 0 && page === 1) {

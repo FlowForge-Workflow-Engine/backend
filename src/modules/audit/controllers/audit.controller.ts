@@ -1,11 +1,12 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
 import { CountApiResponseDto } from "@app/shared/dto/base-response.dto";
 import { AuditService } from "../services/audit.service";
 import { AuditLogListResponseDto } from "../dto/dto-response/audit-response.dto";
+import { FindAuditLogDto } from "../dto/find-audit-log.dto";
 
 @ApiTags("Audit Logs")
 @ApiBearerAuth()
@@ -15,16 +16,14 @@ export class AuditController {
 
   @Get(":id/audit-logs")
   @ApiOperation({ summary: "Get paginated audit log for a workflow instance" })
-  @ApiQuery({ name: "page", required: false, type: Number })
-  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiParam({ name: "id", description: "Workflow instance UUID", format: "uuid" })
   @ApiSuccessResponse(AuditLogListResponseDto, "Audit logs retrieved successfully", { isArray: true })
   async getAuditLogs(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string,
-    @Query("page") page = 1,
-    @Query("limit") limit = 20
+    @Query() dto: FindAuditLogDto
   ): Promise<CountApiResponseDto<AuditLogListResponseDto[]>> {
-    const result = await this.auditService.getAuditLogs(id, tenantId, Number(page), Number(limit));
-    return { status: "success", data: result.data, count: result.total };
+    const result = await this.auditService.getAuditLogs(id, tenantId, dto);
+    return { status: "success", count: result.total, data: result.data };
   }
 }
