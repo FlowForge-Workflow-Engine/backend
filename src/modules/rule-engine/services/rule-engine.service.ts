@@ -1,7 +1,12 @@
 import { Injectable } from "@nestjs/common";
+import {
+  IRuleEngineContract,
+  RuleContext,
+  RuleDefinition,
+  RuleEvaluationResult,
+} from "@app/shared/interfaces/contracts/rule-engine.contract";
 import { ConditionEvaluator } from "../evaluators/condition.evaluator";
 import { RuleContextBuilder } from "../evaluators/rule-context.builder";
-import { RuleContext, RuleDefinition, RuleEvaluationResult } from "../interfaces/rule.interfaces";
 
 /**
  * Service for evaluating workflow transition rules.
@@ -17,7 +22,7 @@ import { RuleContext, RuleDefinition, RuleEvaluationResult } from "../interfaces
  * - Instance metadata (created date, actor, etc.)
  */
 @Injectable()
-export class RuleEngineService {
+export class RuleEngineService implements IRuleEngineContract {
   constructor(
     private readonly contextBuilder: RuleContextBuilder,
     private readonly conditionEvaluator: ConditionEvaluator

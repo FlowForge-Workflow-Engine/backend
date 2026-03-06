@@ -8,12 +8,15 @@ import {
 } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
+import {
+  IRuleEngineContract,
+  RULE_ENGINE_CONTRACT,
+} from "@app/shared/interfaces/contracts/rule-engine.contract";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import {
   IWorkflowQueryContract,
   WORKFLOW_QUERY_CONTRACT,
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
-import { RuleEngineService } from "../../rule-engine/services/rule-engine.service";
 import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
 import { WorkflowInstance } from "../entities/workflow-instance.entity";
 import { ExecutionPublisher } from "../publishers/execution.publisher";
@@ -29,7 +32,8 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
     private readonly instanceRepo: WorkflowInstanceRepository,
     @Inject(WORKFLOW_QUERY_CONTRACT)
     private readonly workflowQuery: IWorkflowQueryContract,
-    private readonly ruleEngine: RuleEngineService,
+    @Inject(RULE_ENGINE_CONTRACT)
+    private readonly ruleEngine: IRuleEngineContract,
     private readonly dataSource: DataSource,
     private readonly publisher: ExecutionPublisher,
     private readonly redis: RedisService
@@ -55,6 +59,7 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
 
     // Step 1: Load and validate the workflow instance
     const instance = await this.instanceRepo.findByIdAndTenant(instanceId, tenantId);
+
     if (!instance) throw new NotFoundException(AppErrors.WORKFLOW_INSTANCE_NOT_FOUND);
     if (instance.status !== WorkflowInstanceStatus.ACTIVE) {
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_INSTANCE_NOT_ACTIVE);
@@ -86,6 +91,7 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
     if (!hasRole) throw new ForbiddenException(AppErrors.TRANSITION_ROLE_FORBIDDEN);
 
     // Step 5: Enforce comment requirement for transitions that demand user justification
+    // check if comment is necessary and comment should NOT be empty or whitespace
     if (transition.requiresComment && !comment?.trim()) {
       throw new UnprocessableEntityException(AppErrors.COMMENT_REQUIRED);
     }
