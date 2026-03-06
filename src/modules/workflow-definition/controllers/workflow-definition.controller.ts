@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
@@ -15,6 +25,8 @@ import {
   WorkflowDefinitionCreatedResponseDto,
   WorkflowDefinitionPublishedResponseDto,
   WorkflowDefinitionDeprecatedResponseDto,
+  WorkflowDefinitionVersionListResponseDto,
+  WorkflowDefinitionVersionDetailResponseDto,
 } from "../dto/dto-response/workflow-definition-response.dto";
 
 @ApiTags("Workflow Definitions")
@@ -58,6 +70,37 @@ export class WorkflowDefinitionController {
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<WorkflowDefinitionDetailResponseDto>> {
     const data = await this.service.findById(id, tenantId);
+    return { status: "success", data };
+  }
+
+  @Get(":id/versions")
+  @ApiOperation({ summary: "Get workflow definition basic info with all published versions" })
+  @ApiSuccessResponse(
+    WorkflowDefinitionVersionListResponseDto,
+    "Workflow definition versions retrieved successfully"
+  )
+  async findVersions(
+    @Param() { id }: IdParamDto,
+    @TenantId() tenantId: string
+  ): Promise<ApiResponseDto<WorkflowDefinitionVersionListResponseDto>> {
+    const { definition, versions } = await this.service.findVersions(id, tenantId);
+    const data = WorkflowDefinitionVersionListResponseDto.fromEntities(definition, versions);
+    return { status: "success", data };
+  }
+
+  @Get(":id/versions/:versionNumber")
+  @ApiOperation({ summary: "Get immutable workflow definition version details by version number" })
+  @ApiSuccessResponse(
+    WorkflowDefinitionVersionDetailResponseDto,
+    "Workflow definition version retrieved successfully"
+  )
+  async findVersionByNumber(
+    @Param() { id }: IdParamDto,
+    @Param("versionNumber", ParseIntPipe) versionNumber: number,
+    @TenantId() tenantId: string
+  ): Promise<ApiResponseDto<WorkflowDefinitionVersionDetailResponseDto>> {
+    const version = await this.service.findVersionByNumber(id, versionNumber, tenantId);
+    const data = WorkflowDefinitionVersionDetailResponseDto.fromEntity(version);
     return { status: "success", data };
   }
 

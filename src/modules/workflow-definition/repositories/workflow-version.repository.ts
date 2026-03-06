@@ -37,6 +37,16 @@ export class WorkflowVersionRepository {
     });
   }
 
+  async findAllByDefinition(
+    workflowDefinitionId: string,
+    tenantId: string
+  ): Promise<WorkflowDefinitionVersion[]> {
+    return this.repo.find({
+      where: { workflowDefinitionId, tenantId },
+      order: { versionNumber: "DESC" },
+    });
+  }
+
   /**
    * Deactivate all versions for a definition — called before activating a new one.
    */

@@ -91,6 +91,25 @@ export class WorkflowDefinitionService {
     return definition;
   }
 
+  async findVersions(
+    id: string,
+    tenantId: string
+  ): Promise<{ definition: WorkflowDefinition; versions: WorkflowDefinitionVersion[] }> {
+    const definition = await this.findById(id, tenantId);
+    const versions = await this.versionService.findAllByDefinition(id, tenantId);
+
+    return { definition, versions };
+  }
+
+  async findVersionByNumber(
+    id: string,
+    versionNumber: number,
+    tenantId: string
+  ): Promise<WorkflowDefinitionVersion> {
+    await this.findById(id, tenantId);
+    return this.versionService.findByDefinitionAndVersion(id, versionNumber, tenantId);
+  }
+
   /**
    * Removes a workflow definition.
    * Only DRAFT definitions can be removed; published definitions must be deprecated first.

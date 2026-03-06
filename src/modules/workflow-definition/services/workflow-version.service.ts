@@ -1,4 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
 import { WorkflowStateRepository } from "../repositories/workflow-state.repository";
@@ -36,6 +37,26 @@ export class WorkflowVersionService {
     private readonly publisher: WorkflowDefinitionPublisher,
     private readonly redis: RedisService
   ) {}
+
+  async findAllByDefinition(definitionId: string, tenantId: string): Promise<WorkflowDefinitionVersion[]> {
+    return this.versionRepository.findAllByDefinition(definitionId, tenantId);
+  }
+
+  async findByDefinitionAndVersion(
+    definitionId: string,
+    versionNumber: number,
+    tenantId: string
+  ): Promise<WorkflowDefinitionVersion> {
+    const version = await this.versionRepository.findByDefinitionAndVersion(
+      definitionId,
+      versionNumber,
+      tenantId
+    );
+
+    if (!version) throw new NotFoundException(AppErrors.DEFINITION_VERSION_NOT_FOUND);
+
+    return version;
+  }
 
   /**
    * Publishes a workflow definition, creating an immutable version snapshot.
@@ -95,7 +116,7 @@ export class WorkflowVersionService {
       })),
     };
 
-    const nextVersion = definition.currentVersion;
+    const currentVersion = definition.currentVersion;
 
     // Deactivate all previous versions
     await this.versionRepository.deactivateAll(definition.id, tenantId);
@@ -103,7 +124,7 @@ export class WorkflowVersionService {
     const version = this.versionRepository.create({
       workflowDefinitionId: definition.id,
       tenantId,
-      versionNumber: nextVersion,
+      versionNumber: currentVersion,
       snapshot,
       isActive: true,
       publishedBy,
@@ -113,7 +134,7 @@ export class WorkflowVersionService {
 
     // Update definition status and bump current_version for next publish
     definition.status = WorkflowDefinitionStatus.PUBLISHED;
-    definition.currentVersion = nextVersion + 1;
+    definition.currentVersion = currentVersion + 1;
     await this.definitionRepository.save(definition);
 
     // Invalidate mutable caches — snapshot is NOT deleted (immutable once created)
@@ -128,12 +149,12 @@ export class WorkflowVersionService {
       eventId: generateUUID(),
       tenantId,
       definitionId: definition.id,
-      versionNumber: nextVersion,
+      versionNumber: currentVersion,
       publishedByUserId: publishedBy,
       occurredAt: new Date().toISOString(),
     });
 
-    this.logger.log(`Published workflow definition ${definition.id} v${nextVersion}`);
+    this.logger.log(`Published workflow definition ${definition.id} v${currentVersion}`);
     return saved;
   }
 }
