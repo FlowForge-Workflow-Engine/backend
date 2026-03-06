@@ -1,6 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Engine, RuleProperties } from "json-rules-engine";
-import { RuleDefinition, RuleEvaluationResult } from "../interfaces/rule.interfaces";
+import {
+  CustomRuleDefinition,
+  RuleDefinition,
+  RuleEvaluationResult,
+  WorkflowRuleDefinition,
+} from "../interfaces/rule.interfaces";
 
 /**
  * Wraps the json-rules-engine `Engine` to evaluate a batch of rules
@@ -25,7 +30,7 @@ export class ConditionEvaluator {
     for (const rule of sorted) {
       const ruleProps: RuleProperties = {
         name: rule.ruleName,
-        conditions: rule.conditions as RuleProperties["conditions"],
+        conditions: this.getConditions(rule) as RuleProperties["conditions"],
         event: { type: rule.ruleName },
         priority: sorted.length - (rule.evaluationOrder ?? 0),
       };
@@ -49,5 +54,21 @@ export class ConditionEvaluator {
       this.logger.error(`Rule evaluation error: ${message}`);
       throw err;
     }
+  }
+
+  private getConditions(rule: RuleDefinition): Record<string, unknown> {
+    const definition = rule.ruleDefinition;
+
+    if (this.isCustomRuleDefinition(definition)) {
+      throw new Error(
+        `Rule \"${rule.ruleName}\" uses custom strategy \"${definition.strategy}\" and cannot be evaluated as an expression rule`
+      );
+    }
+
+    return definition;
+  }
+
+  private isCustomRuleDefinition(definition: WorkflowRuleDefinition): definition is CustomRuleDefinition {
+    return definition["type"] === "custom";
   }
 }

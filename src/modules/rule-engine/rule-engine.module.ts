@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { RULE_ENGINE_CONTRACT } from "@app/shared/interfaces/contracts/rule-engine.contract";
 import { RuleContextBuilder } from "./evaluators/rule-context.builder";
 import { ConditionEvaluator } from "./evaluators/condition.evaluator";
+import { CustomRuleEvaluator } from "./evaluators/custom-rule.evaluator";
 import { RuleEngineService } from "./services/rule-engine.service";
 
 /**
@@ -15,6 +16,7 @@ import { RuleEngineService } from "./services/rule-engine.service";
   providers: [
     RuleContextBuilder,
     ConditionEvaluator,
+    CustomRuleEvaluator,
     RuleEngineService,
     { provide: RULE_ENGINE_CONTRACT, useClass: RuleEngineService },
   ],

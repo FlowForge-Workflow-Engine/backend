@@ -1,8 +1,25 @@
 export const RULE_ENGINE_CONTRACT = Symbol("RULE_ENGINE_CONTRACT");
 
+export interface ExpressionRuleDefinition {
+  readonly type?: "expression";
+  readonly all?: ReadonlyArray<Record<string, unknown>>;
+  readonly any?: ReadonlyArray<Record<string, unknown>>;
+  readonly not?: Record<string, unknown>;
+  readonly [key: string]: unknown;
+}
+
+export interface CustomRuleDefinition {
+  readonly type: "custom";
+  readonly strategy: string;
+  readonly params?: Readonly<Record<string, unknown>>;
+}
+
+export type WorkflowRuleDefinition = ExpressionRuleDefinition | CustomRuleDefinition;
+
 export interface RuleDefinition {
+  readonly id?: string;
   readonly ruleName: string;
-  readonly conditions: Record<string, unknown>;
+  readonly ruleDefinition: WorkflowRuleDefinition;
   readonly evaluationOrder?: number;
 }
 

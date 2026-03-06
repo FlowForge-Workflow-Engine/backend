@@ -6,26 +6,25 @@ import {
   RuleEvaluationResult,
 } from "@app/shared/interfaces/contracts/rule-engine.contract";
 import { ConditionEvaluator } from "../evaluators/condition.evaluator";
+import { CustomRuleEvaluator } from "../evaluators/custom-rule.evaluator";
 import { RuleContextBuilder } from "../evaluators/rule-context.builder";
 
 /**
  * Service for evaluating workflow transition rules.
  * Provides the public API for rule evaluation consumed by WorkflowExecutionModule.
  *
- * This service is STATELESS — it performs no DB reads or writes.
- * It can be exported directly (no Symbol contract needed) because it
- * guards no database tables that require module-boundary protection.
- *
  * Rules are evaluated using json-rules-engine with a context built from:
  * - Workflow instance payload (current state data)
  * - User information (roles, permissions)
  * - Instance metadata (created date, actor, etc.)
+ * - Optional custom strategies for logic that should not live in the AST
  */
 @Injectable()
 export class RuleEngineService implements IRuleEngineContract {
   constructor(
     private readonly contextBuilder: RuleContextBuilder,
-    private readonly conditionEvaluator: ConditionEvaluator
+    private readonly conditionEvaluator: ConditionEvaluator,
+    private readonly customRuleEvaluator: CustomRuleEvaluator
   ) {}
 
   /**
@@ -43,7 +42,27 @@ export class RuleEngineService implements IRuleEngineContract {
    *   - failedRules: array of rule names that failed (empty if all pass)
    */
   async evaluateRules(rules: RuleDefinition[], context: RuleContext): Promise<RuleEvaluationResult> {
+    if (rules.length === 0) {
+      return { passed: true, failedRules: [] };
+    }
+
     const facts = this.contextBuilder.build(context);
-    return this.conditionEvaluator.evaluate(rules, facts);
+    const sortedRules = [...rules].sort((a, b) => (a.evaluationOrder ?? 0) - (b.evaluationOrder ?? 0));
+    const failedRules: Array<{ ruleName: string; reason: string }> = [];
+
+    for (const rule of sortedRules) {
+      const result = this.customRuleEvaluator.isCustomRule(rule)
+        ? await this.customRuleEvaluator.evaluate(rule, context)
+        : await this.conditionEvaluator.evaluate([rule], facts);
+
+      if (!result.passed) {
+        failedRules.push(...result.failedRules);
+      }
+    }
+
+    return {
+      passed: failedRules.length === 0,
+      failedRules,
+    };
   }
 }
