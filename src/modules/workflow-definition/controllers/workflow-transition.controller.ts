@@ -14,6 +14,7 @@ import {
   WorkflowTransitionCreatedResponseDto,
   WorkflowTransitionRuleCreatedResponseDto,
 } from "../dto/dto-response/workflow-transition-response.dto";
+import { TransitionRuleDto } from "../dto/dto-response/transition-rule-response.dto";
 
 /**
  * Nested resource under workflow definitions.
@@ -84,6 +85,17 @@ export class WorkflowTransitionController {
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<WorkflowTransitionRuleCreatedResponseDto>> {
     const data = await this.service.addRule(transitionId, dto, tenantId);
+    return { status: "success", data };
+  }
+
+  @Get(":transitionId/rules")
+  @ApiOperation({ summary: "List all rules of a workflow transition" })
+  @ApiSuccessResponse(TransitionRuleDto, "Workflow transition rules fetched successfully", { isArray: true })
+  async getAllRules(
+    @Param("transitionId") transitionId: string,
+    @TenantId() tenantId: string
+  ): Promise<ApiResponseDto<TransitionRuleDto[]>> {
+    const data = await this.service.getAllRules(transitionId, tenantId);
     return { status: "success", data };
   }
 }

@@ -55,6 +55,7 @@ export class WorkflowTransitionService {
     tenantId: string
   ): Promise<WorkflowTransition> {
     const definition = await this.definitionRepository.findByIdAndTenant(definitionId, tenantId);
+
     if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
     if (definition.status !== WorkflowDefinitionStatus.DRAFT) {
       throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
@@ -100,6 +101,7 @@ export class WorkflowTransitionService {
     tenantId: string
   ): Promise<WorkflowTransition[]> {
     const { page, limit } = dto;
+
     return this.transitionRepository.findByDefinitionAndTenant(definitionId, tenantId, { page, limit });
   }
 
@@ -113,7 +115,9 @@ export class WorkflowTransitionService {
    */
   async findById(id: string, tenantId: string): Promise<WorkflowTransition> {
     const transition = await this.transitionRepository.findByIdAndTenant(id, tenantId);
+
     if (!transition) throw new NotFoundException(AppErrors.WORKFLOW_TRANSITION_NOT_FOUND);
+
     return transition;
   }
 
@@ -130,8 +134,11 @@ export class WorkflowTransitionService {
   async remove(id: string, tenantId: string): Promise<void> {
     const transition = await this.findById(id, tenantId);
     const definitionId = transition.workflowDefinitionId;
+
     await this.ruleRepository.removeByTransitionId(id, tenantId);
+
     await this.transitionRepository.remove(transition);
+
     await this.redis.del(
       CacheKeys.workflowDefinition(tenantId, definitionId),
       CacheKeys.workflowTransitions(tenantId, definitionId),
@@ -156,6 +163,7 @@ export class WorkflowTransitionService {
     tenantId: string
   ): Promise<TransitionRule> {
     const transition = await this.findById(transitionId, tenantId);
+
     const rule = this.ruleRepository.create({
       transitionId: transition.id,
       tenantId,
@@ -163,9 +171,18 @@ export class WorkflowTransitionService {
       ruleDefinition: dto.ruleDefinition,
       evaluationOrder: dto.evaluationOrder ?? 0,
     });
+
     const saved = await this.ruleRepository.save(rule);
+
     // Invalidate transition cache since rules are part of the transition data
     await this.redis.del(CacheKeys.workflowTransitions(tenantId, transition.workflowDefinitionId));
+
     return saved;
+  }
+
+  async getAllRules(transitionId: string, tenantId: string) {
+    const transition = await this.findById(transitionId, tenantId);
+
+    return this.ruleRepository.findByTransitionId(transitionId, tenantId);
   }
 }
