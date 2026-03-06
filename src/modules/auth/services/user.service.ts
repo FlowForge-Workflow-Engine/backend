@@ -8,7 +8,6 @@ import { AuthPublisher } from "../publishers/auth.publisher";
 import { User } from "../entities/user.entity";
 import { UserRole } from "../entities/user-role.entity";
 import { CreateUserDto } from "../dto/create-user.dto";
-import { RoleResponseDto } from "../dto/dto-response/role-response.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { RedisService } from "../../../infra/redis.service";

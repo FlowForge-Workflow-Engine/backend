@@ -1,12 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Role } from "../../entities/role.entity";
 
-/**
- * Role Response DTO
- * Used in user responses to show which roles a user has been assigned.
- * Omits internal fields like userRoles relationship.
- */
-export class RoleResponseDto {
+export class RoleSummaryResponseDto {
   @ApiProperty({
     description: "Role's unique identifier",
     format: "uuid",
@@ -14,6 +9,33 @@ export class RoleResponseDto {
   })
   id: string;
 
+  @ApiProperty({
+    description: "Role name - unique within tenant",
+    example: "Admin",
+  })
+  name: string;
+
+  @ApiProperty({
+    description: "Flag indicating if role is system-defined and cannot be deleted",
+    example: true,
+  })
+  isSystemRole: boolean;
+
+  static fromEntity(role: Role): RoleSummaryResponseDto {
+    const dto = new RoleSummaryResponseDto();
+    dto.id = role.id;
+    dto.name = role.name;
+    dto.isSystemRole = role.isSystemRole;
+    return dto;
+  }
+}
+
+/**
+ * Role Response DTO
+ * Used in role-related responses and embedded role payloads.
+ * Omits internal relationship fields like userRoles.
+ */
+export class RoleResponseDto extends RoleSummaryResponseDto {
   @ApiProperty({
     description: "Tenant ID for multi-tenancy isolation",
     format: "uuid",
@@ -60,12 +82,12 @@ export class RoleResponseDto {
   static fromEntity(role: Role): RoleResponseDto {
     const dto = new RoleResponseDto();
     dto.id = role.id;
-    // dto.tenantId = role.tenantId;
     dto.name = role.name;
-    // dto.description = role.description;
     dto.isSystemRole = role.isSystemRole;
-    // dto.createdAt = role.createdAt;
-    // dto.updatedAt = role.updatedAt;
+    dto.tenantId = role.tenantId;
+    dto.description = role.description;
+    dto.createdAt = role.createdAt;
+    dto.updatedAt = role.updatedAt;
     return dto;
   }
 }

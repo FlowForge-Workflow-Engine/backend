@@ -22,6 +22,7 @@ import { RefreshTokenRepository } from "./repositories/refresh-token.repository"
 
 // Services
 import { AuthService } from "./services/auth.service";
+import { RoleService } from "./services/role.service";
 import { UserService } from "./services/user.service";
 import { UserQueryService } from "./services/user-query.service";
 import { OnboardingService } from "./services/onboarding.service";
@@ -35,6 +36,7 @@ import { AuthPublisher } from "./publishers/auth.publisher";
 
 // Controllers
 import { AuthController } from "./controllers/auth.controller";
+import { RoleController } from "./controllers/role.controller";
 import { UserController } from "./controllers/user.controller";
 
 @Module({
@@ -73,6 +75,7 @@ import { UserController } from "./controllers/user.controller";
 
     // Services (internal — NOT exported)
     AuthService,
+    RoleService,
     UserService,
     UserQueryService,
     OnboardingService,
@@ -87,7 +90,7 @@ import { UserController } from "./controllers/user.controller";
     /** Contract binding — ONLY this token leaves the module boundary */
     { provide: USER_QUERY_CONTRACT, useClass: UserQueryService },
   ],
-  controllers: [AuthController, UserController],
+  controllers: [AuthController, UserController, RoleController],
   exports: [USER_QUERY_CONTRACT],
 })
 export class AuthModule {}

@@ -1,6 +1,6 @@
 import { ApiProperty, OmitType } from "@nestjs/swagger";
 import { User } from "../../entities/user.entity";
-import { RoleResponseDto } from "./role-response.dto";
+import { RoleSummaryResponseDto } from "./role-response.dto";
 
 /**
  * Base User Response DTO
@@ -43,25 +43,21 @@ export class UserResponseDto extends OmitType(User, ["passwordHash"] as const) {
   updatedAt: Date;
 
   @ApiProperty({
-    type: [RoleResponseDto],
+    type: [RoleSummaryResponseDto],
     description: "Array of roles assigned to this user",
     example: [
       {
         id: "550e8400-e29b-41d4-a716-446655440000",
-        tenantId: "550e8400-e29b-41d4-a716-446655440001",
         name: "Admin",
-        description: "Full system access",
         isSystemRole: true,
-        createdAt: "2026-03-01T08:00:00Z",
-        updatedAt: "2026-03-05T10:30:00Z",
       },
     ],
   })
-  roles: RoleResponseDto[];
+  roles: RoleSummaryResponseDto[];
 
   /**
    * Transform a User entity to UserResponseDto
-   * Converts userRoles relationship to roles array using RoleResponseDto
+   * Converts userRoles relationship to roles array using RoleSummaryResponseDto
    * @param user - The user entity to transform
    * @returns UserResponseDto with all fields populated
    */
@@ -80,8 +76,8 @@ export class UserResponseDto extends OmitType(User, ["passwordHash"] as const) {
     // Transform userRoles to roles array
     dto.roles =
       user.userRoles
-        ?.map((ur) => ur.role && RoleResponseDto.fromEntity(ur.role))
-        .filter((role): role is RoleResponseDto => role !== undefined && role !== null) ?? [];
+        ?.map((ur) => ur.role && RoleSummaryResponseDto.fromEntity(ur.role))
+        .filter((role): role is RoleSummaryResponseDto => role !== undefined && role !== null) ?? [];
     return dto;
   }
 }
