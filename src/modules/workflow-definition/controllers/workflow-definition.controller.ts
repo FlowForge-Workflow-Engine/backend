@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
@@ -41,7 +42,7 @@ export class WorkflowDefinitionController {
     isArray: true,
   })
   async findAll(
-    @Body() dto: FindWorkflowDefinitionDto,
+    @Query() dto: FindWorkflowDefinitionDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowDefinitionListResponseDto[]>> {
     const data = await this.service.findAll(dto, tenantId);

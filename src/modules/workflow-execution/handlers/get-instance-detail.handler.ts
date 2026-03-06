@@ -12,10 +12,15 @@ export class GetInstanceDetailHandler implements IQueryHandler<
   constructor(private readonly instanceRepo: WorkflowInstanceRepository) {}
 
   async execute(query: GetInstanceDetailQuery): Promise<GetInstanceDetailResult> {
+    // Load the instance by id with tenant isolation enforced at the repository layer.
     const instance = await this.instanceRepo.findByIdAndTenant(query.instanceId, query.tenantId);
+
+    // Fail fast when the requested instance does not exist for this tenant.
     if (!instance) {
       throw new NotFoundException(AppErrors.WORKFLOW_INSTANCE_NOT_FOUND);
     }
+
+    // Return the full instance detail used by the query side/UI.
     return instance;
   }
 }

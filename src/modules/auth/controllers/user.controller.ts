@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
@@ -26,7 +26,7 @@ export class UserController {
   @ApiOperation({ summary: "List all users within the authenticated tenant" })
   @ApiSuccessResponse(UserListResponseDto, "Users retrieved successfully", { isArray: true })
   async findAll(
-    @Body() dto: FindUserDto,
+    @Query() dto: FindUserDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<UserListResponseDto[]>> {
     const users = await this.userService.findAll(dto, tenantId);

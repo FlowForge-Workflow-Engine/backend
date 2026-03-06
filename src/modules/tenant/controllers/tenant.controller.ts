@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
@@ -36,7 +47,7 @@ export class TenantController {
   @Get()
   @ApiOperation({ summary: "List all tenants (super-admin)" })
   @ApiSuccessResponse(TenantListResponseDto, "Tenants retrieved successfully", { isArray: true })
-  async findAll(@Body() dto: FindTenantDto): Promise<CountApiResponseDto<TenantListResponseDto[]>> {
+  async findAll(@Query() dto: FindTenantDto): Promise<CountApiResponseDto<TenantListResponseDto[]>> {
     const data = await this.tenantService.findAll(dto);
     return { status: "success", count: data.length, data };
   }

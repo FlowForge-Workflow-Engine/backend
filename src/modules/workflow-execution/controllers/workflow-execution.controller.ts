@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -46,7 +46,7 @@ export class WorkflowExecutionController {
     isArray: true,
   })
   async list(
-    @Body() dto: FindWorkflowInstanceDto,
+    @Query() dto: FindWorkflowInstanceDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowExecutionListResponseDto[]>> {
     const result = await this.executionService.getInstanceList(dto, tenantId);

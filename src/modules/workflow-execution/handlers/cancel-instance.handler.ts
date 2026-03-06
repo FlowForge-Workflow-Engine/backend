@@ -30,6 +30,7 @@ export class CancelInstanceHandler implements ICommandHandler<CancelInstanceComm
     const { instanceId, actor } = command;
     const tenantId = actor.tenantId;
 
+    // Step 1: Load and validate the workflow instance before cancellation
     const instance = await this.instanceRepo.findByIdAndTenant(instanceId, tenantId);
     if (!instance) throw new NotFoundException(AppErrors.WORKFLOW_INSTANCE_NOT_FOUND);
     if (instance.status !== WorkflowInstanceStatus.ACTIVE) {
@@ -38,7 +39,9 @@ export class CancelInstanceHandler implements ICommandHandler<CancelInstanceComm
 
     const eventId = generateUUID();
 
+    // Step 2: Cancel the instance and insert an audit record in one transaction
     await this.dataSource.transaction(async (em) => {
+      // Mark the instance as cancelled and close it with a completion timestamp.
       await em.query(
         `UPDATE workflow_instances
          SET status = 'cancelled', completed_at = NOW(), updated_at = NOW()
@@ -46,6 +49,7 @@ export class CancelInstanceHandler implements ICommandHandler<CancelInstanceComm
         [instanceId, tenantId]
       );
 
+      // Record the cancellation in the audit log for traceability.
       await em.query(
         `INSERT INTO audit_logs
            (id, tenant_id, instance_id, actor_id, actor_email, actor_role,
@@ -65,6 +69,7 @@ export class CancelInstanceHandler implements ICommandHandler<CancelInstanceComm
       );
     });
 
+    // Step 3: Publish a cancellation event for downstream consumers
     this.publisher.publishInstanceCancelled({
       eventId,
       tenantId,
@@ -74,12 +79,13 @@ export class CancelInstanceHandler implements ICommandHandler<CancelInstanceComm
       occurredAt: new Date().toISOString(),
     });
 
-    // Invalidate instance-specific cache entries after successful cancellation
+    // Step 4: Invalidate instance-related caches because status/details changed
     await Promise.allSettled([
       this.redis.del(CacheKeys.allowedTransitions(tenantId, instanceId)),
       this.redis.del(CacheKeys.instanceDetail(tenantId, instanceId)),
     ]);
 
+    // Step 5: Reload and return the updated instance state
     const updated = await this.instanceRepo.findByIdAndTenant(instanceId, tenantId);
     return updated!;
   }

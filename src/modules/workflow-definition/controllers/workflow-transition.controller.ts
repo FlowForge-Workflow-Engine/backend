@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -32,7 +32,7 @@ export class WorkflowTransitionController {
     isArray: true,
   })
   async findAll(
-    @Body() dto: FindWorkflowTransitionDto,
+    @Query() dto: FindWorkflowTransitionDto,
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowTransitionListResponseDto[]>> {

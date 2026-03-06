@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -56,7 +57,7 @@ export class WebhookConfigController {
     isArray: true,
   })
   async findAll(
-    @Body() dto: FindWebhookConfigDto,
+    @Query() dto: FindWebhookConfigDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WebhookConfigListResponseDto[]>> {
     const data = await this.webhookConfigRepository.findAllByTenant(tenantId, dto);

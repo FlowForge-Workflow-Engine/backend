@@ -25,12 +25,14 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
     const { workflowDefinitionId, payload, actor } = command;
     const tenantId = actor.tenantId;
 
+    // Step 1: Validate workflow definition exists and is published
     const definition = await this.workflowQuery.findDefinitionById(workflowDefinitionId, tenantId);
     if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
     if (definition.status !== "published") {
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_DEFINITION_NOT_PUBLISHED);
     }
 
+    // Step 2: Load immutable version snapshot (states, transitions, rules)
     const snapshot = await this.workflowQuery.getVersionSnapshot(
       workflowDefinitionId,
       definition.currentVersion - 1, // currentVersion was bumped after publish
@@ -38,12 +40,14 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
     );
     if (!snapshot) throw new NotFoundException(AppErrors.DEFINITION_VERSION_NOT_FOUND);
 
+    // Step 3: Extract states from snapshot and locate the initial state
     const states = (snapshot["states"] as any[]) ?? [];
     const initialState = states.find((s) => s.isInitial === true);
     if (!initialState) {
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_INITIAL_STATE_REQUIRED);
     }
 
+    // Step 4: Create the workflow instance entity using the initial state and payload
     const instance = this.instanceRepo.create({
       tenantId,
       workflowDefinitionId,
@@ -56,8 +60,10 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
       createdBy: actor.sub,
     });
 
+    // Step 5: Persist the new instance in the database
     const saved = await this.instanceRepo.save(instance);
 
+    // Step 6: Publish a creation event so downstream consumers can audit/react
     this.publisher.publishInstanceCreated({
       eventId: generateUUID(),
       tenantId,

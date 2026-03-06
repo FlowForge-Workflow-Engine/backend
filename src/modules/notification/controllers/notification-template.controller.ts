@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -56,7 +57,7 @@ export class NotificationTemplateController {
     isArray: true,
   })
   async findAll(
-    @Body() dto: FindNotificationTemplateDto,
+    @Query() dto: FindNotificationTemplateDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<NotificationTemplateListResponseDto[]>> {
     const data = await this.templateRepository.findAllByTenant(tenantId, dto);
