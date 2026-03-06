@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsObject, IsOptional, IsUUID } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsDefined, IsNotEmpty, IsObject, IsUUID } from "class-validator";
 
 export class CreateInstanceDto {
   @ApiProperty({
@@ -12,11 +12,12 @@ export class CreateInstanceDto {
   @IsNotEmpty({ message: "Workflow definition ID is required" })
   readonly workflowDefinitionId: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: "Initial form payload for the workflow instance (JSON object)",
     example: { requestedBy: "John Doe", amount: 5000 },
+    required: true,
   })
+  @IsDefined({ message: "Payload is required" })
   @IsObject({ message: "Payload must be an object" })
-  @IsOptional()
-  readonly payload?: Record<string, unknown>;
+  readonly payload: Record<string, unknown>;
 }

@@ -2,9 +2,12 @@ import { Injectable } from "@nestjs/common";
 import {
   IWorkflowQueryContract,
   WorkflowDefinitionSummary,
+  WorkflowInstanceFormField,
+  WorkflowInstanceFormSchema,
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
 import { WorkflowVersionRepository } from "../repositories/workflow-version.repository";
+import { InstanceFormSchemaRepository } from "../repositories/instance-form-schema.repository";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
@@ -23,6 +26,7 @@ export class WorkflowQueryService implements IWorkflowQueryContract {
   constructor(
     private readonly definitionRepository: WorkflowDefinitionRepository,
     private readonly versionRepository: WorkflowVersionRepository,
+    private readonly instanceFormSchemaRepository: InstanceFormSchemaRepository,
     private readonly redis: RedisService
   ) {}
 
@@ -86,5 +90,70 @@ export class WorkflowQueryService implements IWorkflowQueryContract {
     if (!versionRecord?.snapshot) return null;
     await this.redis.set(key, versionRecord.snapshot, CacheTTL.IMMUTABLE);
     return versionRecord.snapshot;
+  }
+
+  /**
+   * Retrieves the normalized instance form schema for a workflow definition.
+   * Uses cache-aside to reduce repeated schema reads and normalization.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowInstanceFormSchema> - Normalized instance form schema
+   */
+  async getInstanceFormSchema(definitionId: string, tenantId: string): Promise<WorkflowInstanceFormSchema> {
+    const key = CacheKeys.workflowInstanceFormSchema(tenantId, definitionId);
+    const cached = await this.redis.get<WorkflowInstanceFormSchema>(key);
+    if (cached) return cached;
+
+    // Normalize stored JSON into the contract returned across module boundaries.
+    const record = await this.instanceFormSchemaRepository.findByDefinitionAndTenant(definitionId, tenantId);
+    const schema = this.normalizeInstanceFormSchema(record?.schema);
+
+    await this.redis.set(key, schema, CacheTTL.LONG);
+    return schema;
+  }
+
+  /**
+   * Normalizes persisted schema JSON into the public workflow query contract shape.
+   *
+   * @param schema - Raw schema payload from persistence
+   * @returns WorkflowInstanceFormSchema - Sanitized schema object
+   */
+  private normalizeInstanceFormSchema(
+    schema: Record<string, unknown> | null | undefined
+  ): WorkflowInstanceFormSchema {
+    // Defensively read the fields array because the stored schema is untyped JSON.
+    const rawFields = Array.isArray((schema as { fields?: unknown } | null | undefined)?.fields)
+      ? ((schema as { fields: unknown[] }).fields ?? [])
+      : [];
+
+    return {
+      fields: rawFields
+        .filter((field): field is WorkflowInstanceFormField => this.isWorkflowInstanceFormField(field))
+        .map((field) => ({
+          key: field.key,
+          type: field.type,
+          label: field.label,
+          required: field.required,
+        })),
+    };
+  }
+
+  /**
+   * Type guard for validating workflow instance form field objects.
+   *
+   * @param field - Unknown schema field candidate
+   * @returns boolean - True when the value matches WorkflowInstanceFormField shape
+   */
+  private isWorkflowInstanceFormField(field: unknown): field is WorkflowInstanceFormField {
+    if (!field || typeof field !== "object") return false;
+    const candidate = field as Partial<WorkflowInstanceFormField>;
+
+    return (
+      typeof candidate.key === "string" &&
+      typeof candidate.type === "string" &&
+      typeof candidate.label === "string" &&
+      typeof candidate.required === "boolean"
+    );
   }
 }

@@ -33,6 +33,9 @@ export const CacheKeys = {
   workflowTransitions: (tenantId: string, definitionId: string) =>
     `wf-def:${tenantId}:def:${definitionId}:transitions`,
 
+  workflowInstanceFormSchema: (tenantId: string, definitionId: string) =>
+    `wf-def:${tenantId}:def:${definitionId}:instance-form-schema`,
+
   workflowVersionSnapshot: (tenantId: string, definitionId: string, version: number) =>
     `wf-def:${tenantId}:def:${definitionId}:snapshot:v${version}`,
 

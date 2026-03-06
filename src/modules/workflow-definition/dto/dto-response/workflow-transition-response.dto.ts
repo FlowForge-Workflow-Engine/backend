@@ -79,7 +79,7 @@ export class WorkflowTransitionRuleResponseDto {
   ruleName: string;
 
   @ApiProperty({
-    example: { all: [{ fact: "amount", operator: "lessThanInclusive", value: 10000 }] },
+    example: { all: [{ fact: "payload", path: "$.amount", operator: "greaterThan", value: 10000 }] },
     description: "json-rules-engine conditions AST",
   })
   ruleDefinition: Record<string, unknown>;

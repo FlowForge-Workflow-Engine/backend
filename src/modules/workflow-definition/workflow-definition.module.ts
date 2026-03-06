@@ -19,6 +19,7 @@ import { WorkflowVersionRepository } from "./repositories/workflow-version.repos
 import { WorkflowStateRepository } from "./repositories/workflow-state.repository";
 import { WorkflowTransitionRepository } from "./repositories/workflow-transition.repository";
 import { TransitionRuleRepository } from "./repositories/transition-rule.repository";
+import { InstanceFormSchemaRepository } from "./repositories/instance-form-schema.repository";
 
 // Services
 import { WorkflowDefinitionService } from "./services/workflow-definition.service";
@@ -61,6 +62,7 @@ import { WorkflowTransitionController } from "./controllers/workflow-transition.
     WorkflowStateRepository,
     WorkflowTransitionRepository,
     TransitionRuleRepository,
+    InstanceFormSchemaRepository,
     // Publisher
     WorkflowDefinitionPublisher,
     // Services

@@ -4,6 +4,7 @@ import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import {
   IWorkflowQueryContract,
+  WorkflowInstanceFormField,
   WORKFLOW_QUERY_CONTRACT,
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { WorkflowInstanceRepository } from "../repositories/workflow-instance.repository";
@@ -32,6 +33,18 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
       throw new UnprocessableEntityException(AppErrors.WORKFLOW_DEFINITION_NOT_PUBLISHED);
     }
 
+    // Validate the incoming payload against the configured instance form schema.
+    const formSchema = await this.workflowQuery.getInstanceFormSchema(workflowDefinitionId, tenantId);
+    const missingFields = this.findMissingRequiredFields(payload, formSchema.fields);
+
+    // Return the specific required fields that are absent so the client can correct the payload.
+    if (missingFields.length > 0) {
+      throw new UnprocessableEntityException({
+        errorCode: AppErrors.WORKFLOW_INSTANCE_REQUIRED_FIELDS_MISSING,
+        missingFields,
+      });
+    }
+
     // Step 2: Load immutable version snapshot (states, transitions, rules)
     const snapshot = await this.workflowQuery.getVersionSnapshot(
       workflowDefinitionId,
@@ -54,7 +67,7 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
       definitionVersion: definition.currentVersion - 1,
       currentStateId: initialState.id,
       currentStateName: initialState.name,
-      payload: payload ?? {},
+      payload,
       status: WorkflowInstanceStatus.ACTIVE,
       version: 1,
       createdBy: actor.sub,
@@ -75,5 +88,63 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
     });
 
     return saved;
+  }
+
+  /**
+   * Collects required schema fields that are missing from the submitted payload.
+   *
+   * @param payload - Incoming workflow instance payload
+   * @param fields - Instance form schema fields to validate against
+   * @returns string[] - Missing required field keys
+   */
+  private findMissingRequiredFields(
+    payload: Record<string, unknown>,
+    fields: readonly WorkflowInstanceFormField[]
+  ): string[] {
+    return fields
+      .filter((field) => field.required)
+      .map((field) => field.key)
+      .filter((key) => this.isMissingPayloadValue(payload, key));
+  }
+
+  /**
+   * Determines whether a payload value should be treated as missing.
+   * Empty strings are considered missing in addition to null/undefined.
+   *
+   * @param payload - Incoming workflow instance payload
+   * @param key - Dot-notated field key to inspect
+   * @returns boolean - True when the payload does not contain a usable value
+   */
+  private isMissingPayloadValue(payload: Record<string, unknown>, key: string): boolean {
+    const value = this.readPayloadValue(payload, key);
+    if (value === null || value === undefined) return true;
+    if (typeof value === "string") return value.trim().length === 0;
+
+    return false;
+  }
+
+  /**
+   * Reads a nested value from the payload using a normalized dot-notated path.
+   * Supports keys written as `field`, `.field`, `$field`, or `$.field`.
+   *
+   * @param payload - Incoming workflow instance payload
+   * @param key - Raw schema field key/path
+   * @returns unknown - Resolved payload value or undefined when path is absent
+   */
+  private readPayloadValue(payload: Record<string, unknown>, key: string): unknown {
+    // Normalize schema paths into a plain dot-notated lookup key.
+    const normalizedKey = key.trim().replace(/^\$\./, "").replace(/^\$/, "").replace(/^\./, "");
+    if (!normalizedKey) {
+      return payload;
+    }
+
+    // Walk the object path segment-by-segment until the target value is found.
+    return normalizedKey.split(".").reduce<unknown>((current, segment) => {
+      if (!current || typeof current !== "object") {
+        return undefined;
+      }
+
+      return (current as Record<string, unknown>)[segment];
+    }, payload);
   }
 }

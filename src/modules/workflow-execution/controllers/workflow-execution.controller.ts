@@ -32,11 +32,7 @@ export class WorkflowExecutionController {
     @Body() dto: CreateInstanceDto,
     @CurrentUser() actor: IJwtPayload
   ): Promise<ApiResponseDto<WorkflowExecutionCreatedResponseDto>> {
-    const data = await this.executionService.createInstance(
-      dto.workflowDefinitionId,
-      dto.payload ?? {},
-      actor
-    );
+    const data = await this.executionService.createInstance(dto.workflowDefinitionId, dto.payload, actor);
     return { status: "success", data };
   }
 

@@ -29,6 +29,7 @@ import {
   WorkflowDefinitionVersionListResponseDto,
   WorkflowDefinitionVersionDetailResponseDto,
 } from "../dto/dto-response/workflow-definition-response.dto";
+import { InstanceFormSchemaResponseDto } from "../dto/dto-response/instance-form-schema-response.dto";
 
 @ApiTags("Workflow Definitions")
 @ApiBearerAuth()
@@ -71,6 +72,18 @@ export class WorkflowDefinitionController {
     @TenantId() tenantId: string
   ): Promise<ApiResponseDto<WorkflowDefinitionDetailResponseDto>> {
     const data = await this.service.findById(id, tenantId);
+    return { status: "success", data };
+  }
+
+  @Get(":id/instance-form-schema")
+  @ApiOperation({ summary: "Get the client-facing instance form schema for a workflow definition" })
+  @ApiSuccessResponse(InstanceFormSchemaResponseDto, "Workflow instance form schema retrieved successfully")
+  async getInstanceFormSchema(
+    @Param() { id }: IdParamDto,
+    @TenantId() tenantId: string
+  ): Promise<ApiResponseDto<InstanceFormSchemaResponseDto>> {
+    const schema = await this.service.getInstanceFormSchema(id, tenantId);
+    const data = InstanceFormSchemaResponseDto.fromSchema(schema);
     return { status: "success", data };
   }
 

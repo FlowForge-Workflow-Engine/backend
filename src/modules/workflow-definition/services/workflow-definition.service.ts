@@ -1,7 +1,12 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
+import {
+  WorkflowInstanceFormField,
+  WorkflowInstanceFormSchema,
+} from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
+import { InstanceFormSchemaRepository } from "../repositories/instance-form-schema.repository";
 import { WorkflowVersionService } from "./workflow-version.service";
 import { WorkflowDefinitionPublisher } from "../publishers/workflow-definition.publisher";
 import { WorkflowDefinition, WorkflowDefinitionStatus } from "../entities/workflow-definition.entity";
@@ -10,6 +15,7 @@ import { CreateWorkflowDefinitionDto } from "../dto/create-workflow-definition.d
 import { FindWorkflowDefinitionDto } from "../dto/find-workflow-definition.dto";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
+import { CacheTTL } from "../../../infra/cache-ttl";
 
 /**
  * Internal service for managing workflow definitions.
@@ -29,6 +35,7 @@ export class WorkflowDefinitionService {
 
   constructor(
     private readonly definitionRepository: WorkflowDefinitionRepository,
+    private readonly instanceFormSchemaRepository: InstanceFormSchemaRepository,
     private readonly versionService: WorkflowVersionService,
     private readonly publisher: WorkflowDefinitionPublisher,
     private readonly redis: RedisService
@@ -91,21 +98,62 @@ export class WorkflowDefinitionService {
     return definition;
   }
 
+  /**
+   * Retrieves the normalized instance form schema for a workflow definition.
+   * Uses cache-aside to avoid repeated schema reconstruction from the database record.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowInstanceFormSchema> - Normalized instance form schema
+   */
+  async getInstanceFormSchema(definitionId: string, tenantId: string): Promise<WorkflowInstanceFormSchema> {
+    // Ensure the requested definition exists before reading its form schema.
+    await this.findById(definitionId, tenantId);
+
+    const key = CacheKeys.workflowInstanceFormSchema(tenantId, definitionId);
+    const cached = await this.redis.get<WorkflowInstanceFormSchema>(key);
+    if (cached) return cached;
+
+    // Normalize persisted JSON into the contract shape expected by consumers.
+    const record = await this.instanceFormSchemaRepository.findByDefinitionAndTenant(definitionId, tenantId);
+    const schema = this.normalizeInstanceFormSchema(record?.schema);
+
+    await this.redis.set(key, schema, CacheTTL.LONG);
+    return schema;
+  }
+
+  /**
+   * Retrieves a definition together with all of its published version records.
+   *
+   * @param id - The workflow definition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<{ definition: WorkflowDefinition; versions: WorkflowDefinitionVersion[] }>
+   */
   async findVersions(
     id: string,
     tenantId: string
   ): Promise<{ definition: WorkflowDefinition; versions: WorkflowDefinitionVersion[] }> {
+    // Load the definition first so callers receive a not-found error for invalid IDs.
     const definition = await this.findById(id, tenantId);
     const versions = await this.versionService.findAllByDefinition(id, tenantId);
 
     return { definition, versions };
   }
 
+  /**
+   * Retrieves a single immutable version record for a workflow definition.
+   *
+   * @param id - The workflow definition ID
+   * @param versionNumber - Published version number to fetch
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<WorkflowDefinitionVersion> - Matching version record
+   */
   async findVersionByNumber(
     id: string,
     versionNumber: number,
     tenantId: string
   ): Promise<WorkflowDefinitionVersion> {
+    // Reuse definition existence validation before querying a specific version number.
     await this.findById(id, tenantId);
     return this.versionService.findByDefinitionAndVersion(id, versionNumber, tenantId);
   }
@@ -197,5 +245,50 @@ export class WorkflowDefinitionService {
 
     this.logger.log(`WorkflowDefinition deprecated: ${id} by ${deprecatedBy}`);
     return saved;
+  }
+
+  /**
+   * Normalizes persisted schema JSON into a well-typed instance form schema object.
+   * Filters out malformed fields before returning the result.
+   *
+   * @param schema - Raw schema payload stored in the database
+   * @returns WorkflowInstanceFormSchema - Sanitized schema object
+   */
+  private normalizeInstanceFormSchema(
+    schema: Record<string, unknown> | null | undefined
+  ): WorkflowInstanceFormSchema {
+    // Extract the raw fields array defensively because the stored schema is untyped JSON.
+    const rawFields = Array.isArray((schema as { fields?: unknown } | null | undefined)?.fields)
+      ? ((schema as { fields: unknown[] }).fields ?? [])
+      : [];
+
+    return {
+      fields: rawFields
+        .filter((field): field is WorkflowInstanceFormField => this.isWorkflowInstanceFormField(field))
+        .map((field) => ({
+          key: field.key,
+          type: field.type,
+          label: field.label,
+          required: field.required,
+        })),
+    };
+  }
+
+  /**
+   * Type guard for validating a raw schema field candidate.
+   *
+   * @param field - Unknown value from persisted schema JSON
+   * @returns boolean - True when the value matches WorkflowInstanceFormField shape
+   */
+  private isWorkflowInstanceFormField(field: unknown): field is WorkflowInstanceFormField {
+    if (!field || typeof field !== "object") return false;
+    const candidate = field as Partial<WorkflowInstanceFormField>;
+
+    return (
+      typeof candidate.key === "string" &&
+      typeof candidate.type === "string" &&
+      typeof candidate.label === "string" &&
+      typeof candidate.required === "boolean"
+    );
   }
 }
