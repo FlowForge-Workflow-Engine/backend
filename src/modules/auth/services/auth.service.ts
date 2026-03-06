@@ -69,11 +69,12 @@ export class AuthService {
     // Reload with roles for JWT payload
     const userWithRoles = await this.userRepository.findByIdWithRoles(user.id, tenantId);
     const roles = userWithRoles?.userRoles?.map((ur) => ur.role?.name).filter(Boolean) ?? [];
+    const roleIds = userWithRoles?.userRoles?.map((ur) => ur.roleId).filter(Boolean) ?? [];
 
     user.lastLoginAt = new Date();
     await this.userRepository.save(user);
 
-    return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, roles);
+    return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, roles, roleIds);
   }
 
   /**
@@ -102,13 +103,15 @@ export class AuthService {
     }
 
     const roles = userWithRoles.userRoles?.map((ur) => ur.role?.name).filter(Boolean) ?? [];
+    const roleIds = userWithRoles.userRoles?.map((ur) => ur.roleId).filter(Boolean) ?? [];
 
     return this.issueTokenPair(
       stored.userId,
       userWithRoles.email,
       userWithRoles.firstName,
       stored.tenantId,
-      roles
+      roles,
+      roleIds
     );
   }
 
@@ -137,6 +140,7 @@ export class AuthService {
    * @param firstName - The user first name to include in the token payload
    * @param tenantId - The tenant ID for multi-tenancy isolation
    * @param roles - Array of role names assigned to the user
+   * @param roleIds - Array of role IDs assigned to the user
    * @returns Promise<AuthTokens> - Access token (JWT) and refresh token (opaque)
    */
   async issueTokenPair(
@@ -144,7 +148,8 @@ export class AuthService {
     email: string,
     firstName: string,
     tenantId: string,
-    roles: string[]
+    roles: string[],
+    roleIds: string[]
   ): Promise<AuthTokens> {
     const payload: IJwtPayload = {
       sub: userId,
@@ -153,6 +158,7 @@ export class AuthService {
       tenantId,
       tenantSlug: "", // populated by middleware in future phase
       roles,
+      roleIds,
       plan: "", // populated by TenantQueryContract in future phase
     };
 

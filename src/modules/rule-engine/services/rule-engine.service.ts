@@ -60,6 +60,8 @@ export class RuleEngineService implements IRuleEngineContract {
       }
     }
 
+    console.log({ failedRules });
+
     return {
       passed: failedRules.length === 0,
       failedRules,

@@ -9,6 +9,8 @@ export interface IJwtPayload {
   readonly tenantSlug: string;
   /** Assigned role names */
   readonly roles: string[];
+  /** Assigned role IDs */
+  readonly roleIds: string[];
   /** Tenant plan */
   readonly plan: string;
   /** User first name */

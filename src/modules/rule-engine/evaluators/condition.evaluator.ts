@@ -28,6 +28,9 @@ export class ConditionEvaluator {
 
     const sorted = [...rules].sort((a, b) => (a.evaluationOrder ?? 0) - (b.evaluationOrder ?? 0));
 
+    console.log({ sortedRules: sorted });
+    console.log({ facts });
+
     for (const rule of sorted) {
       const ruleProps: RuleProperties = {
         name: rule.ruleName,
@@ -59,6 +62,9 @@ export class ConditionEvaluator {
 
   private getConditions(rule: RuleDefinition): Record<string, unknown> {
     const definition = rule.ruleDefinition;
+
+    console.log("Rule Definition");
+    console.log(definition);
 
     if (this.isCustomRuleDefinition(definition)) {
       throw new Error(

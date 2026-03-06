@@ -29,7 +29,7 @@ export class GetAllowedTransitionsHandler implements IQueryHandler<
   ) {}
 
   async execute(query: GetAllowedTransitionsQuery): Promise<GetAllowedTransitionsResult> {
-    const { instanceId, tenantId, userRoles } = query;
+    const { instanceId, tenantId, userRoleIds } = query;
 
     // Step 1: Load the instance and ensure it exists and is still active
     const instance = await this.instanceRepo.findByIdAndTenant(instanceId, tenantId);
@@ -74,7 +74,7 @@ export class GetAllowedTransitionsHandler implements IQueryHandler<
     // Step 6: Filter the cached transition set by the current user's roles
     return (allTransitions as (AllowedTransition & { allowedRoleIds?: string[] })[]).filter((t) => {
       const allowedRoleIds = t.allowedRoleIds ?? [];
-      return allowedRoleIds.length === 0 || allowedRoleIds.some((r) => userRoles.includes(r));
+      return allowedRoleIds.length === 0 || allowedRoleIds.some((roleId) => userRoleIds.includes(roleId));
     });
   }
 }

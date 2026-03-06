@@ -137,15 +137,15 @@ export class WorkflowExecutionService {
    *
    * @param instanceId - The workflow instance ID
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @param userRoles - Array of role IDs the user has
+   * @param userRoleIds - Array of role IDs the user has
    * @returns Promise<GetAllowedTransitionsResult> - Array of allowed transitions with metadata
    * @throws NotFoundException - If instance not found
    */
   getAllowedTransitions(
     instanceId: string,
     tenantId: string,
-    userRoles: string[]
+    userRoleIds: string[]
   ): Promise<GetAllowedTransitionsResult> {
-    return this.queryBus.execute(new GetAllowedTransitionsQuery(instanceId, tenantId, userRoles));
+    return this.queryBus.execute(new GetAllowedTransitionsQuery(instanceId, tenantId, userRoleIds));
   }
 }

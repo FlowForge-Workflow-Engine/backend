@@ -66,7 +66,7 @@ export class WorkflowExecutionController {
     @Param() { id }: IdParamDto,
     @CurrentUser() actor: IJwtPayload
   ): Promise<unknown> {
-    return this.executionService.getAllowedTransitions(id, actor.tenantId, actor.roles);
+    return this.executionService.getAllowedTransitions(id, actor.tenantId, actor.roleIds);
   }
 
   @Post(":id/transitions")

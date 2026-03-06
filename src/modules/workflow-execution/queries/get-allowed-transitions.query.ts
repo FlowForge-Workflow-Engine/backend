@@ -12,8 +12,8 @@ export class GetAllowedTransitionsQuery implements IQuery {
   constructor(
     public readonly instanceId: string,
     public readonly tenantId: string,
-    /** Role names from the actor's JWT payload */
-    public readonly userRoles: string[]
+    /** Role IDs from the actor's JWT payload */
+    public readonly userRoleIds: string[]
   ) {}
 }
 

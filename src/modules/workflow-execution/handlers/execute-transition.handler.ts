@@ -87,7 +87,8 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
     const allowedRoleIds = Array.isArray(transition.allowedRoleIds)
       ? (transition.allowedRoleIds as string[])
       : [];
-    const hasRole = allowedRoleIds.length === 0 || actor.roles.some((r) => allowedRoleIds.includes(r));
+    const hasRole =
+      allowedRoleIds.length === 0 || actor.roleIds.some((roleId) => allowedRoleIds.includes(roleId));
     if (!hasRole) throw new ForbiddenException(AppErrors.TRANSITION_ROLE_FORBIDDEN);
 
     // Step 5: Enforce comment requirement for transitions that demand user justification

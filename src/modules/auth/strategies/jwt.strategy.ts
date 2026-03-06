@@ -10,6 +10,7 @@ import { UserRepository } from "../repositories/user.repository";
 
 interface CachedJwtUser {
   isActive: boolean;
+  roleIds: string[];
 }
 
 /**
@@ -37,6 +38,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
   /**
    * Called by Passport after the token signature is verified.
    * Checks user active status via Redis cache (falls back to DB on miss).
+   * Also backfills role IDs for older tokens that were issued before roleIds
+   * became part of the JWT payload.
    * Return value is attached to req.user.
    */
   async validate(payload: IJwtPayload): Promise<IJwtPayload> {
@@ -47,10 +50,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
     const cacheKey = CacheKeys.jwtUser(payload.tenantId, payload.sub);
     let cached = await this.redis.get<CachedJwtUser>(cacheKey);
 
-    if (!cached) {
-      const user = await this.userRepository.findByIdAndTenant(payload.sub, payload.tenantId);
+    if (!cached || !Array.isArray(cached.roleIds)) {
+      const user = await this.userRepository.findByIdAndTenantWithRoles(payload.sub, payload.tenantId);
       if (!user) throw new UnauthorizedException("User not found");
-      cached = { isActive: user.isActive };
+      cached = {
+        isActive: user.isActive,
+        roleIds: user.userRoles?.map((ur) => ur.roleId).filter(Boolean) ?? [],
+      };
       await this.redis.set(cacheKey, cached, CacheTTL.SHORT);
     }
 
@@ -58,6 +64,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
       throw new UnauthorizedException("User account is deactivated");
     }
 
-    return payload;
+    return {
+      ...payload,
+      roleIds: Array.isArray(payload.roleIds) ? payload.roleIds : cached.roleIds,
+    };
   }
 }
