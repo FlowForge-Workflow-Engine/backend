@@ -4,6 +4,7 @@ export interface IWorkflowInstanceCreatedEvent {
   readonly instanceId: string;
   readonly performedByUserId: string;
   readonly performedByEmail: string;
+  readonly performedByRole: string;
   readonly workflowDefinitionId: string;
   readonly initialState: string;
   readonly createdByUserId: string;
@@ -60,6 +61,8 @@ export interface IWorkflowDefinitionPublishedEvent {
   readonly definitionId: string;
   readonly versionNumber: number;
   readonly publishedByUserId: string;
+  readonly publishedByEmail: string;
+  readonly publishedByRole: string;
   readonly occurredAt: string;
 }
 

@@ -5,6 +5,7 @@ import {
   WorkflowInstanceFormSchema,
 } from "@app/shared/interfaces/contracts/workflow-query.contract";
 import { generateUUID } from "@app/shared/utils/uuid.util";
+import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
 import { InstanceFormSchemaRepository } from "../repositories/instance-form-schema.repository";
 import { WorkflowVersionService } from "./workflow-version.service";
@@ -193,19 +194,19 @@ export class WorkflowDefinitionService {
    *
    * @param id - The workflow definition ID to publish
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @param publishedBy - The user ID who published the definition
+   * @param actor - The user ID who published the definition
    * @returns Promise<WorkflowDefinitionVersion> - The created version record
    * @throws NotFoundException - If definition not found
    * @throws BadRequestException - If definition is DEPRECATED
    */
-  async publish(id: string, tenantId: string, publishedBy: string): Promise<WorkflowDefinitionVersion> {
+  async publish(id: string, tenantId: string, actor: IJwtPayload): Promise<WorkflowDefinitionVersion> {
     const definition = await this.findById(id, tenantId);
 
     if (definition.status === WorkflowDefinitionStatus.DEPRECATED) {
       throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
     }
 
-    return this.versionService.publish(definition, publishedBy);
+    return this.versionService.publish(definition, actor);
   }
 
   /**

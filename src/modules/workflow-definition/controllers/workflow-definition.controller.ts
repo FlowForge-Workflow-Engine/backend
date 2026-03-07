@@ -135,7 +135,7 @@ export class WorkflowDefinitionController {
     @TenantId() tenantId: string,
     @CurrentUser() actor: IJwtPayload
   ): Promise<ApiResponseDto<WorkflowDefinitionPublishedResponseDto>> {
-    const data = await this.service.publish(id, tenantId, actor.sub);
+    const data = await this.service.publish(id, tenantId, actor);
     return { status: "success", data };
   }
 

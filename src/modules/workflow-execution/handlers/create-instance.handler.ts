@@ -83,6 +83,7 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
       instanceId: saved.id,
       performedByUserId: actor.sub,
       performedByEmail: actor.email,
+      performedByRole: actor.roles[0] ?? "",
       workflowDefinitionId,
       initialState: initialState.name,
       createdByUserId: actor.sub,

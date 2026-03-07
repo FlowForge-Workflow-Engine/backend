@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
+import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
 import { WorkflowStateRepository } from "../repositories/workflow-state.repository";
 import { WorkflowTransitionRepository } from "../repositories/workflow-transition.repository";
@@ -74,10 +75,10 @@ export class WorkflowVersionService {
    * WorkflowExecutionModule uses snapshots to execute workflow instances.
    *
    * @param definition - The workflow definition to publish
-   * @param publishedBy - The user ID who published the definition
+   * @param actor - The user ID who published the definition
    * @returns Promise<WorkflowDefinitionVersion> - The created version record with snapshot
    */
-  async publish(definition: WorkflowDefinition, publishedBy: string): Promise<WorkflowDefinitionVersion> {
+  async publish(definition: WorkflowDefinition, actor: IJwtPayload): Promise<WorkflowDefinitionVersion> {
     const tenantId = definition.tenantId;
     const states = await this.stateRepository.findByDefinitionAndTenant(definition.id, tenantId);
     const transitions = await this.transitionRepository.findByDefinitionAndTenant(definition.id, tenantId);
@@ -127,7 +128,7 @@ export class WorkflowVersionService {
       versionNumber: currentVersion,
       snapshot,
       isActive: true,
-      publishedBy,
+      publishedBy: actor.sub,
       publishedAt: new Date(),
     });
     const saved = await this.versionRepository.save(version);
@@ -150,7 +151,9 @@ export class WorkflowVersionService {
       tenantId,
       definitionId: definition.id,
       versionNumber: currentVersion,
-      publishedByUserId: publishedBy,
+      publishedByUserId: actor.sub,
+      publishedByEmail: actor.email,
+      publishedByRole: actor.roles[0] ?? "",
       occurredAt: new Date().toISOString(),
     });
 
