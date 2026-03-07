@@ -1,42 +1,29 @@
+import { MailerService } from "@nestjs-modules/mailer";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import * as nodemailer from "nodemailer";
-import * as Handlebars from "handlebars";
 import { NotificationTemplate } from "../entities/notification-template.entity";
 import { NotificationLogRepository } from "../repositories/notification-log.repository";
 import { NotificationStatus } from "../entities/notification-log.entity";
 
 /**
  * Service for sending email notifications.
- * Renders Handlebars templates with context data, sends emails via SMTP/SES,
+ * Renders Pug templates through Nest MailerModule, sends emails via SMTP,
  * and logs all notification attempts with their delivery status.
  * Integrates with NotificationSubscriber to handle workflow events.
  */
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
-  private readonly transporter: nodemailer.Transporter;
 
   constructor(
     private readonly notificationLogRepository: NotificationLogRepository,
-    private readonly configService: ConfigService
-  ) {
-    this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>("SMTP_HOST", "smtp.mailhog.local"),
-      port: this.configService.get<number>("SMTP_PORT", 1025),
-      secure: this.configService.get<boolean>("SMTP_SECURE", false),
-      auth: this.configService.get<string>("SMTP_USER")
-        ? {
-            user: this.configService.get<string>("SMTP_USER"),
-            pass: this.configService.get<string>("SMTP_PASS"),
-          }
-        : undefined,
-    });
-  }
+    private readonly configService: ConfigService,
+    private readonly mailerService: MailerService
+  ) {}
 
   /**
    * Sends an email notification using a template.
-   * Renders Handlebars template with provided context, sends via SMTP, and logs the attempt.
+   * Renders the configured Pug body template, sends via SMTP, and logs the attempt.
    * Creates a notification log entry before sending and updates status after completion.
    * Purpose: keep subscriber-triggered notification log writes tenant-safe by re-entering DB context per write.
    * Gracefully handles failures by logging them without throwing.
@@ -66,14 +53,15 @@ export class NotificationService {
     });
 
     try {
-      const subjectFn = Handlebars.compile(template.subjectTemplate ?? "");
-      const bodyFn = Handlebars.compile(template.bodyTemplate);
+      const subject = this.renderSubject(template.subjectTemplate, context);
 
-      await this.transporter.sendMail({
-        from: this.configService.get<string>("SMTP_FROM", "noreply@workflow-engine.local"),
+      await this.mailerService.sendMail({
+        from: this.resolveFromAddress(),
         to: recipientEmail,
-        subject: subjectFn(context),
-        html: bodyFn(context),
+        subject,
+        // Reuse the persisted bodyTemplate field as the Pug template name/path for this notification.
+        template: this.normalizeTemplateName(template.bodyTemplate),
+        context,
       });
 
       // Re-enter tenant DB context for the status update because this runs after the SMTP call.
@@ -95,5 +83,51 @@ export class NotificationService {
       );
       this.logger.error(`Email failed to ${recipientEmail} [logId=${log.id}]: ${message}`);
     }
+  }
+
+  /**
+   * Purpose: resolve the sender address from the email-specific env names first, then the SMTP fallbacks.
+   */
+  private resolveFromAddress(): string {
+    return (
+      this.configService.get<string>("EMAIL_FROM") ??
+      this.configService.get<string>("SMTP_FROM", "noreply@workflow-engine.com")
+    );
+  }
+
+  /**
+   * Purpose: render the persisted subject template while keeping Pug exclusively responsible for the email body.
+   * Supports lightweight {{path.to.value}} interpolation for subjects without introducing a second body engine.
+   */
+  private renderSubject(
+    subjectTemplate: string | null | undefined,
+    context: Record<string, unknown>
+  ): string {
+    const source = subjectTemplate?.trim() || "Workflow notification";
+
+    return source.replace(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g, (_match, token: string) => {
+      const value = this.readContextPath(context, token);
+      return value == null ? "" : String(value);
+    });
+  }
+
+  /**
+   * Purpose: normalize stored template names so API callers can send either "name" or "name.pug".
+   */
+  private normalizeTemplateName(templateName: string): string {
+    return templateName.replace(/\.pug$/i, "").trim();
+  }
+
+  /**
+   * Purpose: support dot-path lookups for subject interpolation tokens such as {{instancePayload.requestId}}.
+   */
+  private readContextPath(context: Record<string, unknown>, path: string): unknown {
+    return path.split(".").reduce<unknown>((current, segment) => {
+      if (!current || typeof current !== "object" || !(segment in (current as Record<string, unknown>))) {
+        return undefined;
+      }
+
+      return (current as Record<string, unknown>)[segment];
+    }, context);
   }
 }

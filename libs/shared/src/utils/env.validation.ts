@@ -61,12 +61,12 @@ export const envSchema = Joi.object({
   EMAIL_PORT: Joi.number().required(),
 
   // Alternative SMTP Configuration (optional)
-  SMTP_HOST: Joi.string().optional(),
-  SMTP_PORT: Joi.number().optional(),
-  SMTP_SECURE: Joi.boolean().default(false),
-  SMTP_USER: Joi.string().optional(),
-  SMTP_PASS: Joi.string().optional(),
-  SMTP_FROM: Joi.string().email().default("noreply@workflow-engine.local"),
+  // SMTP_HOST: Joi.string().optional(),
+  // SMTP_PORT: Joi.number().optional(),
+  // SMTP_SECURE: Joi.boolean().default(false),
+  // SMTP_USER: Joi.string().optional(),
+  // SMTP_PASS: Joi.string().optional(),
+  // SMTP_FROM: Joi.string().email().default("noreply@workflow-engine.local"),
 
   // =============================================================================
   // NATS MESSAGE BROKER

@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { NotificationChannel } from "../../entities/notification-template.entity";
+import { NotificationEventTrigger } from "../../constants/notification-event-trigger.enum";
 
 /**
  * Notification Template Response DTO
@@ -13,10 +14,11 @@ export class NotificationTemplateResponseDto {
   tenantId: string;
 
   @ApiProperty({
-    example: "workflow-execution.transition.completed",
-    description: "NATS event name that triggers this notification",
+    enum: NotificationEventTrigger,
+    example: NotificationEventTrigger.WORKFLOW_TRANSITION_COMPLETED,
+    description: "Supported workflow event that triggers this notification",
   })
-  eventTrigger: string;
+  eventTrigger: NotificationEventTrigger;
 
   @ApiProperty({
     enum: NotificationChannel,
@@ -26,15 +28,15 @@ export class NotificationTemplateResponseDto {
   channel: NotificationChannel;
 
   @ApiProperty({
-    example: "Your request {{requestId}} has been approved",
-    description: "Handlebars subject template (null for webhook channel)",
+    example: "Workflow moved to {{toState}}",
+    description: "Email subject template with lightweight token interpolation (null for webhook channel)",
     nullable: true,
   })
   subjectTemplate: string | null;
 
   @ApiProperty({
-    example: "Hello {{name}}, your workflow has transitioned to {{state}}.",
-    description: "Handlebars body template or webhook payload JSON",
+    example: "workflow-transition-completed",
+    description: "Pug template file name/path for email notifications or webhook payload template content",
   })
   bodyTemplate: string;
 

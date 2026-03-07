@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Workflow instance cancelled
+  body(style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;")
+    h2(style="margin-bottom: 12px;") Workflow instance cancelled
+    p Hello,
+    p A workflow instance has been cancelled.
+    ul
+      li
+        strong Instance ID:
+        |  #{instanceId || 'N/A'}
+      li
+        strong Workflow Definition ID:
+        |  #{workflowDefinitionId || 'N/A'}
+      li
+        strong Cancelled By:
+        |  #{performedByEmail || 'N/A'}
+      li
+        strong Occurred At:
+        |  #{occurredAt || 'N/A'}
+    p(style="margin-top: 16px;") Regards,
+    p Workflow Engine

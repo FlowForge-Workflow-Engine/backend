@@ -1,6 +1,5 @@
 import { Controller, Logger } from "@nestjs/common";
 import { EventPattern, Payload } from "@nestjs/microservices";
-import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IWorkflowInstanceCreatedEvent,
   IWorkflowTransitionCompletedEvent,
@@ -16,6 +15,7 @@ import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
 import { WebhookConfig } from "../entities/webhook-config.entity";
+import { NotificationEventTrigger } from "../constants/notification-event-trigger.enum";
 
 @Controller()
 export class NotificationSubscriber {
@@ -29,43 +29,42 @@ export class NotificationSubscriber {
     private readonly redis: RedisService
   ) {}
 
-  @EventPattern(NatsEvents.WORKFLOW_INSTANCE_CREATED)
+  @EventPattern(NotificationEventTrigger.WORKFLOW_INSTANCE_CREATED)
   async onInstanceCreated(@Payload() data: IWorkflowInstanceCreatedEvent): Promise<void> {
-    await this.dispatch(NatsEvents.WORKFLOW_INSTANCE_CREATED, data.tenantId, { ...data } as Record<
-      string,
-      unknown
-    >);
+    await this.dispatch(NotificationEventTrigger.WORKFLOW_INSTANCE_CREATED, data.tenantId, {
+      ...data,
+    } as Record<string, unknown>);
   }
 
-  @EventPattern(NatsEvents.WORKFLOW_TRANSITION_COMPLETED)
+  @EventPattern(NotificationEventTrigger.WORKFLOW_TRANSITION_COMPLETED)
   async onTransitionCompleted(@Payload() data: IWorkflowTransitionCompletedEvent): Promise<void> {
-    await this.dispatch(NatsEvents.WORKFLOW_TRANSITION_COMPLETED, data.tenantId, { ...data } as Record<
-      string,
-      unknown
-    >);
+    await this.dispatch(NotificationEventTrigger.WORKFLOW_TRANSITION_COMPLETED, data.tenantId, {
+      ...data,
+    } as Record<string, unknown>);
   }
 
-  @EventPattern(NatsEvents.WORKFLOW_INSTANCE_COMPLETED)
+  @EventPattern(NotificationEventTrigger.WORKFLOW_INSTANCE_COMPLETED)
   async onInstanceCompleted(@Payload() data: IWorkflowInstanceCompletedEvent): Promise<void> {
-    await this.dispatch(NatsEvents.WORKFLOW_INSTANCE_COMPLETED, data.tenantId, { ...data } as Record<
-      string,
-      unknown
-    >);
+    await this.dispatch(NotificationEventTrigger.WORKFLOW_INSTANCE_COMPLETED, data.tenantId, {
+      ...data,
+    } as Record<string, unknown>);
   }
 
-  @EventPattern(NatsEvents.WORKFLOW_INSTANCE_CANCELLED)
+  @EventPattern(NotificationEventTrigger.WORKFLOW_INSTANCE_CANCELLED)
   async onInstanceCancelled(@Payload() data: IWorkflowInstanceCancelledEvent): Promise<void> {
-    await this.dispatch(NatsEvents.WORKFLOW_INSTANCE_CANCELLED, data.tenantId, { ...data } as Record<
-      string,
-      unknown
-    >);
+    await this.dispatch(NotificationEventTrigger.WORKFLOW_INSTANCE_CANCELLED, data.tenantId, {
+      ...data,
+    } as Record<string, unknown>);
   }
 
   /**
    * Cache-aside lookup: retrieve templates for an event trigger.
    * TTL is MEDIUM since templates change infrequently but we want reasonably fresh data.
    */
-  private async getTemplatesForEvent(eventName: string, tenantId: string): Promise<NotificationTemplate[]> {
+  private async getTemplatesForEvent(
+    eventName: NotificationEventTrigger,
+    tenantId: string
+  ): Promise<NotificationTemplate[]> {
     const cacheKey = CacheKeys.notifTemplates(tenantId, eventName);
     const cached = await this.redis.get<NotificationTemplate[]>(cacheKey);
     if (cached) return cached;
@@ -79,7 +78,10 @@ export class NotificationSubscriber {
    * Cache-aside lookup: retrieve webhook configs for an event name.
    * TTL is MEDIUM since webhook configs change infrequently.
    */
-  private async getActiveWebhooks(eventName: string, tenantId: string): Promise<WebhookConfig[]> {
+  private async getActiveWebhooks(
+    eventName: NotificationEventTrigger,
+    tenantId: string
+  ): Promise<WebhookConfig[]> {
     const cacheKey = CacheKeys.notifWebhooks(tenantId, eventName);
     const cached = await this.redis.get<WebhookConfig[]>(cacheKey);
     if (cached) return cached;
@@ -94,7 +96,7 @@ export class NotificationSubscriber {
    * then dispatches notifications in parallel (fire-and-forget per handler).
    */
   private async dispatch(
-    eventName: string,
+    eventName: NotificationEventTrigger,
     tenantId: string,
     context: Record<string, unknown>
   ): Promise<void> {
@@ -107,16 +109,19 @@ export class NotificationSubscriber {
       const emailTemplates = templates.filter((t) => t.channel === NotificationChannel.EMAIL);
       const webhookTemplates = templates.filter((t) => t.channel === NotificationChannel.WEBHOOK);
 
-      // Email notifications — recipient email extracted from context best-effort
-      const recipientEmail = (context["performedByEmail"] as string | undefined) ?? "";
+      // Email notifications — resolve the best available recipient details from the event payload.
+      const recipientEmail = this.extractRecipientEmail(context);
+      const recipientUserId = this.extractRecipientUserId(context);
 
       for (const template of emailTemplates) {
         if (!recipientEmail) {
-          this.logger.warn(`Skipping email template [id=${template.id}] — no recipientEmail in context`);
+          this.logger.warn(
+            `Skipping email template [id=${template.id}] — no recipientEmail available for ${eventName}`
+          );
           continue;
         }
         this.notificationService
-          .sendEmail(template, recipientEmail, null, tenantId, context)
+          .sendEmail(template, recipientEmail, recipientUserId, tenantId, { ...context, eventName })
           .catch((err) => this.logger.error("sendEmail error", err));
       }
 
@@ -134,5 +139,41 @@ export class NotificationSubscriber {
     } catch (err) {
       this.logger.error(`NotificationSubscriber.dispatch failed [event=${eventName}]`, err);
     }
+  }
+
+  /**
+   * Purpose: resolve a recipient email from the workflow event payload without coupling this module to upstream handler internals.
+   */
+  private extractRecipientEmail(context: Record<string, unknown>): string | null {
+    const candidates = [
+      context["performedByEmail"],
+      context["createdByEmail"],
+      context["cancelledByEmail"],
+      context["actorEmail"],
+    ];
+
+    for (const value of candidates) {
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+
+    return null;
+  }
+
+  /**
+   * Purpose: capture the best available recipient user ID for notification log traceability when the event payload includes one.
+   */
+  private extractRecipientUserId(context: Record<string, unknown>): string | null {
+    const candidates = [
+      context["performedByUserId"],
+      context["createdByUserId"],
+      context["cancelledByUserId"],
+      context["actorId"],
+    ];
+
+    for (const value of candidates) {
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+
+    return null;
   }
 }

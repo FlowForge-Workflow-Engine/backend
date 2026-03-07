@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
 import { DataSource, Repository } from "typeorm";
 import { NotificationTemplate } from "../entities/notification-template.entity";
+import { NotificationEventTrigger } from "../constants/notification-event-trigger.enum";
 
 @Injectable()
 export class NotificationTemplateRepository {
@@ -35,7 +36,10 @@ export class NotificationTemplateRepository {
    * Purpose: load active templates for NATS-triggered notifications inside a tenant-scoped DB transaction.
    * Returns all active templates for a given NATS event trigger, scoped to a tenant.
    */
-  async findActiveByEventTrigger(eventTrigger: string, tenantId: string): Promise<NotificationTemplate[]> {
+  async findActiveByEventTrigger(
+    eventTrigger: NotificationEventTrigger,
+    tenantId: string
+  ): Promise<NotificationTemplate[]> {
     return this.withTenantReadScope(tenantId, async (repo) => {
       return repo.find({ where: { eventTrigger, tenantId, isActive: true } });
     });

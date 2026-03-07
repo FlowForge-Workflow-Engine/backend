@@ -1,5 +1,6 @@
 import { Column, Entity } from "typeorm";
 import { BaseEntity } from "@app/shared/entities/base.entity";
+import { NotificationEventTrigger } from "../constants/notification-event-trigger.enum";
 
 export enum NotificationChannel {
   EMAIL = "email",
@@ -8,9 +9,9 @@ export enum NotificationChannel {
 
 @Entity("notification_templates")
 export class NotificationTemplate extends BaseEntity {
-  /** The NATS event name that triggers this notification (e.g. "workflow-execution.transition.completed") - defines when notification fires */
+  /** Supported workflow event that triggers this notification - kept selective so template creation matches current subscriber coverage. */
   @Column({ type: "varchar", length: 100, name: "event_trigger" })
-  eventTrigger: string;
+  eventTrigger: NotificationEventTrigger;
 
   /** Delivery channel for the notification - determines how notification is sent */
   @Column({
@@ -20,11 +21,11 @@ export class NotificationTemplate extends BaseEntity {
   })
   channel: NotificationChannel;
 
-  /** Handlebars template for email subject — null for webhook channel - customizes email subject line */
+  /** Subject text template for email notifications — supports lightweight {{token}} interpolation and is null for webhook channel. */
   @Column({ type: "text", name: "subject_template", nullable: true, default: null })
   subjectTemplate: string | null;
 
-  /** Handlebars template for email body or webhook payload JSON - defines notification content */
+  /** Pug template name/path for email body rendering or raw payload template content for webhook channel. */
   @Column({ type: "text", name: "body_template" })
   bodyTemplate: string;
 

@@ -2,21 +2,25 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 import { NotificationChannel } from "../entities/notification-template.entity";
+import { NotificationEventTrigger } from "../constants/notification-event-trigger.enum";
 
 export class CreateNotificationTemplateDto {
   @ApiProperty({
-    example: "workflow-execution.transition.completed",
-    description: "NATS event name that triggers this notification (1-100 characters)",
+    enum: NotificationEventTrigger,
+    example: NotificationEventTrigger.WORKFLOW_TRANSITION_COMPLETED,
+    description: "Supported workflow event that triggers this notification",
     minLength: 1,
     maxLength: 100,
     required: true,
   })
   @MaxLength(100, { message: "Event trigger must not exceed 100 characters" })
   @MinLength(1, { message: "Event trigger must be at least 1 character long" })
-  @IsString({ message: "Event trigger must be a string" })
+  @IsEnum(NotificationEventTrigger, {
+    message: `Event trigger must be one of: ${Object.values(NotificationEventTrigger).join(", ")}`,
+  })
   @IsNotEmpty({ message: "Event trigger is required" })
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
-  readonly eventTrigger: string;
+  readonly eventTrigger: NotificationEventTrigger;
 
   @ApiProperty({
     enum: NotificationChannel,
@@ -31,8 +35,8 @@ export class CreateNotificationTemplateDto {
   readonly channel: NotificationChannel;
 
   @ApiPropertyOptional({
-    example: "Your request has been {{action}}",
-    description: "Handlebars subject template (required for EMAIL channel, max 500 characters)",
+    example: "Workflow moved to {{toState}}",
+    description: "Email subject template with lightweight {{token}} interpolation (max 500 characters)",
     maxLength: 500,
   })
   @MaxLength(500, { message: "Subject template must not exceed 500 characters" })
@@ -42,8 +46,8 @@ export class CreateNotificationTemplateDto {
   readonly subjectTemplate?: string;
 
   @ApiProperty({
-    example: "Hello {{actorEmail}}, the transition {{transitionName}} was completed.",
-    description: "Handlebars body template or webhook payload JSON (1-5000 characters)",
+    example: "workflow-transition-completed",
+    description: "Pug template file name/path under src/modules/notification/templates (1-5000 characters)",
     minLength: 1,
     maxLength: 5000,
     required: true,

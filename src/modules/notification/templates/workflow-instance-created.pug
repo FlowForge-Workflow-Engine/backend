@@ -1,0 +1,27 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Workflow instance created
+  body(style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;")
+    h2(style="margin-bottom: 12px;") Workflow instance created
+    p Hello,
+    p A new workflow instance has been created successfully.
+    ul
+      li
+        strong Instance ID:
+        |  #{instanceId || 'N/A'}
+      li
+        strong Workflow Definition ID:
+        |  #{workflowDefinitionId || 'N/A'}
+      li
+        strong Initial State:
+        |  #{initialState || 'N/A'}
+      li
+        strong Triggered By:
+        |  #{performedByEmail || 'N/A'}
+      li
+        strong Occurred At:
+        |  #{occurredAt || 'N/A'}
+    p(style="margin-top: 16px;") Regards,
+    p Workflow Engine

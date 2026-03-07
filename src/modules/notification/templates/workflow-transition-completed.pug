@@ -1,0 +1,34 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Workflow transition completed
+  body(style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;")
+    h2(style="margin-bottom: 12px;") Workflow transition completed
+    p Hello,
+    p A workflow transition has been completed.
+    ul
+      li
+        strong Instance ID:
+        |  #{instanceId || 'N/A'}
+      li
+        strong Transition:
+        |  #{transitionName || 'N/A'}
+      li
+        strong From State:
+        |  #{fromState || 'N/A'}
+      li
+        strong To State:
+        |  #{toState || 'N/A'}
+      li
+        strong Performed By:
+        |  #{performedByEmail || 'N/A'}
+      if comment
+        li
+          strong Comment:
+          |  #{comment}
+      li
+        strong Occurred At:
+        |  #{occurredAt || 'N/A'}
+    p(style="margin-top: 16px;") Regards,
+    p Workflow Engine
