@@ -1,5 +1,5 @@
 import { Controller, Logger } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
+import { EventPattern, Payload } from "@nestjs/microservices";
 import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IWorkflowInstanceCreatedEvent,
@@ -29,7 +29,7 @@ export class NotificationSubscriber {
     private readonly redis: RedisService
   ) {}
 
-  @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CREATED)
+  @EventPattern(NatsEvents.WORKFLOW_INSTANCE_CREATED)
   async onInstanceCreated(@Payload() data: IWorkflowInstanceCreatedEvent): Promise<void> {
     await this.dispatch(NatsEvents.WORKFLOW_INSTANCE_CREATED, data.tenantId, { ...data } as Record<
       string,
@@ -37,7 +37,7 @@ export class NotificationSubscriber {
     >);
   }
 
-  @MessagePattern(NatsEvents.WORKFLOW_TRANSITION_COMPLETED)
+  @EventPattern(NatsEvents.WORKFLOW_TRANSITION_COMPLETED)
   async onTransitionCompleted(@Payload() data: IWorkflowTransitionCompletedEvent): Promise<void> {
     await this.dispatch(NatsEvents.WORKFLOW_TRANSITION_COMPLETED, data.tenantId, { ...data } as Record<
       string,
@@ -45,7 +45,7 @@ export class NotificationSubscriber {
     >);
   }
 
-  @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_COMPLETED)
+  @EventPattern(NatsEvents.WORKFLOW_INSTANCE_COMPLETED)
   async onInstanceCompleted(@Payload() data: IWorkflowInstanceCompletedEvent): Promise<void> {
     await this.dispatch(NatsEvents.WORKFLOW_INSTANCE_COMPLETED, data.tenantId, { ...data } as Record<
       string,
@@ -53,7 +53,7 @@ export class NotificationSubscriber {
     >);
   }
 
-  @MessagePattern(NatsEvents.WORKFLOW_INSTANCE_CANCELLED)
+  @EventPattern(NatsEvents.WORKFLOW_INSTANCE_CANCELLED)
   async onInstanceCancelled(@Payload() data: IWorkflowInstanceCancelledEvent): Promise<void> {
     await this.dispatch(NatsEvents.WORKFLOW_INSTANCE_CANCELLED, data.tenantId, { ...data } as Record<
       string,

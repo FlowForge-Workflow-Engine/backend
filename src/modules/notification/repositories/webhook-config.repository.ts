@@ -1,14 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { WebhookConfig } from "../entities/webhook-config.entity";
 
 @Injectable()
 export class WebhookConfigRepository {
   constructor(
     @InjectRepository(WebhookConfig)
-    private readonly repo: Repository<WebhookConfig>
+    private readonly repo: Repository<WebhookConfig>,
+    private readonly dataSource: DataSource
   ) {}
 
   findById(id: string, tenantId: string): Promise<WebhookConfig | null> {
@@ -31,17 +32,20 @@ export class WebhookConfigRepository {
   }
 
   /**
+   * Purpose: load active webhook configs for NATS dispatch inside a tenant-scoped DB transaction.
    * Returns all active webhook configs where `event_triggers` array contains
    * the given eventName, scoped to a tenant.
    * Uses PostgreSQL `= ANY(event_triggers)` syntax via raw query for array containment.
    */
-  findActiveByEventName(eventName: string, tenantId: string): Promise<WebhookConfig[]> {
-    return this.repo
-      .createQueryBuilder("wc")
-      .where("wc.tenantId = :tenantId", { tenantId })
-      .andWhere("wc.isActive = true")
-      .andWhere(":eventName = ANY(wc.eventTriggers)", { eventName })
-      .getMany();
+  async findActiveByEventName(eventName: string, tenantId: string): Promise<WebhookConfig[]> {
+    return this.withTenantReadScope(tenantId, async (repo) => {
+      return repo
+        .createQueryBuilder("wc")
+        .where("wc.tenantId = :tenantId", { tenantId })
+        .andWhere("wc.isActive = true")
+        .andWhere(":eventName = ANY(wc.eventTriggers)", { eventName })
+        .getMany();
+    });
   }
 
   insert(data: Partial<WebhookConfig>): Promise<WebhookConfig> {
@@ -56,5 +60,19 @@ export class WebhookConfigRepository {
 
   async remove(id: string, tenantId: string): Promise<void> {
     await this.repo.delete({ id, tenantId });
+  }
+
+  /**
+   * Purpose: keep subscriber-side webhook config reads on one transaction and one connection for RLS.
+   */
+  private async withTenantReadScope<T>(
+    tenantId: string,
+    fn: (repo: Repository<WebhookConfig>) => Promise<T>
+  ): Promise<T> {
+    return this.dataSource.transaction(async (manager) => {
+      // Set transaction-local tenant context before reading the RLS-protected webhook config table.
+      await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
+      return fn(manager.getRepository(WebhookConfig));
+    });
   }
 }

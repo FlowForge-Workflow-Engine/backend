@@ -38,6 +38,7 @@ export class NotificationService {
    * Sends an email notification using a template.
    * Renders Handlebars template with provided context, sends via SMTP, and logs the attempt.
    * Creates a notification log entry before sending and updates status after completion.
+   * Purpose: keep subscriber-triggered notification log writes tenant-safe by re-entering DB context per write.
    * Gracefully handles failures by logging them without throwing.
    *
    * @param template - The notification template containing subject and body templates
@@ -54,6 +55,7 @@ export class NotificationService {
     tenantId: string,
     context: Record<string, unknown>
   ): Promise<void> {
+    // Create the initial log row under a tenant-scoped DB transaction before external I/O begins.
     const log = await this.notificationLogRepository.insert({
       tenantId,
       templateId: template.id,
@@ -74,12 +76,19 @@ export class NotificationService {
         html: bodyFn(context),
       });
 
-      await this.notificationLogRepository.updateStatus(log.id, NotificationStatus.SENT, new Date());
+      // Re-enter tenant DB context for the status update because this runs after the SMTP call.
+      await this.notificationLogRepository.updateStatus(
+        log.id,
+        tenantId,
+        NotificationStatus.SENT,
+        new Date()
+      );
       this.logger.log(`Email sent to ${recipientEmail} [logId=${log.id}]`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await this.notificationLogRepository.updateStatus(
         log.id,
+        tenantId,
         NotificationStatus.FAILED,
         undefined,
         message

@@ -55,7 +55,7 @@ export class RlsContextService {
       await queryRunner.connect();
 
       // Set the tenant context that RLS policies will use
-      await queryRunner.query("SELECT set_config('app.tenant_id', $1::text, false)", [tenantId]);
+      await queryRunner.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
 
       this.logger.debug(`RLS context set: tenant_id = ${tenantId}`);
     } catch (error) {
@@ -81,7 +81,7 @@ export class RlsContextService {
       await queryRunner.connect();
 
       // Clear the tenant context - this will make RLS deny all access
-      await queryRunner.query("SELECT set_config('app.tenant_id', '', false)");
+      await queryRunner.query("SELECT set_config('app.tenant_id', '', true)");
 
       this.logger.debug("RLS context cleared - access will be denied");
     } catch (error) {

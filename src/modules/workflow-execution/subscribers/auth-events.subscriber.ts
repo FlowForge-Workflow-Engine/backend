@@ -1,5 +1,5 @@
 import { Controller, Logger, OnModuleInit } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
+import { EventPattern, Payload } from "@nestjs/microservices";
 import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
   IUserCreatedEvent,
@@ -24,7 +24,7 @@ export class AuthEventsSubscriber implements OnModuleInit {
     this.logger.log("AuthEventsSubscriber initialized — listening to auth events");
   }
 
-  @MessagePattern(NatsEvents.USER_CREATED)
+  @EventPattern(NatsEvents.USER_CREATED)
   async onUserCreated(@Payload() data: IUserCreatedEvent): Promise<void> {
     try {
       await this.shadowRepo.upsert({
@@ -42,20 +42,20 @@ export class AuthEventsSubscriber implements OnModuleInit {
     }
   }
 
-  @MessagePattern(NatsEvents.USER_DEACTIVATED)
+  @EventPattern(NatsEvents.USER_DEACTIVATED)
   async onUserDeactivated(@Payload() data: IUserDeactivatedEvent): Promise<void> {
     try {
-      await this.shadowRepo.deactivate(data.userId, new Date(data.occurredAt));
+      await this.shadowRepo.deactivate(data.userId, data.tenantId, new Date(data.occurredAt));
       this.logger.log(`Shadow synced: USER_DEACTIVATED [userId=${data.userId}]`);
     } catch (err) {
       this.logger.error(`Failed to sync USER_DEACTIVATED [userId=${data.userId}]`, err);
     }
   }
 
-  @MessagePattern(NatsEvents.USER_ROLES_UPDATED)
+  @EventPattern(NatsEvents.USER_ROLES_UPDATED)
   async onUserRolesUpdated(@Payload() data: IUserRolesUpdatedEvent): Promise<void> {
     try {
-      await this.shadowRepo.updateRoles(data.userId, data.roles, new Date(data.occurredAt));
+      await this.shadowRepo.updateRoles(data.userId, data.tenantId, data.roles, new Date(data.occurredAt));
       this.logger.log(`Shadow synced: USER_ROLES_UPDATED [userId=${data.userId}]`);
     } catch (err) {
       this.logger.error(`Failed to sync USER_ROLES_UPDATED [userId=${data.userId}]`, err);
