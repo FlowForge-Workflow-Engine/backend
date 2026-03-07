@@ -138,6 +138,7 @@ export class OnboardingService {
         savedUser.email,
         savedUser.firstName,
         tenant.id,
+        tenant.slug,
         adminRole ? ["Admin"] : [],
         adminRole ? [adminRole.id] : []
       );
@@ -225,6 +226,7 @@ export class OnboardingService {
         savedUser.email,
         savedUser.firstName,
         tenant.id,
+        tenant.slug,
         roleNames,
         requestorRole ? [requestorRole.id] : []
       );

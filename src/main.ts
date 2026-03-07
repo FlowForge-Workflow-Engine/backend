@@ -52,6 +52,7 @@ async function bootstrap() {
   const corsOptions: CorsOptions = {
     origin: [
       "http://localhost:3000",
+      "http://localhost:8000",
       // FIXME: Add Other Source URLs // Only allow requests from yourdomain.com
     ],
     methods: ["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"],
@@ -97,11 +98,22 @@ async function bootstrap() {
       contentSecurityPolicy: {
         useDefaults: true,
         directives: {
-          defaultSrc: ["'self'", "https://polyfill.io", "https://*.cloudflare.com", "http://127.0.0.1:3000/"],
+          defaultSrc: [
+            "'self'",
+            "https://polyfill.io",
+            "https://*.cloudflare.com",
+            "http://127.0.0.1:3000/",
+            "http://127.0.0.1:8000/",
+            "http://localhost:8000/",
+            "http://localhost:3000/",
+          ],
           baseUri: ["'self'"],
           scriptSrc: [
             "'self'",
             "http://127.0.0.1:3000/",
+            "http://127.0.0.1:8000/",
+            "http://localhost:8000/",
+            "http://localhost:3000/",
             "https://*.cloudflare.com",
             "https://polyfill.io",
             `https: 'unsafe-inline'`, // FIXME: use script-src CSP NONCES
@@ -127,9 +139,9 @@ async function bootstrap() {
       referrerPolicy: { policy: "no-referrer" }, // Protects against referrer leakage.
       xssFilter: true, // Enables the basic XSS protection in older browsers.
       // Configures Cross-Origin settings to strengthen resource isolation and mitigate certain side-channel attacks.
-      crossOriginEmbedderPolicy: true,
       crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-      crossOriginResourcePolicy: { policy: "same-site" },
+      crossOriginResourcePolicy: { policy: "cross-origin" }, // ← was "same-site"
+      crossOriginEmbedderPolicy: false, // ← was true, blocks cross-origin resources
       originAgentCluster: true,
     })
   );

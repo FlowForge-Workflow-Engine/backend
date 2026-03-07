@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -13,6 +14,10 @@ import { argon2hash, argon2verify } from "@app/shared/utils/hashes/argon2";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { sha256 } from "@app/shared/utils/hashes/hash";
+import {
+  TENANT_QUERY_CONTRACT,
+  ITenantQueryContract,
+} from "@app/shared/interfaces/contracts/tenant-query.contract";
 import { UserRepository } from "../repositories/user.repository";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 import { LoginDto } from "../dto/login.dto";
@@ -40,6 +45,8 @@ export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    @Inject(TENANT_QUERY_CONTRACT)
+    private readonly tenantQuery: ITenantQueryContract,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService
   ) {}
@@ -74,7 +81,9 @@ export class AuthService {
     user.lastLoginAt = new Date();
     await this.userRepository.save(user);
 
-    return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, roles, roleIds);
+    const tenant = await this.tenantQuery.findById(tenantId);
+
+    return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, tenant.slug, roles, roleIds);
   }
 
   /**
@@ -105,11 +114,14 @@ export class AuthService {
     const roles = userWithRoles.userRoles?.map((ur) => ur.role?.name).filter(Boolean) ?? [];
     const roleIds = userWithRoles.userRoles?.map((ur) => ur.roleId).filter(Boolean) ?? [];
 
+    const tenant = await this.tenantQuery.findById(stored.tenantId);
+
     return this.issueTokenPair(
       stored.userId,
       userWithRoles.email,
       userWithRoles.firstName,
       stored.tenantId,
+      tenant.slug,
       roles,
       roleIds
     );
@@ -148,6 +160,7 @@ export class AuthService {
     email: string,
     firstName: string,
     tenantId: string,
+    tenantSlug: string,
     roles: string[],
     roleIds: string[]
   ): Promise<AuthTokens> {
@@ -156,7 +169,7 @@ export class AuthService {
       email,
       firstName,
       tenantId,
-      tenantSlug: "", // populated by middleware in future phase
+      tenantSlug,
       roles,
       roleIds,
       plan: "", // populated by TenantQueryContract in future phase
