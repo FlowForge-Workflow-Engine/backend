@@ -7,6 +7,7 @@ import { connect } from "nats";
 import { USER_QUERY_CONTRACT } from "@app/shared/interfaces/contracts/user-query.contract";
 import { NATS_CLIENT } from "../../infra";
 import { TenantModule } from "../tenant/tenant.module";
+import { NotificationModule } from "../notification/notification.module";
 
 // Entities
 import { User } from "./entities/user.entity";
@@ -43,6 +44,7 @@ import { UserController } from "./controllers/user.controller";
   imports: [
     TypeOrmModule.forFeature([User, Role, Permission, UserRole, RefreshToken]),
     TenantModule,
+    NotificationModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       inject: [ConfigService],

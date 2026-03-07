@@ -3,6 +3,7 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { PugAdapter } from "@nestjs-modules/mailer/dist/adapters/pug.adapter";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { NOTIFICATION_TEMPLATE_BOOTSTRAP_CONTRACT } from "@app/shared/interfaces/contracts/notification-template-bootstrap.contract";
 import { join } from "path";
 
 // Entities
@@ -19,6 +20,7 @@ import { WebhookDeliveryLogRepository } from "./repositories/webhook-delivery-lo
 
 // Services
 import { NotificationService } from "./services/notification.service";
+import { NotificationTemplateBootstrapService } from "./services/notification-template-bootstrap.service";
 import { WebhookService } from "./services/webhook.service";
 
 // Subscriber & Controllers
@@ -77,10 +79,14 @@ import { WebhookConfigController } from "./controllers/webhook-config.controller
     WebhookDeliveryLogRepository,
     // Services
     NotificationService,
+    NotificationTemplateBootstrapService,
     WebhookService,
     // Subscriber (also a @Controller for EventPattern)
     NotificationSubscriber,
+    /** Contract binding — only this bootstrap token leaves the module boundary */
+    { provide: NOTIFICATION_TEMPLATE_BOOTSTRAP_CONTRACT, useClass: NotificationTemplateBootstrapService },
   ],
   controllers: [NotificationTemplateController, WebhookConfigController, NotificationSubscriber],
+  exports: [NOTIFICATION_TEMPLATE_BOOTSTRAP_CONTRACT],
 })
 export class NotificationModule {}

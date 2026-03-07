@@ -1,5 +1,6 @@
 export * from "./jwt-payload.interface";
 export * from "./contracts/user-query.contract";
+export * from "./contracts/notification-template-bootstrap.contract";
 export * from "./contracts/tenant-query.contract";
 export * from "./contracts/tenant-provisioning.contract";
 export * from "./contracts/workflow-query.contract";

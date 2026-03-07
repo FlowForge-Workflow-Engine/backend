@@ -13,6 +13,10 @@ import {
   ITenantProvisioningContract,
 } from "@app/shared/interfaces/contracts/tenant-provisioning.contract";
 import {
+  INotificationTemplateBootstrapContract,
+  NOTIFICATION_TEMPLATE_BOOTSTRAP_CONTRACT,
+} from "@app/shared/interfaces/contracts/notification-template-bootstrap.contract";
+import {
   TENANT_QUERY_CONTRACT,
   ITenantQueryContract,
 } from "@app/shared/interfaces/contracts/tenant-query.contract";
@@ -56,6 +60,8 @@ export class OnboardingService {
   constructor(
     @Inject(TENANT_PROVISIONING_CONTRACT)
     private readonly tenantProvisioning: ITenantProvisioningContract,
+    @Inject(NOTIFICATION_TEMPLATE_BOOTSTRAP_CONTRACT)
+    private readonly notificationTemplateBootstrap: INotificationTemplateBootstrapContract,
     @Inject(TENANT_QUERY_CONTRACT)
     private readonly tenantQuery: ITenantQueryContract,
     private readonly userRepository: UserRepository,
@@ -82,6 +88,7 @@ export class OnboardingService {
     if (!acquired) throw new ConflictException("Registration in progress — please try again");
 
     try {
+      // Provision/Create the tenant record and default settings
       const tenant = await this.tenantProvisioning.provision({
         name: dto.tenantName,
         slug: dto.tenantSlug,
@@ -121,6 +128,10 @@ export class OnboardingService {
         });
         await this.userRoleRepo.save(userRole);
       }
+
+      // Bootstrap the tenant-scoped welcome template before publishing tenant.created so the first
+      // onboarding event can be resolved immediately by NotificationSubscriber without manual setup.
+      await this.notificationTemplateBootstrap.ensureTenantCreatedWelcomeTemplate(tenant.id);
 
       // Publish tenant.created only after the founding admin exists so notification subscribers can send the
       // onboarding welcome email without making any cross-module recipient lookup.
