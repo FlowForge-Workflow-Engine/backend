@@ -240,6 +240,99 @@ export class WorkflowTransitionService {
   }
 
   /**
+   * Removes a single rule from a workflow transition.
+   * Only transitions belonging to draft workflow definitions may have rules deleted.
+   * Invalidates transition-related caches after removal.
+   *
+   * @param transitionId - The workflow transition ID
+   * @param ruleId - The transition rule ID to remove
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<void>
+   * @throws NotFoundException - If transition, definition, or rule is not found
+   * @throws BadRequestException - If the parent workflow definition is not in DRAFT status
+   */
+  async removeRule(transitionId: string, ruleId: string, tenantId: string): Promise<void> {
+    // Step 1: Load the transition to resolve its parent workflow definition.
+    const transition = await this.findById(transitionId, tenantId);
+    const definition = await this.definitionRepository.findByIdAndTenant(
+      transition.workflowDefinitionId,
+      tenantId
+    );
+
+    if (!definition) throw new NotFoundException(AppErrors.WORKFLOW_DEFINITION_NOT_FOUND);
+    if (definition.status !== WorkflowDefinitionStatus.DRAFT) {
+      throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
+    }
+
+    // Step 2: Ensure the rule exists and belongs to the target transition.
+    const rule = await this.ruleRepository.findByIdAndTenant(ruleId, tenantId);
+    if (!rule || rule.transitionId !== transitionId) {
+      throw new NotFoundException(AppErrors.TRANSITION_RULE_NOT_FOUND);
+    }
+
+    // Step 3: Remove the rule first so recomputation only sees still-active rules.
+    await this.ruleRepository.remove(rule);
+    // Rebuild the definition-level payload form schema to drop stale fields that were
+    // introduced only by the deleted rule and are no longer referenced anywhere else.
+    await this.recomputeInstanceFormSchema(transition.workflowDefinitionId, tenantId);
+    // Clear both transition and form-schema caches so subsequent reads observe the deletion.
+    await this.redis.del(
+      CacheKeys.workflowTransitions(tenantId, transition.workflowDefinitionId),
+      CacheKeys.workflowInstanceFormSchema(tenantId, transition.workflowDefinitionId)
+    );
+  }
+
+  /**
+   * Recomputes the persisted instance form schema from the payload keys still referenced
+   * by the remaining transition rules within a workflow definition.
+   *
+   * This is especially important after rule deletion so stale payload fields do not remain
+   * required for workflow instance creation when no surviving rule references them anymore.
+   *
+   * @param definitionId - The workflow definition ID
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<void>
+   */
+  private async recomputeInstanceFormSchema(definitionId: string, tenantId: string): Promise<void> {
+    // Rules are scoped to transitions, so gather all transitions under the definition first.
+    const transitions = await this.transitionRepository.findByDefinitionAndTenant(definitionId, tenantId);
+    const rulesByTransition = await Promise.all(
+      transitions.map((transition) => this.ruleRepository.findByTransitionId(transition.id, tenantId))
+    );
+    const remainingRules = rulesByTransition.flat();
+
+    const referencedPayloadKeys = new Set<string>();
+    for (const remainingRule of remainingRules) {
+      // Reuse the same payload-path extraction logic used during rule creation validation.
+      for (const key of this.collectPayloadSchemaFieldKeys(remainingRule.ruleDefinition)) {
+        referencedPayloadKeys.add(key);
+      }
+    }
+
+    const existing = await this.instanceFormSchemaRepository.findByDefinitionAndTenant(
+      definitionId,
+      tenantId
+    );
+    if (!existing && referencedPayloadKeys.size === 0) return;
+
+    const currentSchema = this.normalizeInstanceFormSchema(existing?.schema);
+    // Preserve stored field metadata, but keep only keys that are still referenced by at least
+    // one remaining rule somewhere in the workflow definition.
+    const nextFields = currentSchema.fields.filter((field) => referencedPayloadKeys.has(field.key));
+    const nextSchemaRecord: Record<string, unknown> = { fields: nextFields };
+    const entity =
+      existing ??
+      this.instanceFormSchemaRepository.create({
+        workflowDefinitionId: definitionId,
+        tenantId,
+        schema: nextSchemaRecord,
+      });
+
+    entity.schema = nextSchemaRecord;
+    await this.instanceFormSchemaRepository.save(entity);
+  }
+
+  /**
    * Merges new schema fields into the persisted instance form schema for a definition.
    * Existing fields are preserved and overwritten only by matching keys.
    *

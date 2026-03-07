@@ -116,4 +116,17 @@ export class WorkflowTransitionController {
     const data = await this.service.getAllRules(transitionId, tenantId);
     return { status: "success", data };
   }
+
+  @Delete(":transitionId/rules/:ruleId")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Remove a rule from a draft workflow transition" })
+  @ApiParam({ name: "transitionId", description: "Workflow transition UUID", format: "uuid" })
+  @ApiParam({ name: "ruleId", description: "Transition rule UUID", format: "uuid" })
+  async removeRule(
+    @Param("transitionId", ParseUUIDPipe) transitionId: string,
+    @Param("ruleId", ParseUUIDPipe) ruleId: string,
+    @TenantId() tenantId: string
+  ): Promise<void> {
+    await this.service.removeRule(transitionId, ruleId, tenantId);
+  }
 }
