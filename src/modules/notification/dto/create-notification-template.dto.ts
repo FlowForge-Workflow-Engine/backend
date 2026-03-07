@@ -7,8 +7,8 @@ import { NotificationEventTrigger } from "../constants/notification-event-trigge
 export class CreateNotificationTemplateDto {
   @ApiProperty({
     enum: NotificationEventTrigger,
-    example: NotificationEventTrigger.WORKFLOW_TRANSITION_COMPLETED,
-    description: "Supported workflow event that triggers this notification",
+    example: NotificationEventTrigger.TENANT_CREATED,
+    description: "Supported event trigger that dispatches this notification",
     minLength: 1,
     maxLength: 100,
     required: true,

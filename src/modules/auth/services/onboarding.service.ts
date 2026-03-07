@@ -122,6 +122,21 @@ export class OnboardingService {
         await this.userRoleRepo.save(userRole);
       }
 
+      // Publish tenant.created only after the founding admin exists so notification subscribers can send the
+      // onboarding welcome email without making any cross-module recipient lookup.
+      this.publisher.publishTenantCreated({
+        eventId: generateUUID(),
+        tenantId: tenant.id,
+        name: tenant.name,
+        slug: tenant.slug,
+        plan: tenant.plan,
+        adminUserId: savedUser.id,
+        adminEmail: savedUser.email,
+        adminFirstName: savedUser.firstName,
+        adminLastName: savedUser.lastName,
+        occurredAt: new Date().toISOString(),
+      });
+
       this.publisher.publishUserCreated({
         eventId: generateUUID(),
         tenantId: tenant.id,

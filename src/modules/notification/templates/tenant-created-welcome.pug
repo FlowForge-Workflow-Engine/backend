@@ -1,0 +1,38 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Welcome to Workflow Engine
+  body(style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;")
+    h2(style="margin-bottom: 12px;") Welcome to Workflow Engine
+    p Hello #{adminFirstName || 'Admin'},
+    p Your tenant registration has been completed successfully.
+    p
+      | Please keep the following identifiers safe because they are required for login and tenant support workflows.
+    div(style="margin: 16px 0; padding: 16px; border: 2px solid #dc2626; background: #fef2f2; border-radius: 8px;")
+      p(style="margin: 0 0 10px 0; font-weight: bold; color: #b91c1c;") IMPORTANT: DO NOT LOSE THESE IDs
+      p(style="margin: 0 0 8px 0;")
+        strong Tenant UUID (login identifier):
+      p(style="margin: 0 0 12px 0; font-size: 16px; font-weight: bold; color: #111827;") #{tenantId || 'N/A'}
+      p(style="margin: 0 0 8px 0;")
+        strong Tenant Admin User UUID:
+      p(style="margin: 0; font-size: 16px; font-weight: bold; color: #111827;") #{adminUserId || 'N/A'}
+    ul
+      li
+        strong Tenant Name:
+        |  #{name || 'N/A'}
+      li
+        strong Tenant Slug:
+        |  #{slug || 'N/A'}
+      li
+        strong Admin Email:
+        |  #{adminEmail || 'N/A'}
+      li
+        strong Plan:
+        |  #{plan || 'N/A'}
+      li
+        strong Registered At:
+        |  #{occurredAt || 'N/A'}
+    p(style="margin-top: 16px;") Store these values in a secure internal location accessible to your tenant administrators only.
+    p(style="margin-top: 16px;") Regards,
+    p Workflow Engine

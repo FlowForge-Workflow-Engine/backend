@@ -7,6 +7,7 @@ import {
   IUserDeactivatedEvent,
   IUserRolesUpdatedEvent,
 } from "@app/shared/interfaces/events/auth-events.interface";
+import { ITenantCreatedEvent } from "@app/shared/interfaces/events/tenant-events.interface";
 
 /**
  * Publishes auth/user domain events to NATS.
@@ -44,6 +45,19 @@ export class AuthPublisher {
       this.logger.log(`Published ${NatsEvents.USER_ROLES_UPDATED} [user=${payload.userId}]`);
     } catch (err) {
       this.logger.error(`Failed to publish ${NatsEvents.USER_ROLES_UPDATED}`, err);
+    }
+  }
+
+  /**
+   * Onboarding owns this publish path so the tenant-created event can carry founding-admin recipient details
+   * needed by downstream notification subscribers without breaking module boundaries.
+   */
+  publishTenantCreated(payload: ITenantCreatedEvent): void {
+    try {
+      this.natsClient.publish(NatsEvents.TENANT_CREATED, this.jc.encode(payload));
+      this.logger.log(`Published ${NatsEvents.TENANT_CREATED} [tenant=${payload.tenantId}]`);
+    } catch (err) {
+      this.logger.error(`Failed to publish ${NatsEvents.TENANT_CREATED}`, err);
     }
   }
 }

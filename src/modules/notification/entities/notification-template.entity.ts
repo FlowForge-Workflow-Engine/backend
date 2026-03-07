@@ -9,7 +9,7 @@ export enum NotificationChannel {
 
 @Entity("notification_templates")
 export class NotificationTemplate extends BaseEntity {
-  /** Supported workflow event that triggers this notification - kept selective so template creation matches current subscriber coverage. */
+  /** Supported event trigger for this notification - kept selective so template creation matches current subscriber coverage. */
   @Column({ type: "varchar", length: 100, name: "event_trigger" })
   eventTrigger: NotificationEventTrigger;
 

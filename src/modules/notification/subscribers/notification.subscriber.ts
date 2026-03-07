@@ -6,6 +6,7 @@ import {
   IWorkflowInstanceCompletedEvent,
   IWorkflowInstanceCancelledEvent,
 } from "@app/shared/interfaces/events/workflow-events.interface";
+import { ITenantCreatedEvent } from "@app/shared/interfaces/events/tenant-events.interface";
 import { NotificationTemplateRepository } from "../repositories/notification-template.repository";
 import { WebhookConfigRepository } from "../repositories/webhook-config.repository";
 import { NotificationService } from "../services/notification.service";
@@ -28,6 +29,15 @@ export class NotificationSubscriber {
     private readonly webhookService: WebhookService,
     private readonly redis: RedisService
   ) {}
+
+  @EventPattern(NotificationEventTrigger.TENANT_CREATED)
+  async onTenantCreated(@Payload() data: ITenantCreatedEvent): Promise<void> {
+    // The onboarding flow enriches tenant.created with founding-admin delivery fields so this welcome email
+    // remains fully event-driven and notification stays decoupled from auth internals.
+    await this.dispatch(NotificationEventTrigger.TENANT_CREATED, data.tenantId, {
+      ...data,
+    } as Record<string, unknown>);
+  }
 
   @EventPattern(NotificationEventTrigger.WORKFLOW_INSTANCE_CREATED)
   async onInstanceCreated(@Payload() data: IWorkflowInstanceCreatedEvent): Promise<void> {
@@ -142,10 +152,11 @@ export class NotificationSubscriber {
   }
 
   /**
-   * Purpose: resolve a recipient email from the workflow event payload without coupling this module to upstream handler internals.
+   * Purpose: resolve a recipient email from the event payload without coupling this module to upstream handler internals.
    */
   private extractRecipientEmail(context: Record<string, unknown>): string | null {
     const candidates = [
+      context["adminEmail"],
       context["performedByEmail"],
       context["createdByEmail"],
       context["cancelledByEmail"],
@@ -164,6 +175,7 @@ export class NotificationSubscriber {
    */
   private extractRecipientUserId(context: Record<string, unknown>): string | null {
     const candidates = [
+      context["adminUserId"],
       context["performedByUserId"],
       context["createdByUserId"],
       context["cancelledByUserId"],
