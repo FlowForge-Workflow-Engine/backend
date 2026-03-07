@@ -46,7 +46,7 @@ export class WorkflowExecutionController {
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowExecutionListResponseDto[]>> {
     const result = await this.executionService.getInstanceList(dto, tenantId);
-    return { status: "success", count: result.data.length, data: result.data };
+    return { status: "success", count: result.total, data: result.data };
   }
 
   @Get(":id")

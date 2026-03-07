@@ -11,11 +11,11 @@ export class TenantRepository {
     private readonly repo: Repository<Tenant>
   ) {}
 
-  findAll(options: { page?: number; limit?: number } = {}): Promise<Tenant[]> {
+  findAll(options: { page?: number; limit?: number } = {}): Promise<[Tenant[], number]> {
     const { page, limit } = options;
     const { skip, take } = pagination(page, limit);
 
-    return this.repo.find({
+    return this.repo.findAndCount({
       order: { createdAt: "DESC" },
       skip,
       take,

@@ -26,11 +26,11 @@ export class WorkflowDefinitionRepository {
   async findAllByTenant(
     tenantId: string,
     options: { page?: number; limit?: number } = {}
-  ): Promise<WorkflowDefinition[]> {
+  ): Promise<[WorkflowDefinition[], number]> {
     const { page, limit } = options;
     const { skip, take } = pagination(page, limit);
 
-    return this.repo.find({
+    return this.repo.findAndCount({
       where: { tenantId },
       order: { createdAt: "DESC" },
       skip,

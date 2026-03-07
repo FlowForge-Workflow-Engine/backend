@@ -29,11 +29,12 @@ export class UserController {
     @Query() dto: FindUserDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<UserListResponseDto[]>> {
-    const users = await this.userService.findAll(dto, tenantId);
+    const result = await this.userService.findAll(dto, tenantId);
 
-    const data = users.map((user) => UserListResponseDto.fromEntity(user));
+    const data = result.data.map((user) => UserListResponseDto.fromEntity(user));
 
-    return { status: "success", count: data.length, data };
+    // Expose the full tenant-scoped match count so the frontend can calculate real pagination state.
+    return { status: "success", count: result.total, data };
   }
 
   @Post()

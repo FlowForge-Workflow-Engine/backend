@@ -89,11 +89,14 @@ export class TenantService {
    * Retrieves paginated tenants.
    *
    * @param dto - Pagination parameters
-   * @returns Promise<Tenant[]> - Paginated tenants
+   * @returns Promise<{ data: Tenant[]; total: number }> - Current page data plus total tenant count
    */
-  findAll(dto: FindTenantDto): Promise<Tenant[]> {
+  async findAll(dto: FindTenantDto): Promise<{ data: Tenant[]; total: number }> {
     const { page, limit } = dto;
-    return this.tenantRepository.findAll({ page, limit });
+    const [data, total] = await this.tenantRepository.findAll({ page, limit });
+
+    // Keep the total count alongside the current page so callers do not confuse page size with total results.
+    return { data, total };
   }
 
   /**

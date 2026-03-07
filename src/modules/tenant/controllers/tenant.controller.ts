@@ -48,8 +48,10 @@ export class TenantController {
   @ApiOperation({ summary: "List all tenants (super-admin)" })
   @ApiSuccessResponse(TenantListResponseDto, "Tenants retrieved successfully", { isArray: true })
   async findAll(@Query() dto: FindTenantDto): Promise<CountApiResponseDto<TenantListResponseDto[]>> {
-    const data = await this.tenantService.findAll(dto);
-    return { status: "success", count: data.length, data };
+    const result = await this.tenantService.findAll(dto);
+
+    // Return the full tenant total so admin clients can render accurate pagination controls.
+    return { status: "success", count: result.total, data: result.data };
   }
 
   // @Post()

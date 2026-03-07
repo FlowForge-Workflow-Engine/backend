@@ -78,11 +78,17 @@ export class WorkflowDefinitionService {
    *
    * @param dto - Pagination parameters
    * @param tenantId - The tenant ID
-   * @returns Promise<WorkflowDefinition[]> - Paginated definitions for the tenant
+   * @returns Promise<{ data: WorkflowDefinition[]; total: number }> - Current page data plus total count
    */
-  async findAll(dto: FindWorkflowDefinitionDto, tenantId: string): Promise<WorkflowDefinition[]> {
+  async findAll(
+    dto: FindWorkflowDefinitionDto,
+    tenantId: string
+  ): Promise<{ data: WorkflowDefinition[]; total: number }> {
     const { page, limit } = dto;
-    return this.definitionRepository.findAllByTenant(tenantId, { page, limit });
+    const [data, total] = await this.definitionRepository.findAllByTenant(tenantId, { page, limit });
+
+    // Keep the total definition count with the current slice so controllers can expose true pagination metadata.
+    return { data, total };
   }
 
   /**

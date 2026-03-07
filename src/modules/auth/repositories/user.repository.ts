@@ -48,11 +48,15 @@ export class UserRepository {
 
   /**
    * Load all users in a tenant with their assigned roles.
+   * Returns both the current page slice and the full tenant-scoped match count.
    * Uses LEFT JOIN to include roles even if users have none.
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @returns Promise<User[]> - Array of users with userRoles[] populated
+   * @returns Promise<[User[], number]> - Paginated users with total count
    */
-  findByTenantIdWithRoles(tenantId: string, options: { page: number; limit: number }): Promise<User[]> {
+  findByTenantIdWithRoles(
+    tenantId: string,
+    options: { page: number; limit: number }
+  ): Promise<[User[], number]> {
     const { page, limit } = options;
     const { skip, take } = pagination(page, limit);
 
@@ -64,7 +68,7 @@ export class UserRepository {
       .orderBy("u.createdAt", "DESC")
       .skip(skip)
       .take(take)
-      .getMany();
+      .getManyAndCount();
   }
 
   findManyByIds(ids: string[], tenantId: string): Promise<User[]> {

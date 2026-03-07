@@ -46,8 +46,10 @@ export class WorkflowDefinitionController {
     @Query() dto: FindWorkflowDefinitionDto,
     @TenantId() tenantId: string
   ): Promise<CountApiResponseDto<WorkflowDefinitionListResponseDto[]>> {
-    const data = await this.service.findAll(dto, tenantId);
-    return { status: "success", count: data.length, data };
+    const result = await this.service.findAll(dto, tenantId);
+
+    // Return the total tenant-scoped definition count so the UI can paginate across all matching records.
+    return { status: "success", count: result.total, data: result.data };
   }
 
   @Post()

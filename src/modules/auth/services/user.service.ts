@@ -106,11 +106,14 @@ export class UserService {
    * Retrieves all users in a tenant.
    *
    * @param tenantId - The tenant ID for multi-tenancy isolation
-   * @returns Promise<User[]> - Array of all users in the tenant
+   * @returns Promise<{ data: User[]; total: number }> - Current page data plus total tenant-scoped count
    */
-  async findAll(dto: FindUserDto, tenantId: string): Promise<User[]> {
+  async findAll(dto: FindUserDto, tenantId: string): Promise<{ data: User[]; total: number }> {
     const { page, limit } = dto;
-    return this.userRepository.findByTenantIdWithRoles(tenantId, { page, limit });
+    const [data, total] = await this.userRepository.findByTenantIdWithRoles(tenantId, { page, limit });
+
+    // Keep the page slice paired with the full match count so controllers can return true pagination metadata.
+    return { data, total };
   }
 
   /**
