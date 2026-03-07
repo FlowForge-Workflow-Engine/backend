@@ -320,8 +320,8 @@ export class AuditSubscriber {
       {
         tenantId: data.tenantId,
         instanceId: data.instanceId,
-        actorId: null,
-        actorEmail: null,
+        actorId: data.performedByUserId,
+        actorEmail: data.performedByEmail,
         actorRole: null,
         actionType: AuditActionType.INSTANCE_COMPLETED,
         transitionId: null,
