@@ -183,8 +183,13 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
         instanceId,
         performedByUserId: actor.sub,
         performedByEmail: actor.email,
+        performedByRole: actor.roles[0] ?? "",
+        comment,
         workflowDefinitionId: instance.workflowDefinitionId,
+        fromState: instance.currentStateName,
         finalState: toState.name,
+        transitionId,
+        transitionName: transition.name,
         occurredAt: new Date().toISOString(),
       });
     }

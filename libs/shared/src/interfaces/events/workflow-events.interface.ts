@@ -33,8 +33,13 @@ export interface IWorkflowInstanceCompletedEvent {
   readonly instanceId: string;
   readonly performedByUserId: string;
   readonly performedByEmail: string;
+  readonly performedByRole: string;
+  readonly comment?: string;
   readonly workflowDefinitionId: string;
+  readonly fromState: string;
   readonly finalState: string;
+  readonly transitionId: string;
+  readonly transitionName: string;
   readonly occurredAt: string;
 }
 
