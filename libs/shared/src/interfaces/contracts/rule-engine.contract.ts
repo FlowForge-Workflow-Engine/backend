@@ -98,6 +98,32 @@ export const RULE_SYSTEM_PATHS: readonly RuleSystemPathMetadata[] = [
 export const RULE_PAYLOAD_PATH_FORMAT = "$.<schemaFieldKey>";
 export const RULE_PAYLOAD_PATH_SOURCE = "/workflow-definitions/:id/instance-form-schema";
 
+export const RULE_EXPRESSION_DEFINITION_FIELDS = ["type", "all", "any", "not"] as const;
+export type RuleExpressionDefinitionField = (typeof RULE_EXPRESSION_DEFINITION_FIELDS)[number];
+
+export const RULE_CUSTOM_DEFINITION_FIELDS = ["type", "strategy", "params"] as const;
+export type RuleCustomDefinitionField = (typeof RULE_CUSTOM_DEFINITION_FIELDS)[number];
+
+export const RULE_EXPRESSION_DEFINITION: ExpressionRuleDefinition = {
+  type: RuleType.EXPRESSION,
+  all: [
+    {
+      fact: RuleFactNamespace.PAYLOAD,
+      path: "$.amount",
+      operator: "greaterThan",
+      value: 1000,
+    },
+  ],
+};
+
+export const RULE_CUSTOM_DEFINITION: CustomRuleDefinition = {
+  type: RuleType.CUSTOM,
+  strategy: CustomRuleStrategy.USER_HAS_ANY_ROLE,
+  params: {
+    roles: ["manager", "admin"],
+  },
+};
+
 export interface RuleMetadata {
   readonly facts: readonly RuleFactNamespace[];
   readonly ruleTypes: readonly RuleType[];
@@ -107,6 +133,10 @@ export interface RuleMetadata {
   readonly systemPaths: readonly RuleSystemPathMetadata[];
   readonly payloadPathFormat: string;
   readonly payloadPathSource: string;
+  readonly expressionRuleDefinitionFields: readonly RuleExpressionDefinitionField[];
+  readonly customRuleDefinitionFields: readonly RuleCustomDefinitionField[];
+  readonly expressionRuleDefinition: ExpressionRuleDefinition;
+  readonly customRuleDefinition: CustomRuleDefinition;
 }
 
 export const RULE_METADATA: RuleMetadata = {
@@ -118,6 +148,10 @@ export const RULE_METADATA: RuleMetadata = {
   systemPaths: RULE_SYSTEM_PATHS,
   payloadPathFormat: RULE_PAYLOAD_PATH_FORMAT,
   payloadPathSource: RULE_PAYLOAD_PATH_SOURCE,
+  expressionRuleDefinitionFields: RULE_EXPRESSION_DEFINITION_FIELDS,
+  customRuleDefinitionFields: RULE_CUSTOM_DEFINITION_FIELDS,
+  expressionRuleDefinition: RULE_EXPRESSION_DEFINITION,
+  customRuleDefinition: RULE_CUSTOM_DEFINITION,
 };
 
 export interface ExpressionRuleDefinition {

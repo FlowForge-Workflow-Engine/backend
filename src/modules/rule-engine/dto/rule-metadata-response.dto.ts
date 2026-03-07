@@ -1,6 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
 import {
+  CustomRuleDefinition,
+  RULE_CUSTOM_DEFINITION_FIELDS,
   CustomRuleStrategy,
+  ExpressionRuleDefinition,
+  RULE_EXPRESSION_DEFINITION_FIELDS,
   RULE_EXPRESSION_OPERATORS,
   RULE_EXPRESSION_OPERATOR_DECORATORS,
   RULE_FACT_NAMESPACES,
@@ -98,6 +102,53 @@ export class RuleMetadataResponseDto {
   })
   payloadPathSource: string;
 
+  @ApiProperty({
+    isArray: true,
+    example: [...RULE_EXPRESSION_DEFINITION_FIELDS],
+    description: "Top-level fields the frontend can use while building an expression ruleDefinition",
+  })
+  expressionRuleDefinitionFields: string[];
+
+  @ApiProperty({
+    isArray: true,
+    example: [...RULE_CUSTOM_DEFINITION_FIELDS],
+    description: "Top-level fields the frontend can use while building a custom ruleDefinition",
+  })
+  customRuleDefinitionFields: string[];
+
+  @ApiProperty({
+    type: "object",
+    additionalProperties: true,
+    example: {
+      type: RuleType.EXPRESSION,
+      all: [
+        {
+          fact: RuleFactNamespace.PAYLOAD,
+          path: "$.amount",
+          operator: "greaterThan",
+          value: 1000,
+        },
+      ],
+    },
+    description:
+      "Example shape of an expression ruleDefinition payload that the frontend can build and submit",
+  })
+  expressionRuleDefinitionExample: ExpressionRuleDefinition;
+
+  @ApiProperty({
+    type: "object",
+    additionalProperties: true,
+    example: {
+      type: RuleType.CUSTOM,
+      strategy: CustomRuleStrategy.USER_HAS_ANY_ROLE,
+      params: {
+        roles: ["manager", "admin"],
+      },
+    },
+    description: "Example shape of a custom ruleDefinition payload that the frontend can build and submit",
+  })
+  customRuleDefinitionExample: CustomRuleDefinition;
+
   static fromMetadata(metadata: RuleMetadata): RuleMetadataResponseDto {
     const dto = new RuleMetadataResponseDto();
     dto.facts = [...metadata.facts];
@@ -108,6 +159,10 @@ export class RuleMetadataResponseDto {
     dto.systemPaths = metadata.systemPaths.map((path) => RuleSystemPathResponseDto.fromMetadata(path));
     dto.payloadPathFormat = metadata.payloadPathFormat;
     dto.payloadPathSource = metadata.payloadPathSource;
+    dto.expressionRuleDefinitionFields = [...metadata.expressionRuleDefinitionFields];
+    dto.customRuleDefinitionFields = [...metadata.customRuleDefinitionFields];
+    dto.expressionRuleDefinitionExample = metadata.expressionRuleDefinition;
+    dto.customRuleDefinitionExample = metadata.customRuleDefinition;
     return dto;
   }
 }
