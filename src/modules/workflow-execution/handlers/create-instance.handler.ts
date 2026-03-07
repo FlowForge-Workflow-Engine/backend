@@ -81,6 +81,8 @@ export class CreateInstanceHandler implements ICommandHandler<CreateInstanceComm
       eventId: generateUUID(),
       tenantId,
       instanceId: saved.id,
+      performedByUserId: actor.sub,
+      performedByEmail: actor.email,
       workflowDefinitionId,
       initialState: initialState.name,
       createdByUserId: actor.sub,

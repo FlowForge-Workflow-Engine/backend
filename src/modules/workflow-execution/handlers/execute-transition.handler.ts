@@ -181,6 +181,8 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
         eventId: generateUUID(),
         tenantId,
         instanceId,
+        performedByUserId: actor.sub,
+        performedByEmail: actor.email,
         workflowDefinitionId: instance.workflowDefinitionId,
         finalState: toState.name,
         occurredAt: new Date().toISOString(),

@@ -2,6 +2,8 @@ export interface IWorkflowInstanceCreatedEvent {
   readonly eventId: string;
   readonly tenantId: string;
   readonly instanceId: string;
+  readonly performedByUserId: string;
+  readonly performedByEmail: string;
   readonly workflowDefinitionId: string;
   readonly initialState: string;
   readonly createdByUserId: string;
@@ -29,6 +31,8 @@ export interface IWorkflowInstanceCompletedEvent {
   readonly eventId: string;
   readonly tenantId: string;
   readonly instanceId: string;
+  readonly performedByUserId: string;
+  readonly performedByEmail: string;
   readonly workflowDefinitionId: string;
   readonly finalState: string;
   readonly occurredAt: string;
@@ -38,6 +42,8 @@ export interface IWorkflowInstanceCancelledEvent {
   readonly eventId: string;
   readonly tenantId: string;
   readonly instanceId: string;
+  readonly performedByUserId: string;
+  readonly performedByEmail: string;
   readonly workflowDefinitionId: string;
   readonly cancelledByUserId: string;
   readonly occurredAt: string;

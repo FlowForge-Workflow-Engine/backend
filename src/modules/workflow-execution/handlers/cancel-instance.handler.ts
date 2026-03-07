@@ -49,6 +49,8 @@ export class CancelInstanceHandler implements ICommandHandler<CancelInstanceComm
       eventId,
       tenantId,
       instanceId,
+      performedByUserId: actor.sub,
+      performedByEmail: actor.email,
       workflowDefinitionId: instance.workflowDefinitionId,
       cancelledByUserId: actor.sub,
       occurredAt: new Date().toISOString(),

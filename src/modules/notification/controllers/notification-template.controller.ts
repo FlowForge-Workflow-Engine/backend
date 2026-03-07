@@ -11,7 +11,7 @@ import {
   Put,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
@@ -79,6 +79,7 @@ export class NotificationTemplateController {
   @Put(":id")
   @ApiOperation({ summary: "Update a notification template" })
   @ApiSuccessResponse(NotificationTemplateUpdatedResponseDto, "Notification template updated successfully")
+  @ApiParam({ name: "id", example: "550e8400-e29b...", description: "Notification template UUID" })
   async update(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string,
