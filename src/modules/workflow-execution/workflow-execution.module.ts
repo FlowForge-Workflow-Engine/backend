@@ -3,6 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { CqrsModule } from "@nestjs/cqrs";
 import { ConfigService } from "@nestjs/config";
 import { connect } from "nats";
+import { WORKFLOW_EXECUTION_QUERY_CONTRACT } from "@app/shared/interfaces/contracts/workflow-execution-query.contract";
 import { NATS_CLIENT } from "../../infra";
 import { RuleEngineModule } from "../rule-engine/rule-engine.module";
 import { WorkflowDefinitionModule } from "../workflow-definition/workflow-definition.module";
@@ -27,6 +28,7 @@ import { GetAllowedTransitionsHandler } from "./handlers/get-allowed-transitions
 
 // Services, Publisher, Subscriber, Controller
 import { WorkflowExecutionService } from "./services/workflow-execution.service";
+import { WorkflowExecutionQueryService } from "./services/workflow-execution-query.service";
 import { ExecutionPublisher } from "./publishers/execution.publisher";
 import { AuthEventsSubscriber } from "./subscribers/auth-events.subscriber";
 import { WorkflowExecutionController } from "./controllers/workflow-execution.controller";
@@ -58,10 +60,14 @@ const QueryHandlers = [GetInstanceDetailHandler, GetInstanceListHandler, GetAllo
     ...QueryHandlers,
     // Services & Publishers
     WorkflowExecutionService,
+    WorkflowExecutionQueryService,
     ExecutionPublisher,
     // Subscriber (also a @Controller for MessagePattern)
     AuthEventsSubscriber,
+    /** Contract binding — only this read-only token leaves the module boundary */
+    { provide: WORKFLOW_EXECUTION_QUERY_CONTRACT, useClass: WorkflowExecutionQueryService },
   ],
   controllers: [WorkflowExecutionController, AuthEventsSubscriber],
+  exports: [WORKFLOW_EXECUTION_QUERY_CONTRACT],
 })
 export class WorkflowExecutionModule {}

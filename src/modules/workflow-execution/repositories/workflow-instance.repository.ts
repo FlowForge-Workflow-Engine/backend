@@ -47,4 +47,19 @@ export class WorkflowInstanceRepository {
       take,
     });
   }
+
+  /**
+   * Counts workflow instances for a tenant, with optional status filtering for summary views.
+   */
+  async countByTenant(
+    tenantId: string,
+    options: {
+      status?: WorkflowInstanceStatus;
+    } = {}
+  ): Promise<number> {
+    const where: Record<string, unknown> = { tenantId };
+    if (options.status) where.status = options.status;
+
+    return this.repo.count({ where: where as Partial<WorkflowInstance> });
+  }
 }

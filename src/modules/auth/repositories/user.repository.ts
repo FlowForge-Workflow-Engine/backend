@@ -40,6 +40,13 @@ export class UserRepository {
   }
 
   /**
+   * Returns the tenant-scoped user count for dashboard-style summary views.
+   */
+  countByTenant(tenantId: string): Promise<number> {
+    return this.repo.count({ where: { tenantId } });
+  }
+
+  /**
    * Load all users in a tenant with their assigned roles.
    * Uses LEFT JOIN to include roles even if users have none.
    * @param tenantId - The tenant ID for multi-tenancy isolation

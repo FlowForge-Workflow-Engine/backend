@@ -13,6 +13,7 @@ import { NotificationModule } from "./modules/notification/notification.module";
 import { RuleEngineModule } from "./modules/rule-engine/rule-engine.module";
 import { WorkflowDefinitionModule } from "./modules/workflow-definition/workflow-definition.module";
 import { WorkflowExecutionModule } from "./modules/workflow-execution/workflow-execution.module";
+import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { PostgreSQLDatabaseModule } from "./modules/database/database.module";
 import { HealthModule } from "./modules/health/health.module";
 
@@ -67,6 +68,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     InfraModule,
     AuthModule,
     TenantModule,
+    DashboardModule,
     WorkflowExecutionModule,
     WorkflowDefinitionModule,
     RuleEngineModule,

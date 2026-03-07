@@ -77,6 +77,17 @@ export class UserQueryService implements IUserQueryContract {
   }
 
   /**
+   * Returns a fresh tenant-scoped user count.
+   * We intentionally avoid caching here so dashboard cards do not drift behind recent user changes.
+   *
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<number> - Total number of users in the tenant
+   */
+  async countByTenant(tenantId: string): Promise<number> {
+    return this.userRepository.countByTenant(tenantId);
+  }
+
+  /**
    * Checks if a user exists and has a specific role.
    * Uses findById internally, so benefits from caching.
    *

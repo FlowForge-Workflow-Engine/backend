@@ -28,6 +28,21 @@ export interface IWorkflowQueryContract {
   findDefinitionById(definitionId: string, tenantId: string): Promise<WorkflowDefinitionSummary | null>;
 
   /**
+   * Count all workflow definitions within a tenant.
+   * @param tenantId - UUID of the tenant
+   * @returns Total number of workflow definitions owned by the tenant
+   */
+  countDefinitionsByTenant(tenantId: string): Promise<number>;
+
+  /**
+   * Count only published workflow definitions within a tenant.
+   * This keeps dashboard callers from needing workflow-definition internals.
+   * @param tenantId - UUID of the tenant
+   * @returns Total number of published workflow definitions for the tenant
+   */
+  countPublishedDefinitionsByTenant(tenantId: string): Promise<number>;
+
+  /**
    * Get a version snapshot of a workflow definition.
    * @param definitionId - UUID of the workflow definition
    * @param version - Version number

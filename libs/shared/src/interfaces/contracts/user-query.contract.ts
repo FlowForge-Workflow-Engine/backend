@@ -28,6 +28,14 @@ export interface IUserQueryContract {
   findManyByIds(userIds: string[], tenantId: string): Promise<UserSummary[]>;
 
   /**
+   * Count all users within a tenant.
+   * Used by dashboard-style read models that need a tenant-wide total.
+   * @param tenantId - UUID of the tenant
+   * @returns Total number of users in the tenant
+   */
+  countByTenant(tenantId: string): Promise<number>;
+
+  /**
    * Check if a user has a specific role within a tenant.
    * @param userId - UUID of the user
    * @param tenantId - UUID of the tenant

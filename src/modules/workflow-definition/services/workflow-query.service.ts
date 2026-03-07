@@ -11,6 +11,7 @@ import { InstanceFormSchemaRepository } from "../repositories/instance-form-sche
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
+import { WorkflowDefinitionStatus } from "../entities/workflow-definition.entity";
 
 /**
  * Read-only facade implementing IWorkflowQueryContract.
@@ -58,6 +59,30 @@ export class WorkflowQueryService implements IWorkflowQueryContract {
     };
     await this.redis.set(key, summary, CacheTTL.LONG);
     return summary;
+  }
+
+  /**
+   * Returns the total number of workflow definitions for a tenant.
+   * Counts are read directly from persistence so dashboard numbers stay current.
+   *
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<number> - Total workflow definition count
+   */
+  async countDefinitionsByTenant(tenantId: string): Promise<number> {
+    return this.definitionRepository.countByTenant(tenantId);
+  }
+
+  /**
+   * Returns only the published workflow definition count for a tenant.
+   * The dashboard should not need to know workflow-definition status internals.
+   *
+   * @param tenantId - The tenant ID for multi-tenancy isolation
+   * @returns Promise<number> - Published workflow definition count
+   */
+  async countPublishedDefinitionsByTenant(tenantId: string): Promise<number> {
+    return this.definitionRepository.countByTenant(tenantId, {
+      status: WorkflowDefinitionStatus.PUBLISHED,
+    });
   }
 
   /**

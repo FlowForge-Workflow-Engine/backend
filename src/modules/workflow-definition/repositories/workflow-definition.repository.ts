@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
-import { Repository } from "typeorm";
-import { WorkflowDefinition } from "../entities/workflow-definition.entity";
+import { FindOptionsWhere, Repository } from "typeorm";
+import { WorkflowDefinition, WorkflowDefinitionStatus } from "../entities/workflow-definition.entity";
 
 @Injectable()
 export class WorkflowDefinitionRepository {
@@ -36,6 +36,22 @@ export class WorkflowDefinitionRepository {
       skip,
       take,
     });
+  }
+
+  /**
+   * Counts workflow definitions for a tenant, optionally constrained by lifecycle status.
+   * This supports dashboard-style summary reads without exposing repository access cross-module.
+   */
+  async countByTenant(
+    tenantId: string,
+    options: { status?: WorkflowDefinitionStatus } = {}
+  ): Promise<number> {
+    const where: FindOptionsWhere<WorkflowDefinition> = { tenantId };
+    if (options.status) {
+      where.status = options.status;
+    }
+
+    return this.repo.count({ where });
   }
 
   async remove(entity: WorkflowDefinition): Promise<void> {
