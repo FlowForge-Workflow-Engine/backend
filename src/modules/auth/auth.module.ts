@@ -37,6 +37,7 @@ import { AuthPublisher } from "./publishers/auth.publisher";
 
 // Controllers
 import { AuthController } from "./controllers/auth.controller";
+import { CsrfController } from "./controllers/csrf.controller";
 import { RoleController } from "./controllers/role.controller";
 import { UserController } from "./controllers/user.controller";
 
@@ -92,7 +93,7 @@ import { UserController } from "./controllers/user.controller";
     /** Contract binding — ONLY this token leaves the module boundary */
     { provide: USER_QUERY_CONTRACT, useClass: UserQueryService },
   ],
-  controllers: [AuthController, UserController, RoleController],
+  controllers: [AuthController, CsrfController, UserController, RoleController],
   exports: [USER_QUERY_CONTRACT],
 })
 export class AuthModule {}
