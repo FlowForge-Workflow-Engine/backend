@@ -12,6 +12,7 @@
     "start:dev": "cross-env STAGE=dev nest start --watch",
     "start:staging": "cross-env STAGE=staging nest start --watch",
     "start:uat": "cross-env STAGE=uat nest start --watch",
+    "start:uat:docker": "cross-env STAGE=uat bun dist/src/main.js",
     "start:debug": "nest start --debug --watch",
     "start:prod": "cross-env STAGE=prod node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
