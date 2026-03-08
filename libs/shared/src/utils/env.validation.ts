@@ -1,5 +1,8 @@
 import * as Joi from "joi";
 
+const optionalString = Joi.string().allow("").optional();
+const optionalNumber = Joi.number().empty("").optional();
+
 export const envSchema = Joi.object({
   // =============================================================================
   // ENVIRONMENT CONFIGURATION
@@ -13,21 +16,21 @@ export const envSchema = Joi.object({
   // =============================================================================
   // DATABASE CONFIGURATION (PostgreSQL)
   // =============================================================================
-  DB_HOST: Joi.string().required(),
-  DB_PORT: Joi.number().default(5432),
-  DB_USER: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
-  DATABASE: Joi.string().required(),
+  DB_HOST: optionalString,
+  DB_PORT: Joi.number().empty("").default(5432),
+  DB_USER: optionalString,
+  DB_PASSWORD: optionalString,
+  DATABASE: optionalString,
 
   // Alternative database URL format (optional)
-  DATABASE_URL: Joi.string().optional(),
+  DATABASE_URL: optionalString,
 
   // Session Management (PostgreSQL-based sessions)
-  POSTGRES_USER: Joi.string().optional(),
-  POSTGRES_HOST: Joi.string().optional(),
-  POSTGRES_DB: Joi.string().optional(),
-  POSTGRES_PASSWORD: Joi.string().optional(),
-  POSTGRES_PORT: Joi.number().optional(),
+  POSTGRES_USER: optionalString,
+  POSTGRES_HOST: optionalString,
+  POSTGRES_DB: optionalString,
+  POSTGRES_PASSWORD: optionalString,
+  POSTGRES_PORT: optionalNumber,
 
   // =============================================================================
   // REDIS CONFIGURATION

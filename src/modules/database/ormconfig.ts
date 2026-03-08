@@ -4,11 +4,31 @@ import { config } from "dotenv";
 import { join } from "path";
 import { DataSource, DataSourceOptions } from "typeorm";
 
-// FIXME: For AWS Secretmanager create a script to fetch the envs first to have migration capabilities
-config({ path: join(__dirname, "..", "..", "..", `.env.stage.${process.env.STAGE}`) });
+function resolveStage(): string {
+  if (process.env.STAGE) return process.env.STAGE;
+  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "dev") return "dev";
+  if (process.env.NODE_ENV === "staging" || process.env.NODE_ENV === "staging") return "staging";
+  if (process.env.NODE_ENV === "uat" || process.env.NODE_ENV === "uat") return "uat";
+  if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod") return "prod";
+  return process.env.NODE_ENV || "dev";
+}
+
+// Load the stage env file before Nest bootstraps ConfigModule so CLI/DataSource creation can read env values.
+config({ path: join(__dirname, "..", "..", "..", `.env.stage.${resolveStage()}`) });
+
+function shouldUsePostgresEnv(configService: ConfigService): boolean {
+  const stage = configService.get<string>("STAGE") || resolveStage();
+  return stage === "uat" || stage === "prod";
+}
 
 export function createOrmConfig(configService?: ConfigService): DataSourceOptions & TypeOrmModuleOptions {
   if (!configService) configService = new ConfigService();
+  const usePostgresEnv = shouldUsePostgresEnv(configService);
+  const hostKey = usePostgresEnv ? "POSTGRES_HOST" : "DB_HOST";
+  const portKey = usePostgresEnv ? "POSTGRES_PORT" : "DB_PORT";
+  const userKey = usePostgresEnv ? "POSTGRES_USER" : "DB_USER";
+  const passwordKey = usePostgresEnv ? "POSTGRES_PASSWORD" : "DB_PASSWORD";
+  const databaseKey = usePostgresEnv ? "POSTGRES_DB" : "DATABASE";
 
   const isDev =
     configService.get<string>("NODE_ENV") === "development" ||
@@ -16,11 +36,11 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
 
   const ormconfig: DataSourceOptions & TypeOrmModuleOptions = {
     type: "postgres",
-    host: configService.get<string>("DB_HOST"),
-    port: +configService.get<string>("DB_PORT"),
-    username: configService.get<string>("DB_USER"),
-    password: configService.get<string>("DB_PASSWORD"),
-    database: configService.get<string>("DATABASE"),
+    host: configService.get<string>(hostKey),
+    port: Number(configService.get<string>(portKey) || 5432),
+    username: configService.get<string>(userKey),
+    password: configService.get<string>(passwordKey),
+    database: configService.get<string>(databaseKey),
     entities: [join(__dirname, "..", "..", "**", "**", "*.entity{.ts,.js}")],
     //   autoLoadEntities: true,
     synchronize: false,
@@ -36,18 +56,13 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
     migrationsTableName: "migrations",
     migrationsRun: true,
     ...(isDev ? { logging: true, logger: "file" } : { logging: false }),
+    ssl: usePostgresEnv ? { rejectUnauthorized: false } : false,
     extra: {
       // Connection pool settings
       max: 20,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,
     },
-    // ssl: false,
-    // extra: {
-    //   ssl: {
-    //     rejectUnauthorized: false,
-    //   },
-    // },
   };
 
   return ormconfig;

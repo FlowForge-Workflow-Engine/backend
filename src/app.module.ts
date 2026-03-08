@@ -33,7 +33,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: [`.env.stage.${process.env.STAGE}`, ".env"],
+      envFilePath: [`.env.stage.${process.env.STAGE || "dev"}`, ".env"],
       isGlobal: true,
       validationSchema: envSchema,
       validationOptions: {

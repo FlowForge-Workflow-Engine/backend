@@ -53,6 +53,7 @@ async function bootstrap() {
     origin: [
       "http://localhost:3000",
       "http://localhost:8000",
+      process.env.FR_BASE_URL,
       // FIXME: Add Other Source URLs // Only allow requests from yourdomain.com
     ],
     methods: ["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"],
@@ -146,7 +147,7 @@ async function bootstrap() {
     })
   );
 
-  app.use((req: any, res: any, next: any) => {
+  app.use((_req: any, res: any, next: any) => {
     res.setHeader(
       "Permissions-Policy",
       'fullscreen=(self), camera=(), geolocation=(self "https://*example.com"), autoplay=(), payment=(), microphone=()'
@@ -198,9 +199,14 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  const port = configService.get<string>("PORT") || 3000;
-  await app.listen(port, () => {
-    console.log("Server started on port: " + port);
+  const stage = configService.get<string>("STAGE")?.toLowerCase() || "dev";
+  const isHostedEnvironment =
+    ["uat", "prod"].includes(stage) || Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+  const host = configService.get<string>("HOST") || (isHostedEnvironment ? "0.0.0.0" : "127.0.0.1");
+  const port = Number(configService.get<string>("PORT") || (isHostedEnvironment ? 10000 : 3000));
+
+  await app.listen(port, host, () => {
+    console.log(`Server started on ${host}:${port}`);
   });
 }
 bootstrap();
