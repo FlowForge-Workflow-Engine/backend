@@ -5,7 +5,9 @@ set -e
 STAGE="${STAGE:-uat}"
 
 # Start the local NATS server required by the app's hybrid microservice transport.
-nats-server -p 4222 -m 8222 &
+# nats-server -p 4222 -m 8222 &
+
+nats-server -a 127.0.0.1 -p 4222 &
 
 # Use a non-watch runtime path for the UAT container while keeping the existing local script intact.
 if [ "$STAGE" = "uat" ]; then
