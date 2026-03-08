@@ -83,7 +83,16 @@ export class AuthService {
 
     const tenant = await this.tenantQuery.findById(tenantId);
 
-    return this.issueTokenPair(user.id, user.email, user.firstName, tenantId, tenant.slug, roles, roleIds);
+    return this.issueTokenPair(
+      user.id,
+      user.email,
+      user.firstName,
+      tenantId,
+      tenant.slug,
+      roles,
+      roleIds,
+      tenant.plan
+    );
   }
 
   /**
@@ -123,7 +132,8 @@ export class AuthService {
       stored.tenantId,
       tenant.slug,
       roles,
-      roleIds
+      roleIds,
+      tenant.plan
     );
   }
 
@@ -162,7 +172,8 @@ export class AuthService {
     tenantId: string,
     tenantSlug: string,
     roles: string[],
-    roleIds: string[]
+    roleIds: string[],
+    plan: string
   ): Promise<AuthTokens> {
     const payload: IJwtPayload = {
       sub: userId,
@@ -172,7 +183,7 @@ export class AuthService {
       tenantSlug,
       roles,
       roleIds,
-      plan: "", // populated by TenantQueryContract in future phase
+      plan,
     };
 
     const accessToken = this.jwtService.sign(payload);

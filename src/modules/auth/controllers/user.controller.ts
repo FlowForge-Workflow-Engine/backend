@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -56,6 +56,7 @@ export class UserController {
   @Get(":id")
   @ApiOperation({ summary: "Get a user by ID within the authenticated tenant" })
   @ApiSuccessResponse(UserDetailResponseDto, "User retrieved successfully")
+  @ApiParam({ name: "id", description: "User UUID", format: "uuid" })
   async findOne(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string

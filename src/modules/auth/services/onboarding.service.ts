@@ -166,7 +166,8 @@ export class OnboardingService {
         tenant.id,
         tenant.slug,
         adminRole ? ["Admin"] : [],
-        adminRole ? [adminRole.id] : []
+        adminRole ? [adminRole.id] : [],
+        tenant.plan
       );
 
       this.logger.log(`Company registered: tenant=${tenant.id}, admin=${savedUser.id}`);
@@ -254,7 +255,8 @@ export class OnboardingService {
         tenant.id,
         tenant.slug,
         roleNames,
-        requestorRole ? [requestorRole.id] : []
+        requestorRole ? [requestorRole.id] : [],
+        tenant.plan
       );
       this.logger.log(`User self-registered: user=${savedUser.id} [tenant=${tenant.id}]`);
       return {
