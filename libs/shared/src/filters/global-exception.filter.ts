@@ -9,6 +9,10 @@ interface ErrorResponse {
   path: string;
 }
 
+interface CsrfLikeError extends Error {
+  code?: string;
+}
+
 /**
  * Global exception filter that catches all unhandled exceptions and returns a
  * standardised { statusCode, errorCode, message, timestamp, path } response shape.
@@ -31,7 +35,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let errorCode: string;
     let message: string;
 
-    if (exception instanceof HttpException) {
+    if (this.isInvalidCsrfTokenError(exception)) {
+      // csurf throws a non-Nest error, so map it explicitly to the correct HTTP semantics.
+      statusCode = HttpStatus.FORBIDDEN;
+      errorCode = "INVALID_CSRF_TOKEN";
+      message = "Invalid CSRF token";
+
+      this.logger.warn(`Invalid CSRF token on ${request.method} ${request.url}`);
+    } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
@@ -68,5 +79,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     response.status(statusCode).json(errorResponse);
+  }
+
+  /**
+   * Detects the Express/csurf error shape so invalid tokens return 403 instead of being treated as 500s.
+   *
+   * @param exception - Unknown thrown value from Nest or Express middleware
+   * @returns True when the error represents an invalid CSRF token
+   */
+  private isInvalidCsrfTokenError(exception: unknown): exception is CsrfLikeError {
+    if (!(exception instanceof Error)) {
+      return false;
+    }
+
+    const csrfError = exception as CsrfLikeError;
+    return csrfError.code === "EBADCSRFTOKEN" || csrfError.message === "invalid csrf token";
   }
 }

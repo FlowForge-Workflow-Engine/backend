@@ -41,6 +41,17 @@ async function bootstrap() {
     logger: ["error", "fatal", "log", "verbose", "warn", "debug"],
   });
   const configService = app.get<ConfigService>(ConfigService);
+  const stage = configService.get<string>("STAGE")?.toLowerCase() || "dev";
+  const isHostedEnvironment =
+    ["uat", "prod"].includes(stage) || Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+  const configuredFrontendOrigin = configService.get<string>("FR_BASE_URL");
+  const allowedOrigins = Array.from(
+    new Set(
+      ["http://localhost:3000", "http://localhost:8000", configuredFrontendOrigin].filter(
+        (origin): origin is string => Boolean(origin)
+      )
+    )
+  );
   // const expressApp = app.getHttpAdapter() as unknown as express.Application;
 
   app.setGlobalPrefix("/api");
@@ -50,15 +61,11 @@ async function bootstrap() {
   });
 
   const corsOptions: CorsOptions = {
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:8000",
-      process.env.FR_BASE_URL,
-      // FIXME: Add Other Source URLs // Only allow requests from yourdomain.com
-    ],
+    // Allow local frontend origins plus the exact hosted Vercel origin for the cross-site CSRF flow.
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control", "X-Requested-With"],
-    exposedHeaders: ["Content-Type", "Authorization", "Cache-Control", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control", "X-Requested-With", "X-CSRF-Token"],
+    exposedHeaders: ["Content-Type", "Authorization", "Cache-Control", "X-Requested-With", "X-CSRF-Token"],
     credentials: true,
     optionsSuccessStatus: 204,
     maxAge: 86400,
@@ -76,15 +83,17 @@ async function bootstrap() {
   app.set("trust proxy", 1); // trust first proxy
 
   const ignoreMethods =
-    configService.get<string>("STAGE") == "dev"
-      ? ["GET", "HEAD", "OPTIONS", "DELETE", "POST", "PATCH", "PUT"] // for devlopment we ignoring all
+    stage === "dev"
+      ? ["GET", "HEAD", "OPTIONS", "DELETE", "POST", "PATCH", "PUT"] // For local development, keep CSRF fully relaxed.
       : ["GET", "HEAD", "OPTIONS"];
   app.use(
     csurf({
       cookie: {
-        httpOnly: true, // Prevent JavaScript access to the CSRF cookie
-        secure: process.env.NODE_ENV === "PROD", // Set to secure only in production
-        sameSite: "strict", // Restrict the cookie to same-site requests
+        // Keep the secret cookie inaccessible to JavaScript; the frontend only needs the returned token value.
+        httpOnly: true,
+        // Hosted cross-site browser requests require SameSite=None and Secure=true for the CSRF secret cookie.
+        secure: isHostedEnvironment,
+        sameSite: isHostedEnvironment ? "none" : "lax",
       },
       ignoreMethods,
     })
@@ -169,7 +178,7 @@ async function bootstrap() {
     ##### Set-up Swagger #####
     ##########################
   */
-  if (!["prod", "production"].includes(configService.get<string>("STAGE").toLowerCase())) {
+  if (!["prod", "production"].includes(stage)) {
     const config = new DocumentBuilder()
       .addBearerAuth()
       .setTitle(configService.get<string>("npm_package_name").replaceAll("-", " ").toUpperCase())
@@ -199,9 +208,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  const stage = configService.get<string>("STAGE")?.toLowerCase() || "dev";
-  const isHostedEnvironment =
-    ["uat", "prod"].includes(stage) || Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
   const host = configService.get<string>("HOST") || (isHostedEnvironment ? "0.0.0.0" : "127.0.0.1");
   const port = Number(configService.get<string>("PORT") || (isHostedEnvironment ? 10000 : 3000));
 
