@@ -42,6 +42,7 @@ export class WorkflowTransitionController {
   @ApiSuccessResponse(WorkflowTransitionListResponseDto, "Workflow transitions retrieved successfully", {
     isArray: true,
   })
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async findAll(
     @Query() dto: FindWorkflowTransitionDto,
     @Param() { id }: IdParamDto,
@@ -56,6 +57,7 @@ export class WorkflowTransitionController {
   @ApiSuccessResponse(WorkflowTransitionCreatedResponseDto, "Workflow transition created successfully", {
     created: true,
   })
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async create(
     @Param() { id }: IdParamDto,
     @Body() dto: CreateWorkflowTransitionDto,
