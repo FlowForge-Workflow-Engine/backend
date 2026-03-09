@@ -1,4 +1,4 @@
-import { Controller, Logger } from "@nestjs/common";
+import { Controller, Logger, OnModuleInit } from "@nestjs/common";
 import { EventPattern, Payload } from "@nestjs/microservices";
 import { NatsEvents } from "@app/shared/constants/nats-events.enum";
 import {
@@ -30,10 +30,14 @@ import { AuditActionType } from "../enum/audit-action-type.enum";
  * This ensures safe replay while keeping audit persistence owned by the audit module.
  */
 @Controller()
-export class AuditSubscriber {
+export class AuditSubscriber implements OnModuleInit {
   private readonly logger = new Logger(AuditSubscriber.name);
 
   constructor(private readonly auditLogRepository: AuditLogRepository) {}
+
+  onModuleInit() {
+    this.logger.log("AuditSubscriber initialized — will consume NATS events and persist audit logs");
+  }
 
   @EventPattern(NatsEvents.USER_CREATED)
   async onUserCreated(@Payload() data: IUserCreatedEvent): Promise<void> {

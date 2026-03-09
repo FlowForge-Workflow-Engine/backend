@@ -1,5 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 
 /**
@@ -7,10 +7,16 @@ import { RefreshTokenRepository } from "../repositories/refresh-token.repository
  * Runs a scheduled cron job daily at 12:00 PM to remove tokens older than 36 hours.
  */
 @Injectable()
-export class RefreshTokenCleanupService {
+export class RefreshTokenCleanupService implements OnModuleInit {
   private readonly logger = new Logger(RefreshTokenCleanupService.name);
 
   constructor(private readonly refreshTokenRepository: RefreshTokenRepository) {}
+
+  onModuleInit() {
+    this.logger.log(
+      "RefreshTokenCleanupService initialized — will run daily at 12:00 PM to remove tokens older than 36 hours"
+    );
+  }
 
   /**
    * Cron job that runs daily at 12:00 PM (noon).
@@ -38,4 +44,3 @@ export class RefreshTokenCleanupService {
     }
   }
 }
-
