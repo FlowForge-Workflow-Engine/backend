@@ -10,7 +10,7 @@ import {
   Post,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { CurrentUser } from "@app/shared/decorators/current-user.decorator";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
@@ -69,6 +69,7 @@ export class WorkflowDefinitionController {
   @Get(":id")
   @ApiOperation({ summary: "Get a workflow definition by ID" })
   @ApiSuccessResponse(WorkflowDefinitionDetailResponseDto, "Workflow definition retrieved successfully")
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async findOne(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
@@ -80,6 +81,7 @@ export class WorkflowDefinitionController {
   @Get(":id/instance-form-schema")
   @ApiOperation({ summary: "Get the client-facing instance form schema for a workflow definition" })
   @ApiSuccessResponse(InstanceFormSchemaResponseDto, "Workflow instance form schema retrieved successfully")
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async getInstanceFormSchema(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
@@ -95,6 +97,7 @@ export class WorkflowDefinitionController {
     WorkflowDefinitionVersionListResponseDto,
     "Workflow definition versions retrieved successfully"
   )
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async findVersions(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
@@ -110,6 +113,7 @@ export class WorkflowDefinitionController {
     WorkflowDefinitionVersionDetailResponseDto,
     "Workflow definition version retrieved successfully"
   )
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async findVersionByNumber(
     @Param() { id }: IdParamDto,
     @Param("versionNumber", ParseIntPipe) versionNumber: number,
@@ -123,6 +127,7 @@ export class WorkflowDefinitionController {
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Delete a draft workflow definition" })
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async remove(@Param() { id }: IdParamDto, @TenantId() tenantId: string): Promise<void> {
     await this.service.remove(id, tenantId);
   }
@@ -132,6 +137,7 @@ export class WorkflowDefinitionController {
   @ApiSuccessResponse(WorkflowDefinitionPublishedResponseDto, "Workflow definition published successfully", {
     created: true,
   })
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async publish(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string,
@@ -144,6 +150,7 @@ export class WorkflowDefinitionController {
   @Post(":id/deprecate")
   @ApiOperation({ summary: "Deprecate a published workflow definition" })
   @ApiSuccessResponse(WorkflowDefinitionDeprecatedResponseDto, "Workflow definition deprecated successfully")
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async deprecate(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string,

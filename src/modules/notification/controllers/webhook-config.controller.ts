@@ -11,7 +11,7 @@ import {
   Put,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
@@ -67,6 +67,7 @@ export class WebhookConfigController {
   @Get(":id")
   @ApiOperation({ summary: "Get a webhook configuration by ID" })
   @ApiSuccessResponse(WebhookConfigDetailResponseDto, "Webhook configuration retrieved successfully")
+  @ApiParam({ name: "id", description: "Webhook configuration UUID", format: "uuid" })
   async findOne(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string
@@ -79,6 +80,7 @@ export class WebhookConfigController {
   @Put(":id")
   @ApiOperation({ summary: "Update a webhook configuration" })
   @ApiSuccessResponse(WebhookConfigUpdatedResponseDto, "Webhook configuration updated successfully")
+  @ApiParam({ name: "id", description: "Webhook configuration UUID", format: "uuid" })
   async update(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string,

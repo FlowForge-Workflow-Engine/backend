@@ -10,7 +10,7 @@ import {
   Post,
   Query,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { IdParamDto } from "@app/shared/dto/id-param.dto";
 import { TenantId } from "@app/shared/decorators/tenant-id.decorator";
 import { ApiSuccessResponse } from "@app/shared/decorators/swagger-generic-response.decorator";
@@ -41,6 +41,7 @@ export class WorkflowStateController {
   @ApiSuccessResponse(WorkflowStateListResponseDto, "Workflow states retrieved successfully", {
     isArray: true,
   })
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async findAll(
     @Query() dto: FindWorkflowStateDto,
     @Param() { id }: IdParamDto,
@@ -55,6 +56,7 @@ export class WorkflowStateController {
   @ApiSuccessResponse(WorkflowStateCreatedResponseDto, "Workflow state created successfully", {
     created: true,
   })
+  @ApiParam({ name: "id", description: "Workflow definition UUID", format: "uuid" })
   async create(
     @Param() { id }: IdParamDto,
     @Body() dto: CreateWorkflowStateDto,
@@ -67,6 +69,7 @@ export class WorkflowStateController {
   @Get(":stateId")
   @ApiOperation({ summary: "Get a specific state by ID" })
   @ApiSuccessResponse(WorkflowStateDetailResponseDto, "Workflow state retrieved successfully")
+  @ApiParam({ name: "stateId", description: "Workflow state UUID", format: "uuid" })
   async findOne(
     @Param("stateId") stateId: string,
     @TenantId() tenantId: string
@@ -78,6 +81,7 @@ export class WorkflowStateController {
   @Patch(":stateId")
   @ApiOperation({ summary: "Update a workflow state in a draft workflow definition" })
   @ApiSuccessResponse(WorkflowStateUpdatedResponseDto, "Workflow state updated successfully")
+  @ApiParam({ name: "stateId", description: "Workflow state UUID", format: "uuid" })
   async update(
     @Param() { id }: IdParamDto,
     @Param("stateId") stateId: string,
@@ -91,6 +95,7 @@ export class WorkflowStateController {
   @Delete(":stateId")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Remove a state from a draft workflow definition" })
+  @ApiParam({ name: "stateId", description: "Workflow state UUID", format: "uuid" })
   async remove(@Param("stateId") stateId: string, @TenantId() tenantId: string): Promise<void> {
     await this.service.remove(stateId, tenantId);
   }

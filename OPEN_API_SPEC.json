@@ -245,6 +245,39 @@
                 ]
             }
         },
+        "/api/v1/csrf-token": {
+            "get": {
+                "operationId": "CsrfController_getCsrfToken_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "CSRF token issued successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/CsrfTokenResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "summary": "Issue a CSRF token for cross-site browser requests",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
         "/api/v1/users": {
             "get": {
                 "operationId": "UserController_findAll_v1",
@@ -363,7 +396,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "User UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1089,23 +1122,23 @@
                 ]
             }
         },
-        "/api/v1/workflow-instances": {
+        "/api/v1/notification-templates": {
             "post": {
-                "operationId": "WorkflowExecutionController_create_v1",
+                "operationId": "NotificationTemplateController_create_v1",
                 "parameters": [],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateInstanceDto"
+                                "$ref": "#/components/schemas/CreateNotificationTemplateDto"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Workflow instance created successfully",
+                        "description": "Notification template created successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1116,7 +1149,7 @@
                                         {
                                             "properties": {
                                                 "data": {
-                                                    "$ref": "#/components/schemas/WorkflowExecutionCreatedResponseDto"
+                                                    "$ref": "#/components/schemas/NotificationTemplateCreatedResponseDto"
                                                 }
                                             }
                                         }
@@ -1131,13 +1164,13 @@
                         "bearer": []
                     }
                 ],
-                "summary": "Create a new workflow instance",
+                "summary": "Create a notification template",
                 "tags": [
-                    "Workflow Instances"
+                    "Notification Templates"
                 ]
             },
             "get": {
-                "operationId": "WorkflowExecutionController_list_v1",
+                "operationId": "NotificationTemplateController_findAll_v1",
                 "parameters": [
                     {
                         "name": "page",
@@ -1156,35 +1189,11 @@
                         "schema": {
                             "type": "number"
                         }
-                    },
-                    {
-                        "name": "status",
-                        "required": false,
-                        "in": "query",
-                        "description": "Filter workflow instances by status",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "active",
-                                "completed",
-                                "cancelled"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "workflowDefinitionId",
-                        "required": false,
-                        "in": "query",
-                        "description": "Filter workflow instances by workflow definition ID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Workflow instances retrieved successfully",
+                        "description": "Notification templates retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1197,7 +1206,7 @@
                                                 "data": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/WorkflowExecutionListResponseDto"
+                                                        "$ref": "#/components/schemas/NotificationTemplateListResponseDto"
                                                     }
                                                 },
                                                 "count": {
@@ -1217,21 +1226,21 @@
                         "bearer": []
                     }
                 ],
-                "summary": "List workflow instances (paginated)",
+                "summary": "List all notification templates for the tenant",
                 "tags": [
-                    "Workflow Instances"
+                    "Notification Templates"
                 ]
             }
         },
-        "/api/v1/workflow-instances/{id}": {
+        "/api/v1/notification-templates/{id}": {
             "get": {
-                "operationId": "WorkflowExecutionController_getOne_v1",
+                "operationId": "NotificationTemplateController_findOne_v1",
                 "parameters": [
                     {
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Workflow instance UUID",
+                        "description": "Resource UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1240,7 +1249,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Workflow instance retrieved successfully",
+                        "description": "Notification template retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1251,7 +1260,7 @@
                                         {
                                             "properties": {
                                                 "data": {
-                                                    "$ref": "#/components/schemas/WorkflowExecutionDetailResponseDto"
+                                                    "$ref": "#/components/schemas/NotificationTemplateDetailResponseDto"
                                                 }
                                             }
                                         }
@@ -1266,21 +1275,67 @@
                         "bearer": []
                     }
                 ],
-                "summary": "Get workflow instance details",
+                "summary": "Get a notification template by ID",
                 "tags": [
-                    "Workflow Instances"
+                    "Notification Templates"
                 ]
-            }
-        },
-        "/api/v1/workflow-instances/{id}/allowed-transitions": {
-            "get": {
-                "operationId": "WorkflowExecutionController_getAllowedTransitions_v1",
+            },
+            "put": {
+                "operationId": "NotificationTemplateController_update_v1",
                 "parameters": [
                     {
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Workflow instance UUID",
+                        "description": "Notification template UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "example": "550e8400-e29b...",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification template updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/NotificationTemplateUpdatedResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a notification template",
+                "tags": [
+                    "Notification Templates"
+                ]
+            },
+            "delete": {
+                "operationId": "NotificationTemplateController_remove_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Resource UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1288,7 +1343,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "204": {
                         "description": ""
                     }
                 },
@@ -1297,40 +1352,29 @@
                         "bearer": []
                     }
                 ],
-                "summary": "List transitions available to the current user for this instance",
+                "summary": "Delete a notification template",
                 "tags": [
-                    "Workflow Instances"
+                    "Notification Templates"
                 ]
             }
         },
-        "/api/v1/workflow-instances/{id}/transitions": {
+        "/api/v1/webhook-configs": {
             "post": {
-                "operationId": "WorkflowExecutionController_executeTransition_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Workflow instance UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
+                "operationId": "WebhookConfigController_create_v1",
+                "parameters": [],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ExecuteTransitionDto"
+                                "$ref": "#/components/schemas/CreateWebhookConfigDto"
                             }
                         }
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Workflow instance transitioned successfully",
+                    "201": {
+                        "description": "Webhook configuration created successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1341,7 +1385,7 @@
                                         {
                                             "properties": {
                                                 "data": {
-                                                    "$ref": "#/components/schemas/WorkflowExecutionTransitionedResponseDto"
+                                                    "$ref": "#/components/schemas/WebhookConfigCreatedResponseDto"
                                                 }
                                             }
                                         }
@@ -1356,21 +1400,83 @@
                         "bearer": []
                     }
                 ],
-                "summary": "Execute a transition on a workflow instance",
+                "summary": "Register a new webhook configuration",
                 "tags": [
-                    "Workflow Instances"
+                    "Webhook Configurations"
+                ]
+            },
+            "get": {
+                "operationId": "WebhookConfigController_findAll_v1",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook configurations retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/CountApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/WebhookConfigListResponseDto"
+                                                    }
+                                                },
+                                                "count": {
+                                                    "type": "number",
+                                                    "description": "Total count of items"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List all webhook configurations for the tenant",
+                "tags": [
+                    "Webhook Configurations"
                 ]
             }
         },
-        "/api/v1/workflow-instances/{id}/cancel": {
-            "post": {
-                "operationId": "WorkflowExecutionController_cancel_v1",
+        "/api/v1/webhook-configs/{id}": {
+            "get": {
+                "operationId": "WebhookConfigController_findOne_v1",
                 "parameters": [
                     {
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Workflow instance UUID",
+                        "description": "Resource UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1378,7 +1484,101 @@
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
+                        "description": "Webhook configuration retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/WebhookConfigDetailResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a webhook configuration by ID",
+                "tags": [
+                    "Webhook Configurations"
+                ]
+            },
+            "put": {
+                "operationId": "WebhookConfigController_update_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Resource UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook configuration updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/WebhookConfigUpdatedResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a webhook configuration",
+                "tags": [
+                    "Webhook Configurations"
+                ]
+            },
+            "delete": {
+                "operationId": "WebhookConfigController_remove_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Resource UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
                         "description": ""
                     }
                 },
@@ -1387,19 +1587,19 @@
                         "bearer": []
                     }
                 ],
-                "summary": "Cancel an active workflow instance",
+                "summary": "Delete a webhook configuration",
                 "tags": [
-                    "Workflow Instances"
+                    "Webhook Configurations"
                 ]
             }
         },
-        "/api/v1/workflow-rules/metadata": {
+        "/api/v1/dashboard/stats": {
             "get": {
-                "operationId": "RuleMetadataController_getMetadata_v1",
+                "operationId": "DashboardController_getStats_v1",
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "Workflow rule metadata retrieved successfully",
+                        "description": "Dashboard statistics retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1410,7 +1610,7 @@
                                         {
                                             "properties": {
                                                 "data": {
-                                                    "$ref": "#/components/schemas/RuleMetadataResponseDto"
+                                                    "$ref": "#/components/schemas/DashboardStatsResponseDto"
                                                 }
                                             }
                                         }
@@ -1425,9 +1625,9 @@
                         "bearer": []
                     }
                 ],
-                "summary": "Get fixed rule-authoring metadata for frontend rule builders",
+                "summary": "Get tenant dashboard statistics",
                 "tags": [
-                    "Workflow Rules"
+                    "Dashboard"
                 ]
             }
         },
@@ -2222,7 +2422,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -2464,6 +2664,389 @@
                 ]
             }
         },
+        "/api/v1/workflow-definitions/{id}/transitions/{transitionId}/rules/{ruleId}": {
+            "delete": {
+                "operationId": "WorkflowTransitionController_removeRule_v1",
+                "parameters": [
+                    {
+                        "name": "transitionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workflow transition UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ruleId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Transition rule UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Remove a rule from a draft workflow transition",
+                "tags": [
+                    "Workflow Transitions"
+                ]
+            }
+        },
+        "/api/v1/workflow-instances": {
+            "post": {
+                "operationId": "WorkflowExecutionController_create_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateInstanceDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Workflow instance created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/WorkflowExecutionCreatedResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new workflow instance",
+                "tags": [
+                    "Workflow Instances"
+                ]
+            },
+            "get": {
+                "operationId": "WorkflowExecutionController_list_v1",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter workflow instances by status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "completed",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "workflowDefinitionId",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter workflow instances by workflow definition ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workflow instances retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/CountApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/WorkflowExecutionListResponseDto"
+                                                    }
+                                                },
+                                                "count": {
+                                                    "type": "number",
+                                                    "description": "Total count of items"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List workflow instances (paginated)",
+                "tags": [
+                    "Workflow Instances"
+                ]
+            }
+        },
+        "/api/v1/workflow-instances/{id}": {
+            "get": {
+                "operationId": "WorkflowExecutionController_getOne_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workflow instance UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workflow instance retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/WorkflowExecutionDetailResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get workflow instance details",
+                "tags": [
+                    "Workflow Instances"
+                ]
+            }
+        },
+        "/api/v1/workflow-instances/{id}/allowed-transitions": {
+            "get": {
+                "operationId": "WorkflowExecutionController_getAllowedTransitions_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workflow instance UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List transitions available to the current user for this instance",
+                "tags": [
+                    "Workflow Instances"
+                ]
+            }
+        },
+        "/api/v1/workflow-instances/{id}/transitions": {
+            "post": {
+                "operationId": "WorkflowExecutionController_executeTransition_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workflow instance UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExecuteTransitionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Workflow instance transitioned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/WorkflowExecutionTransitionedResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Execute a transition on a workflow instance",
+                "tags": [
+                    "Workflow Instances"
+                ]
+            }
+        },
+        "/api/v1/workflow-instances/{id}/cancel": {
+            "post": {
+                "operationId": "WorkflowExecutionController_cancel_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workflow instance UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Cancel an active workflow instance",
+                "tags": [
+                    "Workflow Instances"
+                ]
+            }
+        },
+        "/api/v1/workflow-rules/metadata": {
+            "get": {
+                "operationId": "RuleMetadataController_getMetadata_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Workflow rule metadata retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ApiResponseDto"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/RuleMetadataResponseDto"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get fixed rule-authoring metadata for frontend rule builders",
+                "tags": [
+                    "Workflow Rules"
+                ]
+            }
+        },
         "/api/v1/workflow-instances/{id}/audit-logs": {
             "get": {
                 "operationId": "AuditController_getAuditLogs_v1",
@@ -2535,477 +3118,6 @@
                 "summary": "Get paginated audit log for a workflow instance",
                 "tags": [
                     "Audit Logs"
-                ]
-            }
-        },
-        "/api/v1/notification-templates": {
-            "post": {
-                "operationId": "NotificationTemplateController_create_v1",
-                "parameters": [],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateNotificationTemplateDto"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Notification template created successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/ApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "$ref": "#/components/schemas/NotificationTemplateCreatedResponseDto"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Create a notification template",
-                "tags": [
-                    "Notification Templates"
-                ]
-            },
-            "get": {
-                "operationId": "NotificationTemplateController_findAll_v1",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "required": false,
-                        "in": "query",
-                        "description": "Page number",
-                        "schema": {
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "required": false,
-                        "in": "query",
-                        "description": "Number of items per page",
-                        "schema": {
-                            "type": "number"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Notification templates retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/CountApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "$ref": "#/components/schemas/NotificationTemplateListResponseDto"
-                                                    }
-                                                },
-                                                "count": {
-                                                    "type": "number",
-                                                    "description": "Total count of items"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "List all notification templates for the tenant",
-                "tags": [
-                    "Notification Templates"
-                ]
-            }
-        },
-        "/api/v1/notification-templates/{id}": {
-            "get": {
-                "operationId": "NotificationTemplateController_findOne_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Resource UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Notification template retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/ApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "$ref": "#/components/schemas/NotificationTemplateDetailResponseDto"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Get a notification template by ID",
-                "tags": [
-                    "Notification Templates"
-                ]
-            },
-            "put": {
-                "operationId": "NotificationTemplateController_update_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Notification template UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "example": "550e8400-e29b...",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Notification template updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/ApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "$ref": "#/components/schemas/NotificationTemplateUpdatedResponseDto"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Update a notification template",
-                "tags": [
-                    "Notification Templates"
-                ]
-            },
-            "delete": {
-                "operationId": "NotificationTemplateController_remove_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Resource UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": ""
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Delete a notification template",
-                "tags": [
-                    "Notification Templates"
-                ]
-            }
-        },
-        "/api/v1/webhook-configs": {
-            "post": {
-                "operationId": "WebhookConfigController_create_v1",
-                "parameters": [],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateWebhookConfigDto"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Webhook configuration created successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/ApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "$ref": "#/components/schemas/WebhookConfigCreatedResponseDto"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Register a new webhook configuration",
-                "tags": [
-                    "Webhook Configurations"
-                ]
-            },
-            "get": {
-                "operationId": "WebhookConfigController_findAll_v1",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "required": false,
-                        "in": "query",
-                        "description": "Page number",
-                        "schema": {
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "required": false,
-                        "in": "query",
-                        "description": "Number of items per page",
-                        "schema": {
-                            "type": "number"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Webhook configurations retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/CountApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "$ref": "#/components/schemas/WebhookConfigListResponseDto"
-                                                    }
-                                                },
-                                                "count": {
-                                                    "type": "number",
-                                                    "description": "Total count of items"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "List all webhook configurations for the tenant",
-                "tags": [
-                    "Webhook Configurations"
-                ]
-            }
-        },
-        "/api/v1/webhook-configs/{id}": {
-            "get": {
-                "operationId": "WebhookConfigController_findOne_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Resource UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Webhook configuration retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/ApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "$ref": "#/components/schemas/WebhookConfigDetailResponseDto"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Get a webhook configuration by ID",
-                "tags": [
-                    "Webhook Configurations"
-                ]
-            },
-            "put": {
-                "operationId": "WebhookConfigController_update_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Resource UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Webhook configuration updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/ApiResponseDto"
-                                        },
-                                        {
-                                            "properties": {
-                                                "data": {
-                                                    "$ref": "#/components/schemas/WebhookConfigUpdatedResponseDto"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Update a webhook configuration",
-                "tags": [
-                    "Webhook Configurations"
-                ]
-            },
-            "delete": {
-                "operationId": "WebhookConfigController_remove_v1",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "description": "Resource UUID",
-                        "schema": {
-                            "format": "uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": ""
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Delete a webhook configuration",
-                "tags": [
-                    "Webhook Configurations"
                 ]
             }
         },
@@ -3619,6 +3731,19 @@
                     "createdAt",
                     "updatedAt",
                     "roles"
+                ]
+            },
+            "CsrfTokenResponseDto": {
+                "type": "object",
+                "properties": {
+                    "csrfToken": {
+                        "type": "string",
+                        "description": "CSRF token that the frontend must echo in the X-CSRF-Token header",
+                        "example": "zLQ4CH2P-6iS3xGBM7JcRzFmlkF5P6EX0uTk"
+                    }
+                },
+                "required": [
+                    "csrfToken"
                 ]
             },
             "CountApiResponseDto": {
@@ -4503,12 +4628,12 @@
                     }
                 }
             },
-            "WorkflowExecutionCreatedResponseDto": {
+            "NotificationTemplateCreatedResponseDto": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "Workflow instance unique identifier",
+                        "description": "Notification template unique identifier",
                         "format": "uuid"
                     },
                     "tenantId": {
@@ -4516,119 +4641,125 @@
                         "description": "Tenant ID for multi-tenancy isolation",
                         "format": "uuid"
                     },
-                    "workflowDefinitionId": {
-                        "type": "string",
-                        "description": "Foreign key to workflow definition",
-                        "format": "uuid"
-                    },
-                    "definitionVersion": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Version of the definition snapshot used at creation time"
-                    },
-                    "currentStateId": {
-                        "type": "string",
-                        "description": "Current state ID in the workflow state machine",
-                        "format": "uuid"
-                    },
-                    "currentStateName": {
-                        "type": "string",
-                        "example": "pending_approval",
-                        "description": "Denormalized current state name for fast reads"
-                    },
-                    "payload": {
-                        "type": "object",
-                        "example": {
-                            "requestId": "REQ-001",
-                            "amount": 5000
-                        },
-                        "description": "Dynamic business context payload"
-                    },
-                    "status": {
+                    "eventTrigger": {
                         "type": "string",
                         "enum": [
-                            "active",
-                            "completed",
-                            "cancelled"
+                            "tenant.created",
+                            "workflow-execution.instance.created",
+                            "workflow-execution.transition.completed",
+                            "workflow-execution.instance.completed",
+                            "workflow-execution.instance.cancelled"
                         ],
-                        "example": "active",
-                        "description": "Current lifecycle status of the instance"
+                        "example": "workflow-execution.transition.completed",
+                        "description": "Supported workflow event that triggers this notification"
                     },
-                    "version": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Optimistic lock counter, incremented on each successful transition"
-                    },
-                    "createdBy": {
+                    "channel": {
                         "type": "string",
-                        "description": "UUID of the user who created this instance",
-                        "format": "uuid"
+                        "enum": [
+                            "email",
+                            "webhook"
+                        ],
+                        "example": "email",
+                        "description": "Delivery channel for the notification"
                     },
-                    "completedAt": {
-                        "format": "date-time",
+                    "subjectTemplate": {
                         "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Timestamp when instance reached terminal state",
+                        "example": "Workflow moved to {{toState}}",
+                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
                         "nullable": true
+                    },
+                    "bodyTemplate": {
+                        "type": "string",
+                        "example": "workflow-transition-completed",
+                        "description": "Pug template file name/path for email notifications or webhook payload template content"
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this notification template is active"
                     },
                     "createdAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-01T08:00:00Z",
-                        "description": "Instance creation timestamp"
+                        "description": "Template creation timestamp"
                     },
                     "updatedAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-05T10:30:00Z",
-                        "description": "Instance last update timestamp"
+                        "description": "Template last update timestamp"
                     }
                 },
                 "required": [
                     "id",
                     "tenantId",
-                    "workflowDefinitionId",
-                    "definitionVersion",
-                    "currentStateId",
-                    "currentStateName",
-                    "payload",
-                    "status",
-                    "version",
-                    "createdBy",
-                    "completedAt",
+                    "eventTrigger",
+                    "channel",
+                    "subjectTemplate",
+                    "bodyTemplate",
+                    "isActive",
                     "createdAt",
                     "updatedAt"
                 ]
             },
-            "CreateInstanceDto": {
+            "CreateNotificationTemplateDto": {
                 "type": "object",
                 "properties": {
-                    "workflowDefinitionId": {
+                    "eventTrigger": {
                         "type": "string",
-                        "example": "550e8400-e29b-41d4-a716-446655440000",
-                        "description": "UUID of the workflow definition to instantiate",
-                        "format": "uuid"
+                        "enum": [
+                            "tenant.created",
+                            "workflow-execution.instance.created",
+                            "workflow-execution.transition.completed",
+                            "workflow-execution.instance.completed",
+                            "workflow-execution.instance.cancelled"
+                        ],
+                        "example": "tenant.created",
+                        "description": "Supported event trigger that dispatches this notification",
+                        "minLength": 1,
+                        "maxLength": 100
                     },
-                    "payload": {
-                        "type": "object",
-                        "description": "Initial form payload for the workflow instance (JSON object)",
-                        "example": {
-                            "requestedBy": "John Doe",
-                            "amount": 5000
-                        }
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "email",
+                            "webhook"
+                        ],
+                        "description": "Delivery channel for the notification",
+                        "example": "email"
+                    },
+                    "subjectTemplate": {
+                        "type": "string",
+                        "example": "Workflow moved to {{toState}}",
+                        "description": "Email subject template with lightweight {{token}} interpolation (max 500 characters)",
+                        "maxLength": 500
+                    },
+                    "bodyTemplate": {
+                        "type": "string",
+                        "example": "workflow-transition-completed",
+                        "description": "Pug template file name/path under src/modules/notification/templates (1-5000 characters)",
+                        "minLength": 1,
+                        "maxLength": 5000
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "description": "Whether this notification template is active",
+                        "example": true
                     }
                 },
                 "required": [
-                    "workflowDefinitionId",
-                    "payload"
+                    "eventTrigger",
+                    "channel",
+                    "bodyTemplate"
                 ]
             },
-            "WorkflowExecutionListResponseDto": {
+            "NotificationTemplateListResponseDto": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "Workflow instance unique identifier",
+                        "description": "Notification template unique identifier",
                         "format": "uuid"
                     },
                     "tenantId": {
@@ -4636,96 +4767,74 @@
                         "description": "Tenant ID for multi-tenancy isolation",
                         "format": "uuid"
                     },
-                    "workflowDefinitionId": {
-                        "type": "string",
-                        "description": "Foreign key to workflow definition",
-                        "format": "uuid"
-                    },
-                    "definitionVersion": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Version of the definition snapshot used at creation time"
-                    },
-                    "currentStateId": {
-                        "type": "string",
-                        "description": "Current state ID in the workflow state machine",
-                        "format": "uuid"
-                    },
-                    "currentStateName": {
-                        "type": "string",
-                        "example": "pending_approval",
-                        "description": "Denormalized current state name for fast reads"
-                    },
-                    "payload": {
-                        "type": "object",
-                        "example": {
-                            "requestId": "REQ-001",
-                            "amount": 5000
-                        },
-                        "description": "Dynamic business context payload"
-                    },
-                    "status": {
+                    "eventTrigger": {
                         "type": "string",
                         "enum": [
-                            "active",
-                            "completed",
-                            "cancelled"
+                            "tenant.created",
+                            "workflow-execution.instance.created",
+                            "workflow-execution.transition.completed",
+                            "workflow-execution.instance.completed",
+                            "workflow-execution.instance.cancelled"
                         ],
-                        "example": "active",
-                        "description": "Current lifecycle status of the instance"
+                        "example": "workflow-execution.transition.completed",
+                        "description": "Supported workflow event that triggers this notification"
                     },
-                    "version": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Optimistic lock counter, incremented on each successful transition"
-                    },
-                    "createdBy": {
+                    "channel": {
                         "type": "string",
-                        "description": "UUID of the user who created this instance",
-                        "format": "uuid"
+                        "enum": [
+                            "email",
+                            "webhook"
+                        ],
+                        "example": "email",
+                        "description": "Delivery channel for the notification"
                     },
-                    "completedAt": {
-                        "format": "date-time",
+                    "subjectTemplate": {
                         "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Timestamp when instance reached terminal state",
+                        "example": "Workflow moved to {{toState}}",
+                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
                         "nullable": true
+                    },
+                    "bodyTemplate": {
+                        "type": "string",
+                        "example": "workflow-transition-completed",
+                        "description": "Pug template file name/path for email notifications or webhook payload template content"
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this notification template is active"
                     },
                     "createdAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-01T08:00:00Z",
-                        "description": "Instance creation timestamp"
+                        "description": "Template creation timestamp"
                     },
                     "updatedAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-05T10:30:00Z",
-                        "description": "Instance last update timestamp"
+                        "description": "Template last update timestamp"
                     }
                 },
                 "required": [
                     "id",
                     "tenantId",
-                    "workflowDefinitionId",
-                    "definitionVersion",
-                    "currentStateId",
-                    "currentStateName",
-                    "payload",
-                    "status",
-                    "version",
-                    "createdBy",
-                    "completedAt",
+                    "eventTrigger",
+                    "channel",
+                    "subjectTemplate",
+                    "bodyTemplate",
+                    "isActive",
                     "createdAt",
                     "updatedAt"
                 ]
             },
-            "WorkflowExecutionDetailResponseDto": {
+            "NotificationTemplateDetailResponseDto": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "Workflow instance unique identifier",
+                        "description": "Notification template unique identifier",
                         "format": "uuid"
                     },
                     "tenantId": {
@@ -4733,96 +4842,74 @@
                         "description": "Tenant ID for multi-tenancy isolation",
                         "format": "uuid"
                     },
-                    "workflowDefinitionId": {
-                        "type": "string",
-                        "description": "Foreign key to workflow definition",
-                        "format": "uuid"
-                    },
-                    "definitionVersion": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Version of the definition snapshot used at creation time"
-                    },
-                    "currentStateId": {
-                        "type": "string",
-                        "description": "Current state ID in the workflow state machine",
-                        "format": "uuid"
-                    },
-                    "currentStateName": {
-                        "type": "string",
-                        "example": "pending_approval",
-                        "description": "Denormalized current state name for fast reads"
-                    },
-                    "payload": {
-                        "type": "object",
-                        "example": {
-                            "requestId": "REQ-001",
-                            "amount": 5000
-                        },
-                        "description": "Dynamic business context payload"
-                    },
-                    "status": {
+                    "eventTrigger": {
                         "type": "string",
                         "enum": [
-                            "active",
-                            "completed",
-                            "cancelled"
+                            "tenant.created",
+                            "workflow-execution.instance.created",
+                            "workflow-execution.transition.completed",
+                            "workflow-execution.instance.completed",
+                            "workflow-execution.instance.cancelled"
                         ],
-                        "example": "active",
-                        "description": "Current lifecycle status of the instance"
+                        "example": "workflow-execution.transition.completed",
+                        "description": "Supported workflow event that triggers this notification"
                     },
-                    "version": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Optimistic lock counter, incremented on each successful transition"
-                    },
-                    "createdBy": {
+                    "channel": {
                         "type": "string",
-                        "description": "UUID of the user who created this instance",
-                        "format": "uuid"
+                        "enum": [
+                            "email",
+                            "webhook"
+                        ],
+                        "example": "email",
+                        "description": "Delivery channel for the notification"
                     },
-                    "completedAt": {
-                        "format": "date-time",
+                    "subjectTemplate": {
                         "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Timestamp when instance reached terminal state",
+                        "example": "Workflow moved to {{toState}}",
+                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
                         "nullable": true
+                    },
+                    "bodyTemplate": {
+                        "type": "string",
+                        "example": "workflow-transition-completed",
+                        "description": "Pug template file name/path for email notifications or webhook payload template content"
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this notification template is active"
                     },
                     "createdAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-01T08:00:00Z",
-                        "description": "Instance creation timestamp"
+                        "description": "Template creation timestamp"
                     },
                     "updatedAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-05T10:30:00Z",
-                        "description": "Instance last update timestamp"
+                        "description": "Template last update timestamp"
                     }
                 },
                 "required": [
                     "id",
                     "tenantId",
-                    "workflowDefinitionId",
-                    "definitionVersion",
-                    "currentStateId",
-                    "currentStateName",
-                    "payload",
-                    "status",
-                    "version",
-                    "createdBy",
-                    "completedAt",
+                    "eventTrigger",
+                    "channel",
+                    "subjectTemplate",
+                    "bodyTemplate",
+                    "isActive",
                     "createdAt",
                     "updatedAt"
                 ]
             },
-            "WorkflowExecutionTransitionedResponseDto": {
+            "NotificationTemplateUpdatedResponseDto": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "Workflow instance unique identifier",
+                        "description": "Notification template unique identifier",
                         "format": "uuid"
                     },
                     "tenantId": {
@@ -4830,348 +4917,415 @@
                         "description": "Tenant ID for multi-tenancy isolation",
                         "format": "uuid"
                     },
-                    "workflowDefinitionId": {
-                        "type": "string",
-                        "description": "Foreign key to workflow definition",
-                        "format": "uuid"
-                    },
-                    "definitionVersion": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Version of the definition snapshot used at creation time"
-                    },
-                    "currentStateId": {
-                        "type": "string",
-                        "description": "Current state ID in the workflow state machine",
-                        "format": "uuid"
-                    },
-                    "currentStateName": {
-                        "type": "string",
-                        "example": "pending_approval",
-                        "description": "Denormalized current state name for fast reads"
-                    },
-                    "payload": {
-                        "type": "object",
-                        "example": {
-                            "requestId": "REQ-001",
-                            "amount": 5000
-                        },
-                        "description": "Dynamic business context payload"
-                    },
-                    "status": {
+                    "eventTrigger": {
                         "type": "string",
                         "enum": [
-                            "active",
-                            "completed",
-                            "cancelled"
+                            "tenant.created",
+                            "workflow-execution.instance.created",
+                            "workflow-execution.transition.completed",
+                            "workflow-execution.instance.completed",
+                            "workflow-execution.instance.cancelled"
                         ],
-                        "example": "active",
-                        "description": "Current lifecycle status of the instance"
+                        "example": "workflow-execution.transition.completed",
+                        "description": "Supported workflow event that triggers this notification"
                     },
-                    "version": {
-                        "type": "number",
-                        "example": 1,
-                        "description": "Optimistic lock counter, incremented on each successful transition"
-                    },
-                    "createdBy": {
+                    "channel": {
                         "type": "string",
-                        "description": "UUID of the user who created this instance",
-                        "format": "uuid"
+                        "enum": [
+                            "email",
+                            "webhook"
+                        ],
+                        "example": "email",
+                        "description": "Delivery channel for the notification"
                     },
-                    "completedAt": {
-                        "format": "date-time",
+                    "subjectTemplate": {
                         "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Timestamp when instance reached terminal state",
+                        "example": "Workflow moved to {{toState}}",
+                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
                         "nullable": true
+                    },
+                    "bodyTemplate": {
+                        "type": "string",
+                        "example": "workflow-transition-completed",
+                        "description": "Pug template file name/path for email notifications or webhook payload template content"
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this notification template is active"
                     },
                     "createdAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-01T08:00:00Z",
-                        "description": "Instance creation timestamp"
+                        "description": "Template creation timestamp"
                     },
                     "updatedAt": {
                         "format": "date-time",
                         "type": "string",
                         "example": "2026-03-05T10:30:00Z",
-                        "description": "Instance last update timestamp"
+                        "description": "Template last update timestamp"
                     }
                 },
                 "required": [
                     "id",
                     "tenantId",
-                    "workflowDefinitionId",
-                    "definitionVersion",
-                    "currentStateId",
-                    "currentStateName",
-                    "payload",
-                    "status",
-                    "version",
-                    "createdBy",
-                    "completedAt",
+                    "eventTrigger",
+                    "channel",
+                    "subjectTemplate",
+                    "bodyTemplate",
+                    "isActive",
                     "createdAt",
                     "updatedAt"
                 ]
             },
-            "ExecuteTransitionDto": {
+            "WebhookConfigCreatedResponseDto": {
                 "type": "object",
                 "properties": {
-                    "transitionId": {
+                    "id": {
                         "type": "string",
-                        "example": "550e8400-e29b-41d4-a716-446655440000",
-                        "description": "UUID of the transition to execute",
+                        "description": "Webhook configuration unique identifier",
                         "format": "uuid"
                     },
-                    "lastKnownVersion": {
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "My Webhook",
+                        "description": "Human-readable name for the webhook configuration"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/webhooks/workflow",
+                        "description": "Target URL for HTTP POST delivery"
+                    },
+                    "secret": {
+                        "type": "string",
+                        "example": "hmac-secret-key",
+                        "description": "HMAC-SHA256 signing secret"
+                    },
+                    "eventTriggers": {
+                        "example": [
+                            "workflow-execution.transition.completed"
+                        ],
+                        "description": "Array of NATS event names this webhook subscribes to",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this webhook configuration is active"
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Webhook configuration creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Webhook configuration last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "name",
+                    "url",
+                    "secret",
+                    "eventTriggers",
+                    "isActive",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "CreateWebhookConfigDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Slack Alerts",
+                        "description": "Human-readable name for the webhook configuration (1-100 characters)",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://hooks.slack.com/services/xxx",
+                        "description": "Valid HTTPS URL for the webhook endpoint"
+                    },
+                    "secret": {
+                        "type": "string",
+                        "example": "super-secret-signing-key",
+                        "description": "Secret key for signing webhook payloads (1-500 characters)",
+                        "minLength": 1,
+                        "maxLength": 500
+                    },
+                    "eventTriggers": {
+                        "example": [
+                            "workflow-execution.transition.completed",
+                            "workflow-execution.instance.cancelled"
+                        ],
+                        "description": "Array of NATS event names that trigger this webhook",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "description": "Whether this webhook configuration is active",
+                        "example": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "url",
+                    "secret",
+                    "eventTriggers"
+                ]
+            },
+            "WebhookConfigListResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Webhook configuration unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "My Webhook",
+                        "description": "Human-readable name for the webhook configuration"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/webhooks/workflow",
+                        "description": "Target URL for HTTP POST delivery"
+                    },
+                    "secret": {
+                        "type": "string",
+                        "example": "hmac-secret-key",
+                        "description": "HMAC-SHA256 signing secret"
+                    },
+                    "eventTriggers": {
+                        "example": [
+                            "workflow-execution.transition.completed"
+                        ],
+                        "description": "Array of NATS event names this webhook subscribes to",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this webhook configuration is active"
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Webhook configuration creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Webhook configuration last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "name",
+                    "url",
+                    "secret",
+                    "eventTriggers",
+                    "isActive",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "WebhookConfigDetailResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Webhook configuration unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "My Webhook",
+                        "description": "Human-readable name for the webhook configuration"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/webhooks/workflow",
+                        "description": "Target URL for HTTP POST delivery"
+                    },
+                    "secret": {
+                        "type": "string",
+                        "example": "hmac-secret-key",
+                        "description": "HMAC-SHA256 signing secret"
+                    },
+                    "eventTriggers": {
+                        "example": [
+                            "workflow-execution.transition.completed"
+                        ],
+                        "description": "Array of NATS event names this webhook subscribes to",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this webhook configuration is active"
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Webhook configuration creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Webhook configuration last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "name",
+                    "url",
+                    "secret",
+                    "eventTriggers",
+                    "isActive",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "WebhookConfigUpdatedResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Webhook configuration unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "My Webhook",
+                        "description": "Human-readable name for the webhook configuration"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/webhooks/workflow",
+                        "description": "Target URL for HTTP POST delivery"
+                    },
+                    "secret": {
+                        "type": "string",
+                        "example": "hmac-secret-key",
+                        "description": "HMAC-SHA256 signing secret"
+                    },
+                    "eventTriggers": {
+                        "example": [
+                            "workflow-execution.transition.completed"
+                        ],
+                        "description": "Array of NATS event names this webhook subscribes to",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this webhook configuration is active"
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Webhook configuration creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Webhook configuration last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "name",
+                    "url",
+                    "secret",
+                    "eventTriggers",
+                    "isActive",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "DashboardStatsResponseDto": {
+                "type": "object",
+                "properties": {
+                    "totalWorkflows": {
                         "type": "number",
-                        "description": "Last known optimistic lock version of the instance — prevents concurrent transitions",
-                        "example": 1,
-                        "minimum": 1
+                        "example": 12,
+                        "description": "Total workflow definitions owned by the tenant"
                     },
-                    "comment": {
-                        "type": "string",
-                        "description": "Optional comment explaining the transition (max 1000 characters)",
-                        "example": "Approved — all documents verified.",
-                        "maxLength": 1000
+                    "publishedWorkflows": {
+                        "type": "number",
+                        "example": 7,
+                        "description": "Workflow definitions currently in published status"
                     },
-                    "idempotencyKey": {
-                        "type": "string",
-                        "description": "Client-generated unique key to prevent duplicate transitions on retry (max 128 characters)",
-                        "example": "req-abc123",
-                        "maxLength": 128
+                    "activeInstances": {
+                        "type": "number",
+                        "example": 19,
+                        "description": "Workflow instances currently in active status"
+                    },
+                    "totalUsers": {
+                        "type": "number",
+                        "example": 42,
+                        "description": "Total users belonging to the tenant"
                     }
                 },
                 "required": [
-                    "transitionId",
-                    "lastKnownVersion"
-                ]
-            },
-            "RuleSystemPathResponseDto": {
-                "type": "object",
-                "properties": {
-                    "fact": {
-                        "type": "string",
-                        "enum": [
-                            "payload",
-                            "user",
-                            "instance"
-                        ],
-                        "example": "user"
-                    },
-                    "path": {
-                        "type": "string",
-                        "example": "$.roles",
-                        "description": "Path to use together with the fact namespace"
-                    },
-                    "fullPath": {
-                        "type": "string",
-                        "example": "user.roles",
-                        "description": "Convenience combined reference for UI display"
-                    },
-                    "description": {
-                        "type": "string",
-                        "example": "Authenticated actor roles from the JWT context"
-                    }
-                },
-                "required": [
-                    "fact",
-                    "path",
-                    "fullPath",
-                    "description"
-                ]
-            },
-            "RuleMetadataResponseDto": {
-                "type": "object",
-                "properties": {
-                    "facts": {
-                        "type": "array",
-                        "example": [
-                            "payload",
-                            "user",
-                            "instance"
-                        ],
-                        "description": "Fixed top-level fact namespaces supported by the rule engine",
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "payload",
-                                "user",
-                                "instance"
-                            ]
-                        }
-                    },
-                    "ruleTypes": {
-                        "type": "array",
-                        "example": [
-                            "expression",
-                            "custom"
-                        ],
-                        "description": "Supported rule definition types",
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "expression",
-                                "custom"
-                            ]
-                        }
-                    },
-                    "customStrategies": {
-                        "type": "array",
-                        "example": [
-                            "date-range-matches-days",
-                            "user-has-any-role"
-                        ],
-                        "description": "Currently supported custom rule strategies",
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "date-range-matches-days",
-                                "user-has-any-role"
-                            ]
-                        }
-                    },
-                    "expressionOperators": {
-                        "type": "array",
-                        "example": [
-                            "equal",
-                            "notEqual",
-                            "lessThan",
-                            "lessThanInclusive",
-                            "greaterThan",
-                            "greaterThanInclusive",
-                            "in",
-                            "notIn",
-                            "contains",
-                            "doesNotContain"
-                        ],
-                        "description": "Documented built-in json-rules-engine operators used by this project today",
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "equal",
-                                "notEqual",
-                                "lessThan",
-                                "lessThanInclusive",
-                                "greaterThan",
-                                "greaterThanInclusive",
-                                "in",
-                                "notIn",
-                                "contains",
-                                "doesNotContain"
-                            ]
-                        }
-                    },
-                    "operatorDecorators": {
-                        "type": "array",
-                        "example": [
-                            "everyFact",
-                            "everyValue",
-                            "someFact",
-                            "someValue",
-                            "not",
-                            "swap"
-                        ],
-                        "description": "Documented json-rules-engine operator decorators used by this project today",
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "everyFact",
-                                "everyValue",
-                                "someFact",
-                                "someValue",
-                                "not",
-                                "swap"
-                            ]
-                        }
-                    },
-                    "systemPaths": {
-                        "description": "Fixed non-payload paths exposed by the runtime rule context",
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/RuleSystemPathResponseDto"
-                        }
-                    },
-                    "payloadPathFormat": {
-                        "type": "string",
-                        "example": "$.<schemaFieldKey>",
-                        "description": "Path format to use when fact is payload; replace <schemaFieldKey> with a schema key"
-                    },
-                    "payloadPathSource": {
-                        "type": "string",
-                        "example": "/workflow-definitions/:id/instance-form-schema",
-                        "description": "Workflow-specific endpoint that exposes available payload schema keys"
-                    },
-                    "expressionRuleDefinitionFields": {
-                        "example": [
-                            "type",
-                            "all",
-                            "any",
-                            "not"
-                        ],
-                        "description": "Top-level fields the frontend can use while building an expression ruleDefinition",
-                        "type": "array",
-                        "items": {
-                            "type": "array"
-                        }
-                    },
-                    "customRuleDefinitionFields": {
-                        "example": [
-                            "type",
-                            "strategy",
-                            "params"
-                        ],
-                        "description": "Top-level fields the frontend can use while building a custom ruleDefinition",
-                        "type": "array",
-                        "items": {
-                            "type": "array"
-                        }
-                    },
-                    "expressionRuleDefinitionExample": {
-                        "type": "object",
-                        "additionalProperties": true,
-                        "example": {
-                            "type": "expression",
-                            "all": [
-                                {
-                                    "fact": "payload",
-                                    "path": "$.amount",
-                                    "operator": "greaterThan",
-                                    "value": 1000
-                                }
-                            ]
-                        },
-                        "description": "Example shape of an expression ruleDefinition payload that the frontend can build and submit"
-                    },
-                    "customRuleDefinitionExample": {
-                        "type": "object",
-                        "additionalProperties": true,
-                        "example": {
-                            "type": "custom",
-                            "strategy": "user-has-any-role",
-                            "params": {
-                                "roles": [
-                                    "manager",
-                                    "admin"
-                                ]
-                            }
-                        },
-                        "description": "Example shape of a custom ruleDefinition payload that the frontend can build and submit"
-                    }
-                },
-                "required": [
-                    "facts",
-                    "ruleTypes",
-                    "customStrategies",
-                    "expressionOperators",
-                    "operatorDecorators",
-                    "systemPaths",
-                    "payloadPathFormat",
-                    "payloadPathSource",
-                    "expressionRuleDefinitionFields",
-                    "customRuleDefinitionFields",
-                    "expressionRuleDefinitionExample",
-                    "customRuleDefinitionExample"
+                    "totalWorkflows",
+                    "publishedWorkflows",
+                    "activeInstances",
+                    "totalUsers"
                 ]
             },
             "WorkflowDefinitionListResponseDto": {
@@ -6703,6 +6857,677 @@
                     "updatedAt"
                 ]
             },
+            "WorkflowExecutionCreatedResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Workflow instance unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "workflowDefinitionId": {
+                        "type": "string",
+                        "description": "Foreign key to workflow definition",
+                        "format": "uuid"
+                    },
+                    "definitionVersion": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Version of the definition snapshot used at creation time"
+                    },
+                    "currentStateId": {
+                        "type": "string",
+                        "description": "Current state ID in the workflow state machine",
+                        "format": "uuid"
+                    },
+                    "currentStateName": {
+                        "type": "string",
+                        "example": "pending_approval",
+                        "description": "Denormalized current state name for fast reads"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "example": {
+                            "requestId": "REQ-001",
+                            "amount": 5000
+                        },
+                        "description": "Dynamic business context payload"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "example": "active",
+                        "description": "Current lifecycle status of the instance"
+                    },
+                    "version": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Optimistic lock counter, incremented on each successful transition"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "description": "UUID of the user who created this instance",
+                        "format": "uuid"
+                    },
+                    "completedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Timestamp when instance reached terminal state",
+                        "nullable": true
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Instance creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Instance last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "workflowDefinitionId",
+                    "definitionVersion",
+                    "currentStateId",
+                    "currentStateName",
+                    "payload",
+                    "status",
+                    "version",
+                    "createdBy",
+                    "completedAt",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "CreateInstanceDto": {
+                "type": "object",
+                "properties": {
+                    "workflowDefinitionId": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "description": "UUID of the workflow definition to instantiate",
+                        "format": "uuid"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "description": "Initial form payload for the workflow instance (JSON object)",
+                        "example": {
+                            "requestedBy": "John Doe",
+                            "amount": 5000
+                        }
+                    }
+                },
+                "required": [
+                    "workflowDefinitionId",
+                    "payload"
+                ]
+            },
+            "WorkflowExecutionListResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Workflow instance unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "workflowDefinitionId": {
+                        "type": "string",
+                        "description": "Foreign key to workflow definition",
+                        "format": "uuid"
+                    },
+                    "definitionVersion": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Version of the definition snapshot used at creation time"
+                    },
+                    "currentStateId": {
+                        "type": "string",
+                        "description": "Current state ID in the workflow state machine",
+                        "format": "uuid"
+                    },
+                    "currentStateName": {
+                        "type": "string",
+                        "example": "pending_approval",
+                        "description": "Denormalized current state name for fast reads"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "example": {
+                            "requestId": "REQ-001",
+                            "amount": 5000
+                        },
+                        "description": "Dynamic business context payload"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "example": "active",
+                        "description": "Current lifecycle status of the instance"
+                    },
+                    "version": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Optimistic lock counter, incremented on each successful transition"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "description": "UUID of the user who created this instance",
+                        "format": "uuid"
+                    },
+                    "completedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Timestamp when instance reached terminal state",
+                        "nullable": true
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Instance creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Instance last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "workflowDefinitionId",
+                    "definitionVersion",
+                    "currentStateId",
+                    "currentStateName",
+                    "payload",
+                    "status",
+                    "version",
+                    "createdBy",
+                    "completedAt",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "WorkflowExecutionDetailResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Workflow instance unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "workflowDefinitionId": {
+                        "type": "string",
+                        "description": "Foreign key to workflow definition",
+                        "format": "uuid"
+                    },
+                    "definitionVersion": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Version of the definition snapshot used at creation time"
+                    },
+                    "currentStateId": {
+                        "type": "string",
+                        "description": "Current state ID in the workflow state machine",
+                        "format": "uuid"
+                    },
+                    "currentStateName": {
+                        "type": "string",
+                        "example": "pending_approval",
+                        "description": "Denormalized current state name for fast reads"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "example": {
+                            "requestId": "REQ-001",
+                            "amount": 5000
+                        },
+                        "description": "Dynamic business context payload"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "example": "active",
+                        "description": "Current lifecycle status of the instance"
+                    },
+                    "version": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Optimistic lock counter, incremented on each successful transition"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "description": "UUID of the user who created this instance",
+                        "format": "uuid"
+                    },
+                    "completedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Timestamp when instance reached terminal state",
+                        "nullable": true
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Instance creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Instance last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "workflowDefinitionId",
+                    "definitionVersion",
+                    "currentStateId",
+                    "currentStateName",
+                    "payload",
+                    "status",
+                    "version",
+                    "createdBy",
+                    "completedAt",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "WorkflowExecutionTransitionedResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Workflow instance unique identifier",
+                        "format": "uuid"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "description": "Tenant ID for multi-tenancy isolation",
+                        "format": "uuid"
+                    },
+                    "workflowDefinitionId": {
+                        "type": "string",
+                        "description": "Foreign key to workflow definition",
+                        "format": "uuid"
+                    },
+                    "definitionVersion": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Version of the definition snapshot used at creation time"
+                    },
+                    "currentStateId": {
+                        "type": "string",
+                        "description": "Current state ID in the workflow state machine",
+                        "format": "uuid"
+                    },
+                    "currentStateName": {
+                        "type": "string",
+                        "example": "pending_approval",
+                        "description": "Denormalized current state name for fast reads"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "example": {
+                            "requestId": "REQ-001",
+                            "amount": 5000
+                        },
+                        "description": "Dynamic business context payload"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "example": "active",
+                        "description": "Current lifecycle status of the instance"
+                    },
+                    "version": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Optimistic lock counter, incremented on each successful transition"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "description": "UUID of the user who created this instance",
+                        "format": "uuid"
+                    },
+                    "completedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Timestamp when instance reached terminal state",
+                        "nullable": true
+                    },
+                    "createdAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-01T08:00:00Z",
+                        "description": "Instance creation timestamp"
+                    },
+                    "updatedAt": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-03-05T10:30:00Z",
+                        "description": "Instance last update timestamp"
+                    }
+                },
+                "required": [
+                    "id",
+                    "tenantId",
+                    "workflowDefinitionId",
+                    "definitionVersion",
+                    "currentStateId",
+                    "currentStateName",
+                    "payload",
+                    "status",
+                    "version",
+                    "createdBy",
+                    "completedAt",
+                    "createdAt",
+                    "updatedAt"
+                ]
+            },
+            "ExecuteTransitionDto": {
+                "type": "object",
+                "properties": {
+                    "transitionId": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "description": "UUID of the transition to execute",
+                        "format": "uuid"
+                    },
+                    "lastKnownVersion": {
+                        "type": "number",
+                        "description": "Last known optimistic lock version of the instance — prevents concurrent transitions",
+                        "example": 1,
+                        "minimum": 1
+                    },
+                    "comment": {
+                        "type": "string",
+                        "description": "Optional comment explaining the transition (max 1000 characters)",
+                        "example": "Approved — all documents verified.",
+                        "maxLength": 1000
+                    },
+                    "idempotencyKey": {
+                        "type": "string",
+                        "description": "Client-generated unique key to prevent duplicate transitions on retry (max 128 characters)",
+                        "example": "req-abc123",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "transitionId",
+                    "lastKnownVersion"
+                ]
+            },
+            "RuleSystemPathResponseDto": {
+                "type": "object",
+                "properties": {
+                    "fact": {
+                        "type": "string",
+                        "enum": [
+                            "payload",
+                            "user",
+                            "instance"
+                        ],
+                        "example": "user"
+                    },
+                    "path": {
+                        "type": "string",
+                        "example": "$.roles",
+                        "description": "Path to use together with the fact namespace"
+                    },
+                    "fullPath": {
+                        "type": "string",
+                        "example": "user.roles",
+                        "description": "Convenience combined reference for UI display"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Authenticated actor roles from the JWT context"
+                    }
+                },
+                "required": [
+                    "fact",
+                    "path",
+                    "fullPath",
+                    "description"
+                ]
+            },
+            "RuleMetadataResponseDto": {
+                "type": "object",
+                "properties": {
+                    "facts": {
+                        "type": "array",
+                        "example": [
+                            "payload",
+                            "user",
+                            "instance"
+                        ],
+                        "description": "Fixed top-level fact namespaces supported by the rule engine",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "payload",
+                                "user",
+                                "instance"
+                            ]
+                        }
+                    },
+                    "ruleTypes": {
+                        "type": "array",
+                        "example": [
+                            "expression",
+                            "custom"
+                        ],
+                        "description": "Supported rule definition types",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "expression",
+                                "custom"
+                            ]
+                        }
+                    },
+                    "customStrategies": {
+                        "type": "array",
+                        "example": [
+                            "date-range-matches-days",
+                            "user-has-any-role"
+                        ],
+                        "description": "Currently supported custom rule strategies",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "date-range-matches-days",
+                                "user-has-any-role"
+                            ]
+                        }
+                    },
+                    "expressionOperators": {
+                        "type": "array",
+                        "example": [
+                            "equal",
+                            "notEqual",
+                            "lessThan",
+                            "lessThanInclusive",
+                            "greaterThan",
+                            "greaterThanInclusive",
+                            "in",
+                            "notIn",
+                            "contains",
+                            "doesNotContain"
+                        ],
+                        "description": "Documented built-in json-rules-engine operators used by this project today",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "equal",
+                                "notEqual",
+                                "lessThan",
+                                "lessThanInclusive",
+                                "greaterThan",
+                                "greaterThanInclusive",
+                                "in",
+                                "notIn",
+                                "contains",
+                                "doesNotContain"
+                            ]
+                        }
+                    },
+                    "operatorDecorators": {
+                        "type": "array",
+                        "example": [
+                            "everyFact",
+                            "everyValue",
+                            "someFact",
+                            "someValue",
+                            "not",
+                            "swap"
+                        ],
+                        "description": "Documented json-rules-engine operator decorators used by this project today",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "everyFact",
+                                "everyValue",
+                                "someFact",
+                                "someValue",
+                                "not",
+                                "swap"
+                            ]
+                        }
+                    },
+                    "systemPaths": {
+                        "description": "Fixed non-payload paths exposed by the runtime rule context",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RuleSystemPathResponseDto"
+                        }
+                    },
+                    "payloadPathFormat": {
+                        "type": "string",
+                        "example": "$.<schemaFieldKey>",
+                        "description": "Path format to use when fact is payload; replace <schemaFieldKey> with a schema key"
+                    },
+                    "payloadPathSource": {
+                        "type": "string",
+                        "example": "/workflow-definitions/:id/instance-form-schema",
+                        "description": "Workflow-specific endpoint that exposes available payload schema keys"
+                    },
+                    "expressionRuleDefinitionFields": {
+                        "example": [
+                            "type",
+                            "all",
+                            "any",
+                            "not"
+                        ],
+                        "description": "Top-level fields the frontend can use while building an expression ruleDefinition",
+                        "type": "array",
+                        "items": {
+                            "type": "array"
+                        }
+                    },
+                    "customRuleDefinitionFields": {
+                        "example": [
+                            "type",
+                            "strategy",
+                            "params"
+                        ],
+                        "description": "Top-level fields the frontend can use while building a custom ruleDefinition",
+                        "type": "array",
+                        "items": {
+                            "type": "array"
+                        }
+                    },
+                    "expressionRuleDefinitionExample": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "example": {
+                            "type": "expression",
+                            "all": [
+                                {
+                                    "fact": "payload",
+                                    "path": "$.amount",
+                                    "operator": "greaterThan",
+                                    "value": 1000
+                                }
+                            ]
+                        },
+                        "description": "Example shape of an expression ruleDefinition payload that the frontend can build and submit"
+                    },
+                    "customRuleDefinitionExample": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "example": {
+                            "type": "custom",
+                            "strategy": "user-has-any-role",
+                            "params": {
+                                "roles": [
+                                    "manager",
+                                    "admin"
+                                ]
+                            }
+                        },
+                        "description": "Example shape of a custom ruleDefinition payload that the frontend can build and submit"
+                    }
+                },
+                "required": [
+                    "facts",
+                    "ruleTypes",
+                    "customStrategies",
+                    "expressionOperators",
+                    "operatorDecorators",
+                    "systemPaths",
+                    "payloadPathFormat",
+                    "payloadPathSource",
+                    "expressionRuleDefinitionFields",
+                    "customRuleDefinitionFields",
+                    "expressionRuleDefinitionExample",
+                    "customRuleDefinitionExample"
+                ]
+            },
             "AuditLogListResponseDto": {
                 "type": "object",
                 "properties": {
@@ -6848,670 +7673,6 @@
                     "resourceId",
                     "occurredAt",
                     "createdAt"
-                ]
-            },
-            "NotificationTemplateCreatedResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Notification template unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "eventTrigger": {
-                        "type": "string",
-                        "enum": [
-                            "workflow-execution.instance.created",
-                            "workflow-execution.transition.completed",
-                            "workflow-execution.instance.completed",
-                            "workflow-execution.instance.cancelled"
-                        ],
-                        "example": "workflow-execution.transition.completed",
-                        "description": "Supported workflow event that triggers this notification"
-                    },
-                    "channel": {
-                        "type": "string",
-                        "enum": [
-                            "email",
-                            "webhook"
-                        ],
-                        "example": "email",
-                        "description": "Delivery channel for the notification"
-                    },
-                    "subjectTemplate": {
-                        "type": "string",
-                        "example": "Workflow moved to {{toState}}",
-                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
-                        "nullable": true
-                    },
-                    "bodyTemplate": {
-                        "type": "string",
-                        "example": "workflow-transition-completed",
-                        "description": "Pug template file name/path for email notifications or webhook payload template content"
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this notification template is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Template creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Template last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "eventTrigger",
-                    "channel",
-                    "subjectTemplate",
-                    "bodyTemplate",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "CreateNotificationTemplateDto": {
-                "type": "object",
-                "properties": {
-                    "eventTrigger": {
-                        "type": "string",
-                        "enum": [
-                            "workflow-execution.instance.created",
-                            "workflow-execution.transition.completed",
-                            "workflow-execution.instance.completed",
-                            "workflow-execution.instance.cancelled"
-                        ],
-                        "example": "workflow-execution.transition.completed",
-                        "description": "Supported workflow event that triggers this notification",
-                        "minLength": 1,
-                        "maxLength": 100
-                    },
-                    "channel": {
-                        "type": "string",
-                        "enum": [
-                            "email",
-                            "webhook"
-                        ],
-                        "description": "Delivery channel for the notification",
-                        "example": "email"
-                    },
-                    "subjectTemplate": {
-                        "type": "string",
-                        "example": "Workflow moved to {{toState}}",
-                        "description": "Email subject template with lightweight {{token}} interpolation (max 500 characters)",
-                        "maxLength": 500
-                    },
-                    "bodyTemplate": {
-                        "type": "string",
-                        "example": "workflow-transition-completed",
-                        "description": "Pug template file name/path under src/modules/notification/templates (1-5000 characters)",
-                        "minLength": 1,
-                        "maxLength": 5000
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "description": "Whether this notification template is active",
-                        "example": true
-                    }
-                },
-                "required": [
-                    "eventTrigger",
-                    "channel",
-                    "bodyTemplate"
-                ]
-            },
-            "NotificationTemplateListResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Notification template unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "eventTrigger": {
-                        "type": "string",
-                        "enum": [
-                            "workflow-execution.instance.created",
-                            "workflow-execution.transition.completed",
-                            "workflow-execution.instance.completed",
-                            "workflow-execution.instance.cancelled"
-                        ],
-                        "example": "workflow-execution.transition.completed",
-                        "description": "Supported workflow event that triggers this notification"
-                    },
-                    "channel": {
-                        "type": "string",
-                        "enum": [
-                            "email",
-                            "webhook"
-                        ],
-                        "example": "email",
-                        "description": "Delivery channel for the notification"
-                    },
-                    "subjectTemplate": {
-                        "type": "string",
-                        "example": "Workflow moved to {{toState}}",
-                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
-                        "nullable": true
-                    },
-                    "bodyTemplate": {
-                        "type": "string",
-                        "example": "workflow-transition-completed",
-                        "description": "Pug template file name/path for email notifications or webhook payload template content"
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this notification template is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Template creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Template last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "eventTrigger",
-                    "channel",
-                    "subjectTemplate",
-                    "bodyTemplate",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "NotificationTemplateDetailResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Notification template unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "eventTrigger": {
-                        "type": "string",
-                        "enum": [
-                            "workflow-execution.instance.created",
-                            "workflow-execution.transition.completed",
-                            "workflow-execution.instance.completed",
-                            "workflow-execution.instance.cancelled"
-                        ],
-                        "example": "workflow-execution.transition.completed",
-                        "description": "Supported workflow event that triggers this notification"
-                    },
-                    "channel": {
-                        "type": "string",
-                        "enum": [
-                            "email",
-                            "webhook"
-                        ],
-                        "example": "email",
-                        "description": "Delivery channel for the notification"
-                    },
-                    "subjectTemplate": {
-                        "type": "string",
-                        "example": "Workflow moved to {{toState}}",
-                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
-                        "nullable": true
-                    },
-                    "bodyTemplate": {
-                        "type": "string",
-                        "example": "workflow-transition-completed",
-                        "description": "Pug template file name/path for email notifications or webhook payload template content"
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this notification template is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Template creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Template last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "eventTrigger",
-                    "channel",
-                    "subjectTemplate",
-                    "bodyTemplate",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "NotificationTemplateUpdatedResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Notification template unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "eventTrigger": {
-                        "type": "string",
-                        "enum": [
-                            "workflow-execution.instance.created",
-                            "workflow-execution.transition.completed",
-                            "workflow-execution.instance.completed",
-                            "workflow-execution.instance.cancelled"
-                        ],
-                        "example": "workflow-execution.transition.completed",
-                        "description": "Supported workflow event that triggers this notification"
-                    },
-                    "channel": {
-                        "type": "string",
-                        "enum": [
-                            "email",
-                            "webhook"
-                        ],
-                        "example": "email",
-                        "description": "Delivery channel for the notification"
-                    },
-                    "subjectTemplate": {
-                        "type": "string",
-                        "example": "Workflow moved to {{toState}}",
-                        "description": "Email subject template with lightweight token interpolation (null for webhook channel)",
-                        "nullable": true
-                    },
-                    "bodyTemplate": {
-                        "type": "string",
-                        "example": "workflow-transition-completed",
-                        "description": "Pug template file name/path for email notifications or webhook payload template content"
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this notification template is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Template creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Template last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "eventTrigger",
-                    "channel",
-                    "subjectTemplate",
-                    "bodyTemplate",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "WebhookConfigCreatedResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Webhook configuration unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "My Webhook",
-                        "description": "Human-readable name for the webhook configuration"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/webhooks/workflow",
-                        "description": "Target URL for HTTP POST delivery"
-                    },
-                    "secret": {
-                        "type": "string",
-                        "example": "hmac-secret-key",
-                        "description": "HMAC-SHA256 signing secret"
-                    },
-                    "eventTriggers": {
-                        "example": [
-                            "workflow-execution.transition.completed"
-                        ],
-                        "description": "Array of NATS event names this webhook subscribes to",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this webhook configuration is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Webhook configuration creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Webhook configuration last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "name",
-                    "url",
-                    "secret",
-                    "eventTriggers",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "CreateWebhookConfigDto": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Slack Alerts",
-                        "description": "Human-readable name for the webhook configuration (1-100 characters)",
-                        "minLength": 1,
-                        "maxLength": 100
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://hooks.slack.com/services/xxx",
-                        "description": "Valid HTTPS URL for the webhook endpoint"
-                    },
-                    "secret": {
-                        "type": "string",
-                        "example": "super-secret-signing-key",
-                        "description": "Secret key for signing webhook payloads (1-500 characters)",
-                        "minLength": 1,
-                        "maxLength": 500
-                    },
-                    "eventTriggers": {
-                        "example": [
-                            "workflow-execution.transition.completed",
-                            "workflow-execution.instance.cancelled"
-                        ],
-                        "description": "Array of NATS event names that trigger this webhook",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "description": "Whether this webhook configuration is active",
-                        "example": true
-                    }
-                },
-                "required": [
-                    "name",
-                    "url",
-                    "secret",
-                    "eventTriggers"
-                ]
-            },
-            "WebhookConfigListResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Webhook configuration unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "My Webhook",
-                        "description": "Human-readable name for the webhook configuration"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/webhooks/workflow",
-                        "description": "Target URL for HTTP POST delivery"
-                    },
-                    "secret": {
-                        "type": "string",
-                        "example": "hmac-secret-key",
-                        "description": "HMAC-SHA256 signing secret"
-                    },
-                    "eventTriggers": {
-                        "example": [
-                            "workflow-execution.transition.completed"
-                        ],
-                        "description": "Array of NATS event names this webhook subscribes to",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this webhook configuration is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Webhook configuration creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Webhook configuration last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "name",
-                    "url",
-                    "secret",
-                    "eventTriggers",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "WebhookConfigDetailResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Webhook configuration unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "My Webhook",
-                        "description": "Human-readable name for the webhook configuration"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/webhooks/workflow",
-                        "description": "Target URL for HTTP POST delivery"
-                    },
-                    "secret": {
-                        "type": "string",
-                        "example": "hmac-secret-key",
-                        "description": "HMAC-SHA256 signing secret"
-                    },
-                    "eventTriggers": {
-                        "example": [
-                            "workflow-execution.transition.completed"
-                        ],
-                        "description": "Array of NATS event names this webhook subscribes to",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this webhook configuration is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Webhook configuration creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Webhook configuration last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "name",
-                    "url",
-                    "secret",
-                    "eventTriggers",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
-                ]
-            },
-            "WebhookConfigUpdatedResponseDto": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Webhook configuration unique identifier",
-                        "format": "uuid"
-                    },
-                    "tenantId": {
-                        "type": "string",
-                        "description": "Tenant ID for multi-tenancy isolation",
-                        "format": "uuid"
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "My Webhook",
-                        "description": "Human-readable name for the webhook configuration"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/webhooks/workflow",
-                        "description": "Target URL for HTTP POST delivery"
-                    },
-                    "secret": {
-                        "type": "string",
-                        "example": "hmac-secret-key",
-                        "description": "HMAC-SHA256 signing secret"
-                    },
-                    "eventTriggers": {
-                        "example": [
-                            "workflow-execution.transition.completed"
-                        ],
-                        "description": "Array of NATS event names this webhook subscribes to",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "isActive": {
-                        "type": "boolean",
-                        "example": true,
-                        "description": "Whether this webhook configuration is active"
-                    },
-                    "createdAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-01T08:00:00Z",
-                        "description": "Webhook configuration creation timestamp"
-                    },
-                    "updatedAt": {
-                        "format": "date-time",
-                        "type": "string",
-                        "example": "2026-03-05T10:30:00Z",
-                        "description": "Webhook configuration last update timestamp"
-                    }
-                },
-                "required": [
-                    "id",
-                    "tenantId",
-                    "name",
-                    "url",
-                    "secret",
-                    "eventTriggers",
-                    "isActive",
-                    "createdAt",
-                    "updatedAt"
                 ]
             }
         }

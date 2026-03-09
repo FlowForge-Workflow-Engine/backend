@@ -67,6 +67,7 @@ export class NotificationTemplateController {
   @Get(":id")
   @ApiOperation({ summary: "Get a notification template by ID" })
   @ApiSuccessResponse(NotificationTemplateDetailResponseDto, "Notification template retrieved successfully")
+  @ApiParam({ name: "id", description: "Notification template UUID", format: "uuid" })
   async findOne(
     @Param() { id }: IdParamDto,
     @TenantId() tenantId: string

@@ -65,6 +65,7 @@ export class TenantController {
   @Get(":id")
   @ApiOperation({ summary: "Get tenant by ID" })
   @ApiSuccessResponse(TenantDetailResponseDto, "Tenant retrieved successfully")
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async findOne(@Param() { id }: IdParamDto): Promise<ApiResponseDto<TenantDetailResponseDto>> {
     const data = await this.tenantService.findById(id);
     return { status: "success", data };
@@ -74,6 +75,7 @@ export class TenantController {
   @Roles(DefaultSystemRoles.ADMIN)
   @ApiOperation({ summary: "Update tenant name, plan, or active status (Admin only)" })
   @ApiSuccessResponse(TenantUpdatedResponseDto, "Tenant updated successfully")
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async update(
     @Param() { id }: IdParamDto,
     @Body() dto: UpdateTenantDto,
@@ -84,9 +86,10 @@ export class TenantController {
   }
 
   @Delete(":id")
-  @Roles(DefaultSystemRoles.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Deactivate a tenant (Admin only)" })
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
+  @Roles(DefaultSystemRoles.ADMIN)
   async deactivate(@Param() { id }: IdParamDto, @CurrentUser() user: IJwtPayload): Promise<void> {
     await this.tenantService.deactivate(id, user.tenantId);
   }
@@ -96,6 +99,7 @@ export class TenantController {
   @Get(":id/settings")
   @ApiOperation({ summary: "Get settings for a tenant" })
   @ApiSuccessResponse(TenantSettingsResponseDto, "Tenant settings retrieved successfully")
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async getSettings(@Param() { id }: IdParamDto): Promise<ApiResponseDto<TenantSettingsResponseDto>> {
     const data = await this.tenantService.getSettings(id);
     return { status: "success", data };
@@ -105,6 +109,7 @@ export class TenantController {
   @Roles(DefaultSystemRoles.ADMIN)
   @ApiOperation({ summary: "Update settings for a tenant (Admin only)" })
   @ApiSuccessResponse(TenantSettingsResponseDto, "Tenant settings updated successfully")
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async updateSettings(
     @Param() { id }: IdParamDto,
     @Body() dto: UpdateTenantSettingsDto,
@@ -121,6 +126,7 @@ export class TenantController {
   @ApiSuccessResponse(TenantFeatureFlagListResponseDto, "Feature flags retrieved successfully", {
     isArray: true,
   })
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async getFeatureFlags(
     @Param() { id }: IdParamDto
   ): Promise<CountApiResponseDto<TenantFeatureFlagListResponseDto[]>> {
@@ -134,6 +140,7 @@ export class TenantController {
   @ApiSuccessResponse(TenantFeatureFlagCreatedResponseDto, "Feature flag created successfully", {
     created: true,
   })
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async createFeatureFlag(
     @Param() { id }: IdParamDto,
     @Body() dto: CreateFeatureFlagDto,
@@ -148,6 +155,7 @@ export class TenantController {
   @ApiOperation({ summary: "Update a feature flag (Admin only)" })
   @ApiParam({ name: "key", description: "Feature flag key (e.g. enable_webhooks)" })
   @ApiSuccessResponse(TenantFeatureFlagUpdatedResponseDto, "Feature flag updated successfully")
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async updateFeatureFlag(
     @Param() { id }: IdParamDto,
     @Param("key") key: string,
@@ -163,6 +171,7 @@ export class TenantController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Delete a feature flag (Admin only)" })
   @ApiParam({ name: "key", description: "Feature flag key (e.g. enable_webhooks)" })
+  @ApiParam({ name: "id", description: "Tenant UUID", format: "uuid" })
   async deleteFeatureFlag(
     @Param() { id }: IdParamDto,
     @Param("key") key: string,

@@ -15,6 +15,8 @@ import {
   UserCreatedResponseDto,
 } from "../dto/dto-response/user-response.dto";
 import { FindUserDto } from "../dto/find-user.dto";
+import { Roles } from "@app/shared/decorators/roles.decorator";
+import { DefaultSystemRoles } from "@app/shared/constants/default-system-roles.enum";
 
 @ApiTags("Users")
 @ApiBearerAuth()
@@ -69,15 +71,19 @@ export class UserController {
   }
 
   @Delete(":id")
+  @Roles(DefaultSystemRoles.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Deactivate a user" })
+  @ApiParam({ name: "id", description: "User UUID", format: "uuid" })
   async deactivate(@Param() { id }: IdParamDto, @TenantId() tenantId: string): Promise<void> {
     await this.userService.deactivate(id, tenantId);
   }
 
   @Post(":id/roles")
+  @Roles(DefaultSystemRoles.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Assign a role to a user" })
+  @ApiParam({ name: "id", description: "User UUID", format: "uuid" })
   async assignRole(
     @Param() { id }: IdParamDto,
     @Body() dto: AssignRoleDto,
