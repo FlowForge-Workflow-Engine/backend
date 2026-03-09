@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { JSONCodec, NatsConnection } from "nats";
 import { NATS_CLIENT } from "../../../infra";
 import { NatsEvents } from "@app/shared/constants/nats-events.enum";
@@ -10,11 +10,17 @@ import {
 } from "@app/shared/interfaces/events/workflow-events.interface";
 
 @Injectable()
-export class ExecutionPublisher {
+export class ExecutionPublisher implements OnModuleInit {
   private readonly logger = new Logger(ExecutionPublisher.name);
   private readonly jc = JSONCodec();
 
   constructor(@Inject(NATS_CLIENT) private readonly nats: NatsConnection) {}
+
+  onModuleInit() {
+    this.logger.log(
+      "ExecutionPublisher initialized — will publish NATS events for workflow execution domain"
+    );
+  }
 
   publishInstanceCreated(payload: IWorkflowInstanceCreatedEvent): void {
     this.publish(NatsEvents.WORKFLOW_INSTANCE_CREATED, payload);

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { JSONCodec, NatsConnection } from "nats";
 import { NATS_CLIENT } from "../../../infra";
 import { NatsEvents } from "@app/shared/constants/nats-events.enum";
@@ -14,11 +14,15 @@ import {
  * Uses raw nats NatsConnection (no @nestjs/microservices dependency).
  */
 @Injectable()
-export class TenantPublisher {
+export class TenantPublisher implements OnModuleInit {
   private readonly logger = new Logger(TenantPublisher.name);
   private readonly jc = JSONCodec();
 
   constructor(@Inject(NATS_CLIENT) private readonly natsClient: NatsConnection) {}
+
+  onModuleInit() {
+    this.logger.log("TenantPublisher initialized — will publish NATS events for tenant domain");
+  }
 
   publishTenantCreated(payload: ITenantCreatedEvent): void {
     try {
