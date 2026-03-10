@@ -59,6 +59,31 @@ This document explains **why** the system is built the way it is, and justifies 
   - [7.15 Containerization: Docker](#715-containerization-docker)
   - [7.16 Source control platform: GitHub](#716-source-control-platform-github)
 - [Appendix A. Embedded Reference Sections (verbatim)](#appendix-a-embedded-reference-sections-verbatim)
+  - [1. Business Point of View](#1-business-point-of-view)
+  - [2. Actors and Personas](#2-actors-and-personas)
+  - [3. Foundation](#3-foundation)
+  - [4. Microservice-Extractable Contract-First Modular Monolith](#4-microservice-extractable-contract-first-modular-monolith)
+  - [5. The Right Way — Export a Purpose-Built Query Service](#5-the-right-way--export-a-purpose-built-query-service)
+  - [6. Why This Is Microservice-Ready](#6-why-this-is-microservice-ready)
+  - [7. Pattern 3 — Event-Driven Shadow Read Models (Local Denormalization)](#7-pattern-3--event-driven-shadow-read-models-local-denormalization)
+  - [8. Why This Is Truly Microservice-Ready](#8-why-this-is-truly-microservice-ready)
+  - [9. Full Decision Tree — Which Pattern When](#9-full-decision-tree--which-pattern-when)
+  - [10. API Architecture Pattern](#10-api-architecture-pattern)
+  - [11. Microservice Design Patterns Catalogue](#11-microservice-design-patterns-catalogue)
+  - [12. Database Design](#12-database-design)
+  - [13. Scalability Considerations](#13-scalability-considerations)
+  - [14. Microservice or Monolith?](#14-microservice-or-monolith)
+  - [Recommendation: Modular Monolith first, architected for microservice extraction](#recommendation-modular-monolith-first-architected-for-microservice-extraction)
+  - [The Strategy: Modular Monolith with hard module boundaries](#the-strategy-modular-monolith-with-hard-module-boundaries)
+  - [15. SQL or NoSQL?](#15-sql-or-nosql)
+  - [Recommendation: PostgreSQL (SQL) as primary, with JSONB for flexible payloads](#recommendation-postgresql-sql-as-primary-with-jsonb-for-flexible-payloads)
+  - [16. Database Design — Schema, Multi-Tenancy, and Scalability](#16-database-design--schema-multi-tenancy-and-scalability)
+  - [17. Multi-Tenancy Strategy: Shared Database, Shared Schema with tenant_id](#17-multi-tenancy-strategy-shared-database-shared-schema-with-tenantid)
+  - [18. Tenancy Models Available and Recommendation](#18-tenancy-models-available-and-recommendation)
+  - [19. Workflow Execution Model](#19-workflow-execution-model)
+  - [20. Rule Engine Mental Picture](#20-rule-engine-mental-picture)
+
+  
 
 ---
 
@@ -785,7 +810,70 @@ Below are sane “enterprise SaaS” starting SLAs (tunable by tier):
 
 ## Appendix A. Embedded Reference Sections (verbatim)
 
-### Section 1: Microservice-Extractable Contract-First Modular Monolith
+### 1. Business Point of View
+
+#### Who Will Onboard the Platform?
+
+B2B companies — businesses, not individual consumers. Examples:
+
+| Industry              | Use Case                                       |
+| --------------------- | ---------------------------------------------- |
+| Finance / Procurement | Purchase approval, expense claims              |
+| HR                    | Onboarding, offboarding, leave approvals       |
+| Software / IT         | Bug lifecycle, change request management       |
+| Healthcare            | Patient intake workflows, discharge approvals  |
+| Legal                 | Contract review and sign-off workflows         |
+| E-commerce            | Return/refund approval processes               |
+| Education             | Admission workflows, faculty request approvals |
+
+Each company onboards as a tenant. Their employees are tenant-level users. They define their own workflows, their own roles, their own rules — all within the shared platform.
+
+---
+
+### 2. Actors and Personas
+
+There are two layers of actors:
+
+##### Layer 1 — Platform Level (Your SaaS)
+
+| Actor                        | Who They Are                      | What They Do                                                |
+| ---------------------------- | --------------------------------- | ----------------------------------------------------------- |
+| Super Admin / Platform Owner | You (the company that built this) | Onboards tenants, manages billing, monitors platform health |
+
+##### Layer 2 — Tenant Level (Per Company)
+
+| Actor             | Who They Are                    | What They Do                                                                |
+| ----------------- | ------------------------------- | --------------------------------------------------------------------------- |
+| Tenant Admin      | The IT/Ops manager of Company X | Creates workflow definitions, manages roles, users, and rules for their org |
+| Approver          | A manager or senior person      | Reviews and approves/rejects workflow instances                             |
+| Requestor         | An employee                     | Initiates a workflow instance (e.g., submits a purchase request)            |
+| Viewer (optional) | Auditor, read-only stakeholder  | Can view instances and audit logs but cannot take action                    |
+
+The Tenant Admin is the power user. The Requestor and Approver are the daily operators.
+
+---
+
+### 3. Foundation
+
+#### What is a workflow engine platform?
+
+A workflow engine platform is a system that runs business processes described as:
+
+- States (where something is now)
+- Transitions (how it moves)
+- Rules/conditions (when it’s allowed)
+- Actors/roles (who can do it)
+- History/audit (what happened)
+
+It has two big halves:
+
+- Workflow Definition (design-time): create/validate/version workflows
+- Workflow Execution (run-time): start instances, advance steps, enforce rules, record audit
+
+---
+
+
+### 4. Microservice-Extractable Contract-First Modular Monolith
 
 <!-- SECTION 1 BEGIN HERE -->
 
@@ -874,7 +962,7 @@ export class TenantService {
 
 This creates a hard coupling at the repository layer. When you extract AuthModule to its own service, `UserRepository` no longer exists in the same process. Your code breaks.
 
-### The Right Way — Export a Purpose-Built Query Service
+### 5. The Right Way — Export a Purpose-Built Query Service
 
 AuthModule exposes a **deliberately limited interface** — only the methods other modules are allowed to call. Not the full repository. Not the full UserService. A contract surface.
 
@@ -990,7 +1078,7 @@ export class TenantService {
 }
 ```
 
-### Why This Is Microservice-Ready
+### 6. Why This Is Microservice-Ready
 
 When you extract AuthModule to its own service:
 
@@ -1013,9 +1101,9 @@ This is the **Dependency Inversion Principle** applied at module boundaries — 
 
 ---
 
-## Pattern 3 — Event-Driven Shadow Read Models (Local Denormalization)
+### 7. Pattern 3 — Event-Driven Shadow Read Models (Local Denormalization)
 
-### When to use it
+#### When to use it
 
 When:
 
@@ -1025,7 +1113,7 @@ When:
 - Latency of a synchronous cross-module call would be unacceptable at scale
 - You are truly planning to extract to separate microservices (separate DBs, no shared schema)
 
-### The Problem This Solves
+#### The Problem This Solves
 
 Imagine `WorkflowExecution` module needs to show a list of instances with:
 
@@ -1038,7 +1126,7 @@ You have two bad options without this pattern:
 - Option A: 3 service calls per list item → N+1 query problem → terrible latency
 - Option B: Import 2 module services → tight coupling, breaks on extraction
 
-### The Solution — Shadow Table + Event Subscription
+#### The Solution — Shadow Table + Event Subscription
 
 Each module maintains a **local denormalized copy** of the foreign data it needs frequently. It keeps this copy fresh by listening to NATS events from the owning module.
 
@@ -1136,7 +1224,7 @@ async getInstancesForDashboard(tenantId: string): Promise<InstanceDashboardItem[
 }
 ```
 
-### Why This Is Truly Microservice-Ready
+### 8. Why This Is Truly Microservice-Ready
 
 When extracted to separate services with separate databases:
 
@@ -1146,7 +1234,7 @@ When extracted to separate services with separate databases:
 
 ---
 
-## Full Decision Tree — Which Pattern When
+### 9. Full Decision Tree — Which Pattern When
 
 ```text
 You need data from Module A while you're in Module B
@@ -1193,11 +1281,10 @@ Summary Table — All Three Patterns Side by Side
 
 ---
 
-### Section 2: API Architecture Pattern
+### 10. API Architecture Pattern
 
 <!-- SECTION 2 BEGIN HERE -->
 
-API Architecture Pattern
 Recommendation: REST for external APIs, Internal Events via NATS
 
 | Pattern                  | Verdict for This System             | Reason                                                                                                                                                              |
@@ -1219,7 +1306,7 @@ Recommendation: REST for external APIs, Internal Events via NATS
 
 ---
 
-### Section 3: Microservice Design Patterns Catalogue
+### 11. Microservice Design Patterns Catalogue
 
 <!-- SECTION 3 BEGIN HERE -->
 
@@ -1249,7 +1336,7 @@ Since we're building a Modular Monolith designed for microservice extraction, he
 
 ---
 
-### Section 4: Database Design
+### 12. Database Design
 
 <!-- SECTION 4 BEGIN HERE -->
 
@@ -1305,7 +1392,7 @@ It is read-heavy, with write spikes.
 
 <!-- SECTION 4 END HERE -->
 
-### Section 5: Scalability Considerations
+### 13. Scalability Considerations
 
 <!-- SECTION 5 BEGIN HERE -->
 
@@ -1323,11 +1410,8 @@ Scalability Considerations
 
 ---
 
-### Section 6: REFERENCES
 
-<!-- SECTION 6 BEGIN HERE -->
-
-## 12. Microservice or Monolith?
+### 14. Microservice or Monolith?
 
 ### Recommendation: **Modular Monolith first, architected for microservice extraction**
 
@@ -1363,7 +1447,7 @@ Each module has its own service layer, repository, and never directly imports an
 
 ---
 
-## 13. SQL or NoSQL?
+### 15. SQL or NoSQL?
 
 ### Recommendation: **PostgreSQL (SQL) as primary, with JSONB for flexible payloads**
 
@@ -1383,6 +1467,7 @@ Here's the reasoning:
 
 - **Redis** — for caching workflow definitions (they rarely change, expensive to recompute), active user sessions, and rate limiting counters
 - **Elasticsearch (future/stretch)** — for full-text search across audit logs and instance payloads at scale
+- **Append-only audit log** — could be stored in a NoSQL store like MongoDB for high write throughput at scale
 
 **Summary:**
 
@@ -1392,9 +1477,9 @@ Here's the reasoning:
 
 ---
 
-## 14. Database Design — Schema, Multi-Tenancy, and Scalability
+### 16. Database Design — Schema, Multi-Tenancy, and Scalability
 
-### Multi-Tenancy Strategy: **Shared Database, Shared Schema with `tenant_id`**
+### 17. Multi-Tenancy Strategy: **Shared Database, Shared Schema with `tenant_id`**
 
 **Three options exist:**
 
@@ -1415,134 +1500,10 @@ Why:
 
 <!-- SECTION 6 END HERE -->
 
-### Section 7: Rule Engine Mental Picture
-
-#### Where and How Is Business Logic / Conditions Executed?
-
-This is the most conceptually complex part. Let me paint the mental picture clearly.
-
-##### The Problem
-
-A Tenant Admin types this rule in the UI:
-
-```ts
-amount > 10000 AND user.department == "Engineering"
-```
-
-This is a string. How does the server execute it?
-
-##### The Rule Engine — Mental Picture
-
-Think of it like Excel formulas. When you type =SUM(A1:A10) in Excel, Excel has an interpreter that reads your string, understands it as an expression, and evaluates it against the cell data. You didn't write code — but Excel's engine runs logic on your behalf.
-
-The Rule Engine in our system works the same way:
-
-Step 1 — Storage: The rule is stored as a string (or structured JSON AST) in the database
-
-```json
-{
-  "type": "AND",
-  "conditions": [
-    { "field": "payload.amount", "operator": ">", "value": 10000 },
-    { "field": "user.department", "operator": "==", "value": "Engineering" }
-  ]
-}
-```
-
-Step 2 — Context Building: At runtime, the execution service builds a context object
-
-```json
-{
-  "payload": { "amount": 15000, "vendor": "Acme" },
-  "user": { "id": "u1", "role": "Requestor", "department": "Engineering" },
-  "instance": { "current_state": "Draft", "created_at": "2026-01-01" }
-}
-```
-
-**Step 3 — Evaluation**: The Rule Engine receives the rule AST + context, walks the tree, and evaluates:
-
-```ts
-amount(15000) > 10000 → TRUE
-department("Engineering") == "Engineering" → TRUE
-AND(TRUE, TRUE) → TRUE ✅ → Transition is allowed
-```
-
-**Step 4 — Decision**: Based on the result, the transition is either allowed or blocked.
-
-##### Rule Engine Options
-
-| Approach                                            | What it is                                      | When to use                                        |
-| --------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
-| **JSON Rules Engine** (`json-rules-engine` library) | Pre-built evaluator for JSON-defined conditions | ✅ Best for this use case — fast, safe, extensible |
-| **Expression evaluator** (`expr-eval`, `jexl`)      | Evaluates math/logic string expressions         | Good for power users who want formula-like syntax  |
-| **Strategy Pattern (hardcoded)**                    | Write a TypeScript class per rule type          | Only if rules are few and fixed                    |
-| **Sandboxed JS eval** (`vm2`, `isolated-vm`)        | Executes actual JS code written by tenant       | Powerful but dangerous — security risk             |
-
-**We'll use `json-rules-engine`** — it's safe (no code injection risk), expressive, and the rule structure is serializable to the database.
-
 ---
 
-### Section 8: Business Point of View
 
-#### Who Will Onboard the Platform?
-
-B2B companies — businesses, not individual consumers. Examples:
-
-| Industry              | Use Case                                       |
-| --------------------- | ---------------------------------------------- |
-| Finance / Procurement | Purchase approval, expense claims              |
-| HR                    | Onboarding, offboarding, leave approvals       |
-| Software / IT         | Bug lifecycle, change request management       |
-| Healthcare            | Patient intake workflows, discharge approvals  |
-| Legal                 | Contract review and sign-off workflows         |
-| E-commerce            | Return/refund approval processes               |
-| Education             | Admission workflows, faculty request approvals |
-
-Each company onboards as a tenant. Their employees are tenant-level users. They define their own workflows, their own roles, their own rules — all within the shared platform.
-
-### Section 9: Actors and Personas
-
-#### The Actors / Personas
-
-There are two layers of actors:
-
-##### Layer 1 — Platform Level (Your SaaS)
-
-| Actor                        | Who They Are                      | What They Do                                                |
-| ---------------------------- | --------------------------------- | ----------------------------------------------------------- |
-| Super Admin / Platform Owner | You (the company that built this) | Onboards tenants, manages billing, monitors platform health |
-
-##### Layer 2 — Tenant Level (Per Company)
-
-| Actor             | Who They Are                    | What They Do                                                                |
-| ----------------- | ------------------------------- | --------------------------------------------------------------------------- |
-| Tenant Admin      | The IT/Ops manager of Company X | Creates workflow definitions, manages roles, users, and rules for their org |
-| Approver          | A manager or senior person      | Reviews and approves/rejects workflow instances                             |
-| Requestor         | An employee                     | Initiates a workflow instance (e.g., submits a purchase request)            |
-| Viewer (optional) | Auditor, read-only stakeholder  | Can view instances and audit logs but cannot take action                    |
-
-The Tenant Admin is the power user. The Requestor and Approver are the daily operators.
-
-### Section 10: Foundation
-
-#### What is a workflow engine platform?
-
-A workflow engine platform is a system that runs business processes described as:
-
-- States (where something is now)
-- Transitions (how it moves)
-- Rules/conditions (when it’s allowed)
-- Actors/roles (who can do it)
-- History/audit (what happened)
-
-It has two big halves:
-
-- Workflow Definition (design-time): create/validate/version workflows
-- Workflow Execution (run-time): start instances, advance steps, enforce rules, record audit
-
----
-
-### Section 11: Tenancy Models Available and Recommendation
+### 18. Tenancy Models Available and Recommendation
 
 > Included this part in FAQ as well
 
@@ -1602,7 +1563,7 @@ It has two big halves:
 
 <!-- SECTION 11 END HERE -->
 
-### Section 12: Workflow Execution Model
+### 19. Workflow Execution Model
 
 #### 12.1 Where are workflows stored?
 
@@ -1690,3 +1651,70 @@ A **rule evaluator** that takes:
    - Emits notifications/events
 
 <!-- SECTION 12 END HERE -->
+
+### 20. Rule Engine Mental Picture
+
+#### Where and How Is Business Logic / Conditions Executed?
+
+This is the most conceptually complex part. Let me paint the mental picture clearly.
+
+##### The Problem
+
+A Tenant Admin types this rule in the UI:
+
+```ts
+amount > 10000 AND user.department == "Engineering"
+```
+
+This is a string. How does the server execute it?
+
+##### The Rule Engine — Mental Picture
+
+Think of it like Excel formulas. When you type =SUM(A1:A10) in Excel, Excel has an interpreter that reads your string, understands it as an expression, and evaluates it against the cell data. You didn't write code — but Excel's engine runs logic on your behalf.
+
+The Rule Engine in our system works the same way:
+
+Step 1 — Storage: The rule is stored as a string (or structured JSON AST) in the database
+
+```json
+{
+  "type": "AND",
+  "conditions": [
+    { "field": "payload.amount", "operator": ">", "value": 10000 },
+    { "field": "user.department", "operator": "==", "value": "Engineering" }
+  ]
+}
+```
+
+Step 2 — Context Building: At runtime, the execution service builds a context object
+
+```json
+{
+  "payload": { "amount": 15000, "vendor": "Acme" },
+  "user": { "id": "u1", "role": "Requestor", "department": "Engineering" },
+  "instance": { "current_state": "Draft", "created_at": "2026-01-01" }
+}
+```
+
+**Step 3 — Evaluation**: The Rule Engine receives the rule AST + context, walks the tree, and evaluates:
+
+```ts
+amount(15000) > 10000 → TRUE
+department("Engineering") == "Engineering" → TRUE
+AND(TRUE, TRUE) → TRUE ✅ → Transition is allowed
+```
+
+**Step 4 — Decision**: Based on the result, the transition is either allowed or blocked.
+
+##### Rule Engine Options
+
+| Approach                                            | What it is                                      | When to use                                        |
+| --------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| **JSON Rules Engine** (`json-rules-engine` library) | Pre-built evaluator for JSON-defined conditions | ✅ Best for this use case — fast, safe, extensible |
+| **Expression evaluator** (`expr-eval`, `jexl`)      | Evaluates math/logic string expressions         | Good for power users who want formula-like syntax  |
+| **Strategy Pattern (hardcoded)**                    | Write a TypeScript class per rule type          | Only if rules are few and fixed                    |
+| **Sandboxed JS eval** (`vm2`, `isolated-vm`)        | Executes actual JS code written by tenant       | Powerful but dangerous — security risk             |
+
+**We'll use `json-rules-engine`** — it's safe (no code injection risk), expressive, and the rule structure is serializable to the database.
+
+---
