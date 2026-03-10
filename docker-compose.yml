@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wf-postgres
+    environment:
+      POSTGRES_DB: workflow-engine
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d workflow-engine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wf-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: wf-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wf-net
+
+  nats:
+    image: nats:2.12
+    container_name: wf-nats
+    command: ["-js", "-DV"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "nats", "server", "ping", "--server", "nats://localhost:4222"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wf-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wf-backend
+    env_file:
+      - ./backend/.env.stage.dev
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DATABASE: workflow-engine
+      REDIS_URL: redis://redis:6379
+      NATS_URL: nats://nats:4222
+      HOST: 0.0.0.0
+      PORT: 10000
+      NODE_ENV: development
+      STAGE: dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    ports:
+      - "10000:10000"
+    networks:
+      - wf-net
+
+networks:
+  wf-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
