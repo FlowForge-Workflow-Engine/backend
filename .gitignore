@@ -7,7 +7,10 @@
 *.sql
 
 # ENVs
-.env*
+.env
+.env.stage.dev
+.env.stage.uat
+
 
 # Logs
 logs
