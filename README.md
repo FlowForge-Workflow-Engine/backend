@@ -307,7 +307,7 @@ bun run migration:run
 ```bash
 bun run start:dev
 # Server starts at http://localhost:10000
-# Swagger UI at http://localhost:10000/api/docs (dev/staging only)
+# Swagger UI at http://localhost:10000/api (dev/staging/uat only)
 ```
 
 ---
@@ -461,10 +461,10 @@ Tests use `@nestjs/testing` with mocked repositories and Redis. Integration test
 Swagger UI is available **only in non-production environments** (`STAGE !== 'prod'`):
 
 ```
-http://localhost:10000/api/docs
+http://localhost:10000/api
 ```
 
-The OpenAPI spec can be exported as JSON from `http://localhost:10000/api/docs-json`. The raw spec is also committed at `OPEN_API_SPEC.json` in the project root.
+The OpenAPI spec can be exported as JSON from `http://localhost:10000/api-json`. The raw spec is also committed at `OPEN_API_SPEC.json` in the project root.
 
 All endpoints require:
 
