@@ -443,7 +443,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "User UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -474,7 +474,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "User UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -670,7 +670,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -717,7 +717,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -774,7 +774,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -805,7 +805,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -852,7 +852,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -911,7 +911,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -965,7 +965,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1024,7 +1024,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1090,7 +1090,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Tenant UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1240,7 +1240,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Notification template UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1476,7 +1476,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Webhook configuration UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1523,7 +1523,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Webhook configuration UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1749,7 +1749,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1796,7 +1796,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1827,7 +1827,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1876,7 +1876,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1925,7 +1925,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -1982,7 +1982,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -2031,7 +2031,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -2098,7 +2098,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -2152,7 +2152,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
@@ -2211,7 +2211,9 @@
                         "name": "stateId",
                         "required": true,
                         "in": "path",
+                        "description": "Workflow state UUID",
                         "schema": {
+                            "format": "uuid",
                             "type": "string"
                         }
                     }
@@ -2266,7 +2268,9 @@
                         "name": "stateId",
                         "required": true,
                         "in": "path",
+                        "description": "Workflow state UUID",
                         "schema": {
+                            "format": "uuid",
                             "type": "string"
                         }
                     }
@@ -2321,7 +2325,9 @@
                         "name": "stateId",
                         "required": true,
                         "in": "path",
+                        "description": "Workflow state UUID",
                         "schema": {
+                            "format": "uuid",
                             "type": "string"
                         }
                     }
@@ -2368,7 +2374,7 @@
                         "name": "id",
                         "required": true,
                         "in": "path",
-                        "description": "Resource UUID",
+                        "description": "Workflow definition UUID",
                         "schema": {
                             "format": "uuid",
                             "type": "string"
