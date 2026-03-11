@@ -204,6 +204,8 @@ backend/
 ├── nest-cli.json
 ├── package.json
 ├── tsconfig.json
+├── .env.stage.example                   # Template for all environment variables
+├── .env.stage.dev                       # Local development environment variables that you will create
 ├── AGENT_PROMPT.md                      # 13 architectural constraints (read this first)
 ├── ENVIRONMENT_SETUP.md
 ├── WORKFLOW_EXECUTION.md
@@ -292,7 +294,7 @@ docker compose -f docker-compose.dev.yml up -d
 ### 3. Configure environment
 
 ```bash
-cp .env .env.stage.dev
+cp .env.stage.example .env.stage.dev
 # Edit .env.stage.dev with your local values (see Environment Variables below)
 ```
 
