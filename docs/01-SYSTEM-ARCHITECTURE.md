@@ -129,6 +129,16 @@ The platform is a **multi-tenant SaaS workflow engine** that enables B2B tenants
 
 **Decision:** Build as a **Microservice-Extractable Contract-First Modular Monolith**: a single deployable NestJS application with strict internal boundaries and explicit contracts.
 
+**Microservice-Extractable Contract-First Modular Monolith is essentially:**
+```text
+  DDD (Domain Driven Design)
+  + Vertical Slice
+  + Clean Architecture
+  + Domain Events
+  + Module Facades
+  + Contract-First APIs
+```
+
 **Alternatives considered:**
 
 | Alternative                          | Why it’s attractive                   | Why it’s not chosen here                                                                             |
