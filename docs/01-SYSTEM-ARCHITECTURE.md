@@ -58,6 +58,9 @@ This document explains **why** the system is built the way it is, and justifies 
   - [7.14 Component system: shadcn/ui (Radix primitives)](#714-component-system-shadcnui-radix-primitives)
   - [7.15 Containerization: Docker](#715-containerization-docker)
   - [7.16 Source control platform: GitHub](#716-source-control-platform-github)
+  - [7.17 Non-Functional Requirements + SLAs](#717-non-functional-requirements--slas)
+  - [7.18 Production-Ready NATS & KAFKA together](#718-production-ready-nats--kafka-together)
+  - [7.19 Chat Service Scaling: Users Worlds Apart](#719-chat-service-scaling-users-worlds-apart)
 - [Appendix A. Embedded Reference Sections (verbatim)](#appendix-a-embedded-reference-sections-verbatim)
   - [1. Business Point of View](#1-business-point-of-view)
   - [2. Actors and Personas](#2-actors-and-personas)
@@ -506,6 +509,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 - CPU-heavy workloads may require careful optimization or offloading to workers; mitigated by async design and scaling strategy.
 
+---
+
 ### 7.2 Package manager/runtime: Bun
 
 **Decision:** Use Bun (`oven/bun` image; `bun install`, `bun run`) for install/build/start in container.
@@ -520,6 +525,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Trade-offs:**
 
 - Some Node ecosystem tooling assumes Node; production script includes a Node path as fallback (`backend/package.json` has `start:prod`).
+
+---
 
 ### 7.3 Backend framework: NestJS
 
@@ -536,6 +543,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 - Slightly more framework surface area than minimalist frameworks; pays off in maintainability.
 
+---
+
 ### 7.4 ORM: TypeORM
 
 **Decision:** Use TypeORM for persistence mapping and migrations.
@@ -550,6 +559,9 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Trade-offs:**
 
 - Requires discipline to avoid implicit relations and to keep queries predictable under RLS.
+
+---
+
 
 ### 7.5 Database: PostgreSQL + JSONB + RLS
 
@@ -567,6 +579,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 - Requires careful indexing and RLS-aware query patterns; addressed in DB design doc.
 
+---
+
 ### 7.6 Caching + rate limiting: Redis
 
 **Decision:** Use Redis for cache-aside reads, leaky bucket rate limiting, and idempotency locks.
@@ -581,6 +595,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Trade-offs:**
 
 - Extra dependency; the system must degrade gracefully on cache outages.
+
+---
 
 ### 7.7 Messaging: NATS (and JetStream upgrade path)
 
@@ -597,6 +613,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 - Core NATS is at-most-once; message loss is acceptable for non-critical side effects (audit visibility/notifications), and consumers are idempotent.
 
+---
+
 ### 7.8 Auth: JWT + refresh tokens + CSRF
 
 **Decision:** JWT bearer tokens for auth + refresh token rotation; CSRF token endpoint for browser safety.
@@ -610,6 +628,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Trade-offs:**
 
 - Access token revocation is limited until expiry; mitigated by short TTL and refresh rotation.
+
+---
 
 ### 7.9 Password hashing: Argon2id
 
@@ -625,6 +645,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 - Higher compute cost; acceptable for auth endpoints with rate limiting.
 
+---
+
 ### 7.10 API style: REST
 
 **Decision:** External API is REST, versioned under `/api/v1`.
@@ -639,6 +661,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 - Some client aggregations may require BFF endpoints later (aggregator pattern).
 
+---
+
 ### 7.11 Frontend: React + Vite
 
 **Decision:** React + Vite.
@@ -648,6 +672,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Why chosen:** ecosystem maturity + TypeScript ergonomics + build performance.
 
 **Trade-offs:** requires deliberate patterns to avoid state sprawl; addressed with TanStack Query + Zustand.
+
+---
 
 ### 7.12 Styling: TailwindCSS
 
@@ -659,6 +685,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 **Trade-offs:** utility-class learning curve; mitigated by component primitives.
 
+---
+
 ### 7.13 Server-state/client-state: TanStack Query + Zustand
 
 **Decision:** TanStack Query for server state, Zustand for client/UI/auth state.
@@ -668,6 +696,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Why chosen:** best-of-breed cache/invalidation for server state; minimal client store for auth and UI.
 
 **Trade-offs:** requires consistent query key strategy; centralized in `frontend/src/lib/query-keys.ts`.
+
+---
 
 ### 7.14 Component system: shadcn/ui (Radix primitives)
 
@@ -679,6 +709,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 
 **Trade-offs:** more assembly work than a full design system; pays off in custom UX.
 
+---
+
 ### 7.15 Containerization: Docker
 
 **Decision:** Docker as the packaging and deployment unit.
@@ -688,6 +720,8 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 **Why chosen:** standard tooling and compatibility across environments.
 
 **Trade-offs:** none unique; standard container operational practices apply.
+
+---
 
 ### 7.16 Source control platform: GitHub
 
@@ -726,7 +760,7 @@ This maps directly to the system’s bounded contexts and aligns with the Strang
 - Horizontal scaling: All NestJS services are stateless → spin up more instances under load
 - Database scaling: Read replicas for query load; write scaling via PgBouncer connection pooling
 - Tenant-level scaling: Large enterprise tenants can be isolated to dedicated instances (tenant sharding)
-- Target: Support 10,000 concurrent users, 1,000 tenants, 10M+ workflow instances
+- **Target: Support 10,000 concurrent users, 1,000 tenants, 10M+ workflow instances**
 
 #### 4. Latency
 
@@ -817,6 +851,332 @@ Below are sane “enterprise SaaS” starting SLAs (tunable by tier):
 |        Deployment model        |                            Start single-region multi-AZ                            |     Standard SaaS baseline for HA without multi-region complexity     |
 |        Deployment model        |              Move to multi-region active-active for enterprise later               |                Future evolution path for stricter SLAs                |
 |         Observability          |                 100% transitions produce structured logs + traces                  |         Required for debugging, auditing, and SLO enforcement         |
+
+
+---
+
+### 7.18 Production-Ready NATS & KAFKA together
+
+`API → NATS (service comm) → Microservices`
+
+`Events → KAFKA (event store) → Analytics / Pipelines`
+
+- These are two fundamentally different responsibilities, not two alternatives for the same thing.
+
+- This is the **Dual-Bus Architecture** (also called **Lambda-style messaging**): 
+  - a speed layer (NATS) + a durability layer (Kafka). 
+  - It's the same pattern used by LinkedIn (who built Kafka for exactly this), Uber's real-time infrastructure, and many enterprise SaaS platforms.
+
+- **This is good architecture for a multi-tenant SaaS platform. Here's Why**
+
+| Concern | How This Design Handles It |
+|---|---|
+| **Real-time latency** | NATS delivers sub-2 ms between services; Kafka never blocks the hot path |
+| **Message durability** | Kafka provides guaranteed, replayable event storage for audit, analytics, and history |
+| **Fault isolation** | NATS failure doesn't lose audit data (Kafka is independent); Kafka backpressure doesn't slow down live user messages |
+| **Multi-tenant event sourcing** | Kafka topics partitioned by `tenant_id` support event replay per tenant |
+| **Scale** | NATS 3-node cluster handles millions of messages/sec; Kafka multi-broker handles >1M events/sec |
+| **DLQ strategy** | Kafka DLQ + AWS SQS ensures no notification or audit event is permanently lost |
+| **Chat at scale** | NATS fanout for delivery, Kafka for history — this is the industry-standard pattern |
+
+---
+
+#### EXPLANATION
+
+**✅ NATS — The Nervous System (Service Command Bus)**
+- NATS is your internal, real-time, inter-service communication layer. The diagram explicitly labels it "NATS Command Bus." It handles:
+
+#### → Use Cases — Why NATS Wins
+
+| Use Case | Why NATS Wins |
+|---|---|
+| **Service-to-service domain events** (`NatsEvents` enum) | ~0.5–2 ms latency, no HTTP stack overhead |
+| **CQRS command routing** | Request–Reply pattern is native to NATS |
+| **Real-time fanout** (execution → audit, notification) | Pub/Sub with *at-most-once* semantics for non-critical side effects |
+| **Shadow table sync** (`USER_CREATED` → `we_user_shadows`) | Lightweight ephemeral delivery, consumers are idempotent |
+| **Chat message delivery between pods** | Fanout to all connected pods, microsecond relay |
+| **Workflow transition signals** | Low-latency operational events |
+
+- The **entire `NatsEvents` enum is the NATS** layer. Every event in that file — `USER_CREATED`, `WORKFLOW_TRANSITION_COMPLETED`, `NOTIFICATION_SEND_EMAIL`, etc. — travels over NATS in production. 
+- JetStream adds durability when at-least-once guarantees are needed (already accounted for in your architecture doc §7.7).
+
+**✅ Kafka — The Memory (Durable Event Store)**
+- Kafka is your durable, high-throughput, replayable event log. 
+- The diagram explicitly enumerates what goes over Kafka:
+
+**KAFKA Communication:**
+- All service → Audit Log
+- Service → Analytics
+- Service → Notifications + DLQ
+- Chat Service, for history
+
+#### → Use Cases — Why Kafka Wins
+
+| Use Case | Why Kafka Wins |
+|---|---|
+| **Audit log persistence** | Append-only, durable, replayable, 7-day+ retention |
+| **Analytics pipeline** | >1M events/sec throughput, Kafka Streams or Flink can process |
+| **Notification DLQ** | Dead letter with AWS SQS integration, retry policy |
+| **Chat history** | MongoDB persistence backed by durable Kafka consumer |
+| **Multi-tenant event sourcing** | Partition by `tenant_id` for isolation and ordered replay |
+
+---
+
+#### ✅ How They Work Together (The Dual-Bus Pattern)
+- A workflow transition is the best example of both working in tandem:
+
+```text
+User clicks "Approve"
+     │
+     ▼
+Kong API Gateway
+     │
+     ▼
+Workflow Execution Service (writes DB + audit atomically)
+     │
+     ├──► NATS: workflow-execution.transition.completed
+     │         │
+     │         ├──► Notification Service (real-time, ephemeral, ~1ms)
+     │         ├──► Audit Subscriber (shadow model sync, idempotent)
+     │         └──► Rule Engine / other services (CQRS command relay)
+     │
+     └──► KAFKA: workflow.transition.completed (topic, partitioned by tenant_id)
+               │
+               ├──► Audit Log Service (durable write → MongoDB)
+               ├──► Analytics Service (metrics, dashboards)
+               └──► Notification Service DLQ (if NATS delivery failed)
+```
+
+- The key insight: NATS delivers the signal fast; Kafka durably stores the fact. 
+- The two are not redundant — they are complementary layers of a two-tier event architecture.
+
+---
+
+#### ✅ The One Genuine Risk: Dual Publishing Complexity
+- When a service needs to publish to both NATS and Kafka, you have to handle the case where NATS succeeds but Kafka fails (or vice versa). 
+- This is a partial failure problem. The mitigation:
+
+```text
+1. Publish to NATS first (ephemeral, fast)
+2. Produce to Kafka second (durable, slightly slower)
+
+If Kafka fails:
+  → Retry with exponential backoff
+  → Dead Letter to SQS DLQ
+  → NATS delivery already happened (real-time was not blocked)
+
+The NATS path and Kafka path serve different consumers. 
+Real-time consumers don't care about Kafka.
+Durable consumers don't care if NATS dropped the message.
+```
+
+- This means: the two buses serve different consumers and partial failures are acceptable by design, not a problem.
+
+---
+
+#### ✅ When to Introduce Kafka (If Not Already)
+- For your current MVP (modular monolith) with NATS only, this is correct — you don't need Kafka yet. 
+- NATS JetStream is the upgrade path first. 
+
+**Introduce Kafka when:**
+
+- Audit log volume requires long-term durable storage beyond what JetStream's limited retention can serve
+- Analytics service needs its own independent consumption stream
+- Chat service needs history that survives service restarts
+- You have 3+ independent consumer groups that need the same events at different rates
+
+---
+
+#### SUMMARY: The Layered Picture
+```text
+┌──────────────────────────────────────────────────────────┐
+│                    CLIENT LAYER                          │
+│         Browser WebSocket / REST / Webhooks              │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+                    Kong Gateway
+                         │
+┌────────────────────────▼──────────────────────────────────────┐
+│                   MICROSERVICES                               │
+│  Auth  Tenant  WorkflowDef  WorkflowExec  Chat  Notification  │
+|                                                               |
+│     Rule-Engine  Payment  Platform Admin  Audit  Analytics    │
+└──────┬──────────────────────────────────┬─────────────────────┘
+       │                                  │
+       ▼                                  ▼
+  ┌─────────────┐                  ┌──────────────────┐
+  │    NATS     │                  │     KAFKA        │
+  │  JetStream  │                  │  Multi-Broker    │
+  │             │                  │                  │
+  │ • Commands  │                  │ • Audit Events   │
+  │ • RPC       │                  │ • Chat History   │
+  │ • Fanout    │                  │ • Analytics Feed │
+  │ • Presence  │                  │ • Notif + DLQ    │
+  │ • Typing    │                  │ • Event Sourcing │
+  └─────────────┘                  └──────────────────┘
+       │                                  │
+       └──────────────────────────────────┘
+                         │
+              MongoDB (Chat, Audit)
+              PostgreSQL (Workflow, Auth, Tenant)
+              Redis (Sessions, Cache, Presence)
+```
+- This is a recommended, production-grade, well-established pattern. 
+- The separation is clean, the responsibilities are non-overlapping, and the operational overhead is justified at the scale you're targeting **(10K concurrent users, 1K tenants, 10M+ instances)**. 
+- The only caveat: don't introduce Kafka before you need it — NATS JetStream covers you for the first stage of scale.
+
+---
+
+### 7.19 Chat Service Scaling: Users Worlds Apart
+- This is the WebSocket fan-out problem and it's the most important infrastructure challenge for the Chat Service.
+Here's the reality:
+
+```text
+User A (India)              User B (USA)
+connected to Pod 1          connected to Pod 3
+     │                            │
+     │                      different process
+     │                      different memory
+     └─────── HOW DO THEY TALK? ──────────┘
+```
+
+#### The Core Problem
+- WebSocket is a stateful, persistent connection. 
+- When User A sends a message, Pod 1 holds that connection. 
+- But Pod 3 holds User B's connection. 
+- Pod 1 has no direct way to push to User B — it doesn't own that socket.
+
+#### The Solution: NATS as the Pod-to-Pod Message Relay
+```text
+User A (India, Pod 1)
+  │
+  │  sends message via WebSocket
+  ▼
+Chat Service Pod 1
+  │
+  ├──► Persist to Kafka: chat.messages topic
+  │
+  └──► Publish to NATS: chat.message.{tenantId}.{conversationId}
+                │
+                │  NATS broadcasts to ALL subscribed Chat Service pods
+                │
+  ┌─────────────┴─────────────┐
+  ▼                           ▼
+Pod 1                       Pod 3 (USA)
+(knows User A)              (holds User B's WebSocket)
+  │                           │
+  │ (skips, not their client) │  pushes message to User B
+                              ▼
+                          User B receives it in real-time
+```
+
+- **Why NATS?** Because it's the only thing running in every pod. 
+- **Why not Kafka?** Because Kafka is a pull-based system — a consumer must actively poll for messages. 
+- **Why not Redis Pub/Sub?** Because it's single-threaded and doesn't scale beyond a few thousand messages/sec.
+```
+- Every Chat Service pod subscribes to chat.message.*.* 
+- When a pod receives a NATS event for a conversation, it checks its in-memory map of connected WebSocket clients. 
+- If it holds that connection, it delivers. If not, it drops silently.
+```
+- This means: **every chat message is published to NATS**, and every pod subscribes to every conversation. 
+- The in-memory filter ensures a message is delivered only once, even though every pod sees every event.
+
+---
+
+#### For Geographically Distributed Users (Worlds Apart)
+
+```text
+User A (Mumbai)                         User B (New York)
+      │                                       │
+      ▼                                       ▼
+AWS ALB (ap-south-1)              AWS ALB (us-east-1)
+      │                                       │
+      ▼                                       ▼
+Chat Pods — Region India          Chat Pods — Region USA
+      │                                       │
+      │                                       │
+      └─────── NATS Cluster (Multi-AZ) ───────┘
+               OR
+      └─────── KAFKA (cross-region bridge) ───┘
+               (AWS MSK Replicator)
+```
+➞ **For within-region delivery**: NATS Cluster (3 nodes minimum) handles sub-millisecond relay between pods.
+
+➞ **For cross-region delivery**: KAFKA acts as the durable cross-region bridge, or you use NATS with leaf nodes / gateway connections between regional NATS clusters. A regional Chat Service pod consumes from Kafka, finds the local WebSocket connection, and delivers.
+
+**Connection Management**
+> Redis is critical here too. Each pod registers its connected client sockets in Redis:
+```
+Redis key: chat:session:{userId} → podId
+```
+
+- This lets any pod look up "which pod has User B?" before deciding whether to consume or skip an NATS fanout message. 
+
+- This eliminates unnecessary processing on pods that don't hold the target connection, critical at scale.
+
+--- 
+
+**1️⃣ Global Message Flow (The Bridge)**
+> When you send a message, it doesn't go directly to User B's server. Instead, it follows this path:
+
+- **Step 1 (Local Ingest)**: Your message hits the India Load Balancer and is handled by a node in the India EKS cluster.
+
+- **Step 2 (Regional Storage)**: That node publishes the message to a Local Kafka Cluster (like Amazon MSK) in the India region.
+
+- **Step 3 (The Handover)**: A replication tool—such as **Amazon MSK Replicator** or **MirrorMaker 2**—detects the new message and automatically copies it from the India Kafka cluster to the US Kafka cluster over the AWS backbone.
+
+- **Step 4 (US Delivery)**: A worker node in the US EKS cluster is "listening" to the US Kafka cluster. It sees the replicated message and pushes it to User B via their active WebSocket connection. 
+
+**2️⃣ Networking: How the Clusters Talk**
+>For the Kafka clusters in India and the US to see each other, you must establish a private network path:
+
+- VPC Peering: The simplest way to connect two VPCs across regions so they can communicate using private IP addresses.
+
+- AWS Transit Gateway: Best for complex setups with many clusters; you can "peer" Transit Gateways across regions to route traffic globally. 
+
+**3️⃣ User Discovery (Where is User B?)**
+>The system needs to know which region User B is connected to.
+
+- Global Registry: A global database (like Amazon DynamoDB Global Tables) stores the "Session State."
+
+- Mapping: When the message arrives in the US, the backend checks this global table to find exactly which US server node holds User B's active WebSocket. 
+
+**4️⃣ Shared History**
+>To ensure both you and User B see the same chat history later:
+
+- Asynchronous Sink: Both regional Kafka clusters "sink" their messages into the same global database.
+
+- Conflict Resolution: If you both send messages at the same time, the database uses timestamps or "last-writer-wins" to order them consistently for both users.
+
+--- 
+
+#### Full Flow: User A sends a message to User B
+```text
+1. User A sends message via WebSocket to Chat Service Pod 1
+
+2. Pod 1:
+   a. Validates message (auth, tenant isolation, rate limit)
+   b. Assigns messageId (UUID), timestamps it
+   c. Publishes to NATS: chat.message.{tenantId}.{convId}   [~1ms]
+   d. Produces to Kafka: chat.messages topic                 [async, ~5ms]
+
+3. NATS fanout to all Chat Service pods:
+   - Pod 2, Pod 3, Pod 4 each receive the NATS message
+   - Each checks: "Do I have this user's WebSocket?"
+   - Pod 3 has User B's connection → delivers message to User B browser
+
+4. Kafka async consumers (parallel, decoupled):
+   - chat-history-writer: writes to MongoDB chat_messages
+   - analytics-service: increments message count, latency metrics
+   - notification-service: checks if User B is online (Redis presence key)
+     → if offline: sends email/push notification
+     → if online: already delivered via NATS, skip
+
+5. User B receives message in ~2-5ms (NATS path)
+   MongoDB has durable copy within ~50-100ms (Kafka path)
+```
+
+---
 
 ## Appendix A. Embedded Reference Sections (verbatim)
 
