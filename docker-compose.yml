@@ -1,63 +1,114 @@
+# Local development services for the workflow engine backend.
+# Compose file format version used by Docker Compose.
 version: "3.9"
 
 services:
+  # PostgreSQL is the primary relational database for the workflow engine.
+  # It stores application data such as workflows, execution state, and metadata.
   postgres:
+    # Base image and version used for the PostgreSQL container.
     image: postgres:16-alpine
+    # Stable, human-friendly container name for local development.
     container_name: wf-postgres
+    # Environment variables consumed by the postgres image during startup.
+    # These initialize the default database and superuser credentials.
     environment:
       POSTGRES_DB: workflow-engine
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    # Exposes PostgreSQL on the host so local tools/apps can connect via port 5432.
     ports:
       - "5432:5432"
+    # Persists database files on a named Docker volume so data survives container restarts.
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Healthcheck lets dependent services wait until PostgreSQL is actually ready.
     healthcheck:
+      # Runs a readiness probe inside the container.
       test: ["CMD-SHELL", "pg_isready -U postgres -d workflow-engine"]
+      # Time between healthcheck runs.
       interval: 10s
+      # Maximum time Docker waits for each healthcheck execution.
       timeout: 5s
+      # Number of failed checks before the container is marked unhealthy.
       retries: 5
+    # Attaches the service to the shared application network.
     networks:
       - wf-net
 
+  # Redis is used as the in-memory data store for caching, fast lookups,
+  # temporary state, and possibly queues or pub/sub depending on app usage.
   redis:
+    # Base image and version used for the Redis container.
     image: redis:7-alpine
+    # Stable container name for easier local inspection.
     container_name: wf-redis
+    # Starts Redis with append-only persistence enabled for better local durability.
     command: ["redis-server", "--appendonly", "yes"]
+    # Exposes Redis on the host so local apps/tools can connect on port 6379.
     ports:
       - "6379:6379"
+    # Persists Redis data across container restarts.
     volumes:
       - redis_data:/data
+    # Healthcheck verifies Redis is responding before dependents use it.
     healthcheck:
+      # Sends a simple ping command to Redis.
       test: ["CMD", "redis-cli", "ping"]
+      # Time between healthcheck runs.
       interval: 10s
+      # Maximum allowed runtime for a single healthcheck attempt.
       timeout: 5s
+      # Number of failures allowed before unhealthy status is set.
       retries: 5
+    # Connects Redis to the shared Docker network.
     networks:
       - wf-net
 
+  # NATS is the messaging/event bus for asynchronous communication between services.
+  # JetStream is enabled here to support persistence/streaming capabilities.
   nats:
+    # Base image and version used for the NATS server.
     image: nats:2.12
+    # Stable container name for local development.
     container_name: wf-nats
+    # Startup flags:
+    # -js enables JetStream
+    # -DV enables debug/verbose logging for easier troubleshooting locally
     command: ["-js", "-DV"]
+    # 4222 is the client connection port; 8222 exposes the monitoring/admin endpoint.
     ports:
       - "4222:4222"
       - "8222:8222"
+    # Healthcheck confirms the NATS server is reachable from inside the container.
     healthcheck:
       test: ["CMD", "nats", "server", "ping", "--server", "nats://localhost:4222"]
+      # Time between healthcheck runs.
       interval: 10s
+      # Maximum time allowed per healthcheck command.
       timeout: 5s
+      # Failed attempts before NATS is considered unhealthy.
       retries: 5
+    # Connects NATS to the shared service network.
     networks:
       - wf-net
 
+  # Backend is the main application service for the workflow engine.
+  # It depends on PostgreSQL, Redis, and NATS to serve API and workflow features.
   backend:
+    # Builds the backend image from the local Dockerfile instead of pulling one from a registry.
     build:
+      # Directory sent as build context to Docker.
       context: ./backend
+      # Dockerfile used to build the backend image.
       dockerfile: Dockerfile
+    # Stable container name for easier local debugging.
     container_name: wf-backend
+    # Loads additional environment variables from the backend development env file.
     env_file:
       - ./backend/.env.stage.dev
+    # Runtime environment variables injected into the backend container.
+    # These point the app to the local database, cache, and message broker services.
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -70,23 +121,34 @@ services:
       PORT: 10000
       NODE_ENV: development
       STAGE: dev
+    # Controls startup ordering so the backend waits for required dependencies.
     depends_on:
+      # Wait until PostgreSQL healthcheck passes before starting backend.
       postgres:
         condition: service_healthy
+      # Wait until Redis healthcheck passes before starting backend.
       redis:
         condition: service_healthy
+      # Ensure NATS container has started before backend boots.
       nats:
         condition: service_started
+    # Exposes the backend API on the host at port 10000.
     ports:
       - "10000:10000"
+    # Connects the backend to the same internal network as the supporting services.
     networks:
       - wf-net
 
+# Shared Docker network so services can reach each other by service name.
 networks:
   wf-net:
+    # Bridge is the default single-host Docker network driver.
     driver: bridge
 
+# Named volumes used to persist service data outside container filesystems.
 volumes:
+  # Stores PostgreSQL data files.
   postgres_data:
+  # Stores Redis append-only and snapshot data.
   redis_data:
 
