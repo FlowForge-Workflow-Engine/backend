@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { TransitionRule } from "../entities/transition-rule.entity";
 
 @Injectable()
@@ -29,9 +29,13 @@ export class TransitionRuleRepository {
     return this.repo.findOne({ where: { id, tenantId } });
   }
 
+  async removeByTransitionIds(transitionIds: string[], tenantId: string): Promise<void> {
+    if (!transitionIds.length) return;
+    await this.repo.delete({ transitionId: In(transitionIds), tenantId });
+  }
+
   async removeByTransitionId(transitionId: string, tenantId: string): Promise<void> {
-    const rules = await this.findByTransitionId(transitionId, tenantId);
-    if (rules.length) await this.repo.remove(rules);
+    await this.removeByTransitionIds([transitionId], tenantId);
   }
 
   async remove(entity: TransitionRule): Promise<void> {

@@ -200,7 +200,7 @@ async function bootstrap() {
   // Session Management
   // expressSession(app);
 
-  // NATS hybrid microservice — receives @MessagePattern events from all modules
+  // NATS hybrid microservice — receives @MessagePattern/@EventPattern events from all modules
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.NATS,
     options: createNatsOptions(configService),
