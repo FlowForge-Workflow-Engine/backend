@@ -39,8 +39,21 @@ export class WorkflowTransitionRepository {
     });
   }
 
+  async findIdsByDefinitionAndTenant(workflowDefinitionId: string, tenantId: string): Promise<string[]> {
+    const transitions = await this.repo.find({
+      select: { id: true },
+      where: { workflowDefinitionId, tenantId },
+    });
+
+    return transitions.map((transition) => transition.id);
+  }
+
   async findByFromStateId(fromStateId: string, tenantId: string): Promise<WorkflowTransition[]> {
     return this.repo.find({ where: { fromStateId, tenantId } });
+  }
+
+  async removeByDefinitionId(workflowDefinitionId: string, tenantId: string): Promise<void> {
+    await this.repo.delete({ workflowDefinitionId, tenantId });
   }
 
   async remove(entity: WorkflowTransition): Promise<void> {

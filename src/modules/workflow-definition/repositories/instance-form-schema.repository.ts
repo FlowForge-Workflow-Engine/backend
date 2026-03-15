@@ -24,4 +24,8 @@ export class InstanceFormSchemaRepository {
   ): Promise<InstanceFormSchema | null> {
     return this.repo.findOne({ where: { workflowDefinitionId, tenantId } });
   }
+
+  async removeByDefinitionId(workflowDefinitionId: string, tenantId: string): Promise<void> {
+    await this.repo.delete({ workflowDefinitionId, tenantId });
+  }
 }

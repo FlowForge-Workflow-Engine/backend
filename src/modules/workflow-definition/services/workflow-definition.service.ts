@@ -8,6 +8,9 @@ import { generateUUID } from "@app/shared/utils/uuid.util";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { WorkflowDefinitionRepository } from "../repositories/workflow-definition.repository";
 import { InstanceFormSchemaRepository } from "../repositories/instance-form-schema.repository";
+import { WorkflowStateRepository } from "../repositories/workflow-state.repository";
+import { WorkflowTransitionRepository } from "../repositories/workflow-transition.repository";
+import { TransitionRuleRepository } from "../repositories/transition-rule.repository";
 import { WorkflowVersionService } from "./workflow-version.service";
 import { WorkflowDefinitionPublisher } from "../publishers/workflow-definition.publisher";
 import { WorkflowDefinition, WorkflowDefinitionStatus } from "../entities/workflow-definition.entity";
@@ -37,6 +40,9 @@ export class WorkflowDefinitionService {
   constructor(
     private readonly definitionRepository: WorkflowDefinitionRepository,
     private readonly instanceFormSchemaRepository: InstanceFormSchemaRepository,
+    private readonly stateRepository: WorkflowStateRepository,
+    private readonly transitionRepository: WorkflowTransitionRepository,
+    private readonly ruleRepository: TransitionRuleRepository,
     private readonly versionService: WorkflowVersionService,
     private readonly publisher: WorkflowDefinitionPublisher,
     private readonly redis: RedisService
@@ -183,11 +189,27 @@ export class WorkflowDefinitionService {
       throw new BadRequestException(AppErrors.WORKFLOW_DEFINITION_NOT_DRAFT);
     }
 
+    // Load only transition IDs for the definition so we can delete their rules first.
+    const transitionIds = await this.transitionRepository.findIdsByDefinitionAndTenant(id, tenantId);
+
+    // Remove all rules and form schema associated with the definition's transitions first.
+    await Promise.all([
+      this.ruleRepository.removeByTransitionIds(transitionIds, tenantId),
+      this.instanceFormSchemaRepository.removeByDefinitionId(id, tenantId),
+    ]);
+
+    await this.transitionRepository.removeByDefinitionId(id, tenantId);
+    await this.stateRepository.removeByDefinitionId(id, tenantId);
+
+    // Remove the definition last so we can validate it exists before deleting its children.
     await this.definitionRepository.remove(definition);
 
     await this.redis.del(
       CacheKeys.workflowDefinition(tenantId, id),
-      CacheKeys.workflowDefinitionList(tenantId)
+      CacheKeys.workflowDefinitionList(tenantId),
+      CacheKeys.workflowStates(tenantId, id),
+      CacheKeys.workflowTransitions(tenantId, id),
+      CacheKeys.workflowInstanceFormSchema(tenantId, id)
     );
     this.logger.log(`WorkflowDefinition removed: ${id} [tenant=${tenantId}]`);
   }

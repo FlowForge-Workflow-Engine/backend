@@ -51,6 +51,10 @@ export class WorkflowStateRepository {
     });
   }
 
+  async removeByDefinitionId(workflowDefinitionId: string, tenantId: string): Promise<void> {
+    await this.repo.delete({ workflowDefinitionId, tenantId });
+  }
+
   async remove(entity: WorkflowState): Promise<void> {
     await this.repo.remove(entity);
   }
