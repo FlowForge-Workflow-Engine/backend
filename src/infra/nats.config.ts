@@ -1,4 +1,5 @@
 import { ConfigService } from "@nestjs/config";
+import { ConnectionOptions } from "nats";
 
 /**
  * Injection token for the NATS ClientProxy.
@@ -12,7 +13,7 @@ export const NATS_CLIENT = "NATS_CLIENT";
  * Mirrors `NatsOptions['options']` from @nestjs/microservices without importing it.
  * This prevents a hard dependency on @nestjs/microservices in config code.
  */
-export interface NatsConnectionOptions {
+export interface NatsConnectionOptions extends ConnectionOptions {
   /** Array of NATS server URLs */
   readonly servers: string[];
   /** Maximum reconnect attempts (-1 = unlimited) */
@@ -35,9 +36,23 @@ export function createNatsOptions(configService: ConfigService): NatsConnectionO
 
   return {
     servers: [natsUrl],
-    maxReconnectAttempts: -1,
-    reconnectTimeWait: 2_000,
+    // reconnect options
+    reconnect: true,
+    maxReconnectAttempts: -1, // unlimited reconnect attempts
+    reconnectTimeWait: 2_000, // 2-second backoff between reconnect attempts
     name: appName,
+
+    // keep alive options
+    pingInterval: 30_000, // ping every 10 seconds
+    maxPingOut: 5, // disconnect after 5 failed pings
+
+    // jitter options: Prevents reconnect storms when many services restart.
+    reconnectJitter: 100,
+    reconnectJitterTLS: 1000,
+
+    // connection options
+    timeout: 5_000, // Fail connect after 5 seconds
+    waitOnFirstConnect: true, // waits until a connection succeeds
   };
 }
 
