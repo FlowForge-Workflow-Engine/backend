@@ -29,6 +29,8 @@ export interface NatsConnectionOptions extends ConnectionOptions {
  *
  * @param configService - NestJS ConfigService instance
  * @returns NATS connection options
+ * Connection options can be found here:
+ * @link https://docs.nats.io/reference/reference#connection-options
  */
 export function createNatsOptions(configService: ConfigService): NatsConnectionOptions {
   const natsUrl = configService.get<string>("NATS_URL", "nats://localhost:4222");
