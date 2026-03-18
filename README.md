@@ -485,7 +485,7 @@ No module's repository, entity, or service class is ever imported by another mod
 - **NATS events** — published and consumed via subjects in `NatsEvents` enum
 - **JWT claims** — `@CurrentUser()` reads from the request's JWT payload
 
-Violating this constraint breaks microservice extraction. If you need data from another module, use one of the three patterns documented in `AGENT_PROMPT.md §Constraint 2`.
+Violating this constraint breaks microservice extraction. If you need data from another module, use one of the three patterns documented in [`01-SYSTEM-ARCHITECTURE.md §Appendix 4. Microservice-Extractable Contract-First Modular Monolith`](./docs/01-SYSTEM-ARCHITECTURE.md#4-microservice-extractable-contract-first-modular-monolith).
 
 ### 2. The Global Request Pipeline
 
@@ -572,17 +572,22 @@ All documentation lives in the project's `docs/` folder:
 
 | Document                         | Description                                                            |
 | -------------------------------- | ---------------------------------------------------------------------- |
-| `01-SYSTEM-ARCHITECTURE.md`      | Full architectural philosophy, module boundaries, technology decisions |
-| `02-HIGH-LEVEL-DESIGN.md`        | System flows, component interactions, frontend/backend integration     |
-| `03-LOW-LEVEL-DESIGN.md`         | Class-level design, patterns, algorithms, CQRS deep dive               |
-| `04-DOMAIN-MODEL-DDD.md`         | Aggregates, bounded contexts, domain events, ubiquitous language       |
-| `05-DATABASE-DESIGN.md`          | Full schema, RLS policies, index catalogue, migration strategy         |
-| `06-API-DESIGN.md`               | REST API reference, error codes, rate limiting, OpenAPI appendix       |
-| `07-SECURITY-DESIGN.md`          | Threat model, auth design, tenant isolation, rate limiting             |
-| `08-SCALABILITY-PERFORMANCE.md`  | Caching strategy, DB tuning, NATS vs Kafka, horizontal scaling         |
-| `09-PRD.md`                      | Product requirements, user stories, API integration contract           |
-| `10-MIGRATION-GUIDE.md`          | Modular monolith → microservices phased migration playbook             |
-| `11-FAQ.md`                      | All 36 architectural decision questions answered                       |
+| [`01-SYSTEM-ARCHITECTURE.md`](./docs/01-SYSTEM-ARCHITECTURE.md)      | Full architectural philosophy, module boundaries, technology decisions |
+| [`02-HIGH-LEVEL-DESIGN.md`](./docs/02-HIGH-LEVEL-DESIGN.md)        | System flows, component interactions, frontend/backend integration     |
+| [`03-LOW-LEVEL-DESIGN.md`](./docs/03-LOW-LEVEL-DESIGN.md)         | Class-level design, patterns, algorithms, CQRS deep dive               |
+| [`04-DOMAIN-MODEL-DDD.md`](./docs/04-DOMAIN-MODEL-DDD.md)         | Aggregates, bounded contexts, domain events, ubiquitous language       |
+| [`05-DATABASE-DESIGN.md`](./docs/05-DATABASE-DESIGN.md)          | Full schema, RLS policies, index catalogue, migration strategy         |
+| [`06-API-DESIGN.md`](./docs/06-API-DESIGN.md)               | REST API reference, error codes, rate limiting, OpenAPI appendix       |
+| [`07-SECURITY-DESIGN.md`](./docs/07-SECURITY-DESIGN.md)          | Threat model, auth design, tenant isolation, rate limiting             |
+| [`08-SCALABILITY-PERFORMANCE.md`](./docs/08-SCALABILITY-PERFORMANCE.md)  | Caching strategy, DB tuning, NATS vs Kafka, horizontal scaling         |
+| [`09-PRD.md`](./docs/09-PRD.md)                      | Product requirements, user stories, API integration contract           |
+| [`10-MIGRATION-GUIDE.md`](./docs/10-MIGRATION-GUIDE.md)          | Modular monolith → microservices phased migration playbook             |
+| [`11-FAQ.md`](./docs/11-FAQ.md)                      | All 36 architectural decision questions answered                       |
+
+**Supporting Documents**
+
+| Document                         | Description                                                            |
+| -------------------------------- | ---------------------------------------------------------------------- |
 | `AGENT_PROMPT.md`                | 13 hard architectural constraints every contributor must read          |
 | `ENVIRONMENT_SETUP.md`           | Detailed environment variable guide                                    |
 | `WORKFLOW_EXECUTION.md`          | Leave approval walkthrough, execution engine step-by-step              |
