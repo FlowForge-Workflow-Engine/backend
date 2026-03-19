@@ -583,6 +583,7 @@ All documentation lives in the project's `docs/` folder:
 | [`09-PRD.md`](./docs/09-PRD.md)                      | Product requirements, user stories, API integration contract           |
 | [`10-MIGRATION-GUIDE.md`](./docs/10-MIGRATION-GUIDE.md)          | Modular monolith → microservices phased migration playbook             |
 | [`11-FAQ.md`](./docs/11-FAQ.md)                      | All 36 architectural decision questions answered                       |
+| [`12-QnA.md`](./docs/12-QnA.md)                      | All supporting justifications for Tech Stacks used                       |
 
 **Supporting Documents**
 
@@ -594,3 +595,5 @@ All documentation lives in the project's `docs/` folder:
 | `SCHEMA_DESIGN_PHILOSOPHY.md`    | Why minimal ORM relations; aggregate root pattern                      |
 | `RLS_IMPLEMENTATION_STRATEGY.md` | PostgreSQL RLS design rationale and implementation                     |
 | `TENANT_RATE_LIMITING.md`        | Leaky bucket algorithm, dual-tier rate limiting design                 |
+| `FlowForge_Throughput_Derivation.md`        | NATS vs Kafka throughput derivation                 |
+| `FlowForge_Architecture_Analysis.md`        | FlowForge Architecture Analysis                 |
