@@ -105,8 +105,6 @@ author: Debi Prasad Mishra
 
 The schema is designed around strict module boundaries, microservice extractability, and explicit data loading. The following content is from `SCHEMA_DESIGN_PHILOSOPHY.md` and is included verbatim.
 
-markdown
-
 ## Schema Design Philosophy
 
 ### Overview
@@ -306,8 +304,6 @@ CROSS MODULE:
   AuditLog (audit) → User (auth)
   ✅ NO relation — store only userId UUID + snapshot fields (email, role)
 ```
-
----
 
 ---
 
