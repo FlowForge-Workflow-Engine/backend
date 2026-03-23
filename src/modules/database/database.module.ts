@@ -1,9 +1,8 @@
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { createOrmConfig } from "./ormconfig";
-import { RlsContextService } from "./services/rls-context.service";
-import { DatabaseContextInterceptor } from "./interceptors/database-context.interceptor";
+import { DatabaseCoreModule } from "@app/database";
 
 /**
  * DatabaseModule wires TypeORM to PostgreSQL using the centralised infra config.
@@ -12,6 +11,7 @@ import { DatabaseContextInterceptor } from "./interceptors/database-context.inte
  *
  * Also provides RLS (Row-Level Security) services for multi-tenant data isolation.
  */
+@Global()
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -19,8 +19,8 @@ import { DatabaseContextInterceptor } from "./interceptors/database-context.inte
       useFactory: (configService: ConfigService) => createOrmConfig(configService),
       inject: [ConfigService],
     }),
+    DatabaseCoreModule, // ← pulls in all portable providers
   ],
-  providers: [RlsContextService, DatabaseContextInterceptor],
-  exports: [RlsContextService, DatabaseContextInterceptor],
+  exports: [DatabaseCoreModule], // re-export so AppModule consumers get everything
 })
 export class PostgreSQLDatabaseModule {}

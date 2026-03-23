@@ -2,14 +2,18 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { WeUserShadow } from "../entities/we-user-shadow.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
 
 @Injectable()
-export class UserShadowRepository {
+export class UserShadowRepository extends BaseRepository<WeUserShadow> {
   constructor(
-    @InjectRepository(WeUserShadow)
-    private readonly repo: Repository<WeUserShadow>,
+    @InjectRepository(WeUserShadow) readonly entityRepo: Repository<WeUserShadow>,
+    readonly requestContext: RequestContextService,
     private readonly dataSource: DataSource
-  ) {}
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   async findById(id: string): Promise<WeUserShadow | null> {
     return this.repo.findOne({ where: { id } });
@@ -59,6 +63,7 @@ export class UserShadowRepository {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context before touching the RLS-protected shadow table.
+      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager.getRepository(WeUserShadow));
     });

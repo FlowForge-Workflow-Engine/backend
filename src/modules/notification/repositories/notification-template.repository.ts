@@ -4,14 +4,18 @@ import { pagination } from "@app/shared/utils/paginaton";
 import { DataSource, Repository } from "typeorm";
 import { NotificationChannel, NotificationTemplate } from "../entities/notification-template.entity";
 import { NotificationEventTrigger } from "../constants/notification-event-trigger.enum";
+import { BaseRepository, RequestContextService } from "@app/database";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
 
 @Injectable()
-export class NotificationTemplateRepository {
+export class NotificationTemplateRepository extends BaseRepository<NotificationTemplate> {
   constructor(
-    @InjectRepository(NotificationTemplate)
-    private readonly repo: Repository<NotificationTemplate>,
+    @InjectRepository(NotificationTemplate) readonly entityRepo: Repository<NotificationTemplate>,
+    readonly requestContext: RequestContextService,
     private readonly dataSource: DataSource
-  ) {}
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findById(id: string, tenantId: string): Promise<NotificationTemplate | null> {
     return this.repo.findOne({ where: { id, tenantId } });
@@ -30,6 +34,19 @@ export class NotificationTemplateRepository {
       skip,
       take,
     });
+  }
+
+  async update(
+    id: string,
+    tenantId: string,
+    data: Partial<NotificationTemplate>
+  ): Promise<NotificationTemplate | null> {
+    await this.repo.update({ id, tenantId }, data);
+    return this.findById(id, tenantId);
+  }
+
+  async remove(id: string, tenantId: string): Promise<void> {
+    await this.repo.delete({ id, tenantId });
   }
 
   /**
@@ -71,19 +88,6 @@ export class NotificationTemplateRepository {
     });
   }
 
-  async update(
-    id: string,
-    tenantId: string,
-    data: Partial<NotificationTemplate>
-  ): Promise<NotificationTemplate | null> {
-    await this.repo.update({ id, tenantId }, data);
-    return this.findById(id, tenantId);
-  }
-
-  async remove(id: string, tenantId: string): Promise<void> {
-    await this.repo.delete({ id, tenantId });
-  }
-
   /**
    * Purpose: keep subscriber-side template reads on one transaction and one connection so RLS can evaluate correctly.
    */
@@ -93,6 +97,7 @@ export class NotificationTemplateRepository {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context on the same connection used by the template read.
+      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager.getRepository(NotificationTemplate));
     });
@@ -107,6 +112,7 @@ export class NotificationTemplateRepository {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context before writing to the notification template table.
+      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager.getRepository(NotificationTemplate));
     });

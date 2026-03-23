@@ -7,6 +7,7 @@ import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { TenantRepository } from "../repositories/tenant.repository";
 import { TenantSettingsRepository } from "../repositories/tenant-settings.repository";
 import { TenantPlan } from "../entities/tenant.entity";
+import { RequestContextService } from "@app/database";
 
 /**
  * Implements ITenantProvisioningContract — the write-side counterpart to TenantQueryService.
@@ -23,7 +24,8 @@ export class TenantProvisioningService implements ITenantProvisioningContract {
 
   constructor(
     private readonly tenantRepository: TenantRepository,
-    private readonly tenantSettingsRepository: TenantSettingsRepository
+    private readonly tenantSettingsRepository: TenantSettingsRepository,
+    private readonly requestContext: RequestContextService
   ) {}
 
   /**
@@ -48,6 +50,15 @@ export class TenantProvisioningService implements ITenantProvisioningContract {
       isActive: true,
     });
     const saved = await this.tenantRepository.save(tenant);
+
+    // ✅ Handle Special case for tenant provisioning / Tenant Onboarding
+    // Manually set the tenant_id in the request context so that the RLS policies can see it.
+    this.requestContext.setTenantId(saved.id);
+    const queryRunner = this.requestContext.getQueryRunner();
+    if (!queryRunner) {
+      throw new Error("QueryRunner not set in request context");
+    }
+    await queryRunner.query(`SELECT set_config('app.tenant_id', $1::text, true)`, [saved.id]);
 
     // Bootstrap default tenant settings (maxUsers=50, maxWorkflows=10, timezone='UTC')
     await this.tenantSettingsRepository.upsert(saved.id, {});

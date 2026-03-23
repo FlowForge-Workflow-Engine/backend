@@ -1,8 +1,10 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor, Logger } from "@nestjs/common";
-import { Observable } from "rxjs";
-import { tap } from "rxjs/operators";
+import { from, Observable } from "rxjs";
+import { catchError, finalize, switchMap, tap } from "rxjs/operators";
 import { IJwtPayload } from "../../../../libs/shared/src/interfaces/jwt-payload.interface";
 import { RlsContextService } from "../services/rls-context.service";
+import { Reflector } from "@nestjs/core";
+import { IS_PUBLIC_KEY } from "@app/shared/decorators/public.decorator";
 
 /**
  * DatabaseContextInterceptor - Sets PostgreSQL session context for Row-Level Security (RLS)
@@ -45,46 +47,69 @@ import { RlsContextService } from "../services/rls-context.service";
  *
  * Must run AFTER JwtAuthGuard populates req.user but BEFORE any database queries.
  */
+
+interface RequestWithTenant {
+  user?: IJwtPayload;
+  body?: { tenantSlug?: string; tenantId?: string; refreshToken?: string };
+  params?: { tenantSlug?: string };
+  query?: { tenantSlug?: string };
+}
+
 @Injectable()
 export class DatabaseContextInterceptor implements NestInterceptor {
   private readonly logger = new Logger(DatabaseContextInterceptor.name);
 
-  constructor(private readonly rlsContextService: RlsContextService) {}
+  constructor(
+    private readonly rlsContextService: RlsContextService,
+    private readonly reflector: Reflector
+  ) {}
 
   /**
    * Sets PostgreSQL session context for RLS before request processing
    */
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
-    const request = context.switchToHttp().getRequest<{ user?: IJwtPayload }>();
+    const request = context.switchToHttp().getRequest<RequestWithTenant>();
+
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     // Extract tenant ID from JWT payload
-    const tenantId = request.user?.tenantId;
+    const tenantId = isPublic ? request.body?.tenantId : request.user?.tenantId;
+    const tenantSlug = request.body?.tenantSlug || request.query?.tenantSlug;
+    const refreshToken = request.body?.refreshToken;
 
-    if (tenantId) {
-      try {
-        // Set PostgreSQL session context for RLS
-        await this.rlsContextService.setTenantContext(tenantId);
+    let requestFailed = false;
 
-        this.logger.debug(`Database context set for tenant: ${tenantId}`);
-      } catch (error) {
-        this.logger.error(`Failed to set database context for tenant ${tenantId}:`, error.message);
-        // Don't throw - let request continue but log the security issue
-        // In production, you might want to throw here for fail-secure behavior
-      }
-    } else {
-      // No tenant context - RLS will deny all access (fail-secure)
-      this.logger.debug("No tenant context available - RLS will deny access");
-    }
+    return from(this.rlsContextService.setTenantContext(tenantId, tenantSlug, refreshToken, isPublic)).pipe(
+      switchMap(() => next.handle()),
+      catchError((err) => {
+        requestFailed = true;
+        throw err; // rethrow — NestJS exception filters handle the response
+      }),
+      finalize(async () => {
+        const qr = this.rlsContextService.getTenantContext();
+        if (!qr || qr.isReleased) return;
 
-    return next.handle().pipe(
-      tap(() => {
-        // Optional: Clear context after request (for connection pooling safety)
-        // In most cases, this isn't necessary as each request gets a fresh context
-        if (tenantId) {
-          this.rlsContextService.clearTenantContext().catch((error) => {
-            this.logger.warn(`Failed to clear database context: ${error.message}`);
-          });
+        try {
+          if (qr.isTransactionActive) {
+            if (requestFailed) {
+              await qr.rollbackTransaction();
+            } else {
+              await qr.commitTransaction();
+            }
+          }
+        } catch (err) {
+          this.logger.error("Failed to commit/rollback transaction:", err.message);
+        } finally {
+          await qr.release(); // always release — returns connection to pool clean
         }
+
+        this.logger.debug(
+          `QR released — tx ${requestFailed ? "rolled back" : "committed"}, RLS context cleared`
+        );
+        console.log("=".repeat(150));
       })
     );
   }

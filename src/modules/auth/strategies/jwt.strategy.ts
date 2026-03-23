@@ -51,7 +51,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
     let cached = await this.redis.get<CachedJwtUser>(cacheKey);
 
     if (!cached || !Array.isArray(cached.roleIds)) {
-      const user = await this.userRepository.findByIdAndTenantWithRoles(payload.sub, payload.tenantId);
+      const user = await this.userRepository.findByIdAndTenantWithRolesForJwtStretegy(
+        payload.sub,
+        payload.tenantId
+      );
       if (!user) throw new UnauthorizedException("User not found");
       cached = {
         isActive: user.isActive,

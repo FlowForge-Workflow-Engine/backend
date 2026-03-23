@@ -3,13 +3,17 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 import { User } from "../entities/user.entity";
 import { pagination } from "@app/shared/utils/paginaton";
+import { BaseRepository, RequestContextService } from "@app/database";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
 
 @Injectable()
-export class UserRepository {
+export class UserRepository extends BaseRepository<User> {
   constructor(
-    @InjectRepository(User)
-    private readonly repo: Repository<User>
-  ) {}
+    @InjectRepository(User) readonly entityRepo: Repository<User>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findByEmailAndTenant(email: string, tenantId: string): Promise<User | null> {
     return this.repo.findOne({ where: { email, tenantId } });
@@ -94,5 +98,45 @@ export class UserRepository {
 
   save(user: User): Promise<User> {
     return this.repo.save(user);
+  }
+
+  /**
+   * Self-contained RLS-aware lookup for JwtStrategy.validate().
+   *
+   * Guards run before interceptors — DatabaseContextInterceptor has not fired
+   * yet when JwtStrategy queries the user.
+   *
+   * The CLS QueryRunner does not exist at this point,
+   * so this.repo (the contextRepo getter) falls back to entityRepo
+   * which is FORCE RLS-bound with no context set → denied.
+   *
+   * Solution: open a dedicated QR here using tenantId from the JWT payload
+   * (already decoded and trusted by this point), set RLS context, query, release.
+   *
+   * Fully self-contained — no CLS involvement, no interference with the
+   * interceptor's QR that will be created immediately after this guard phase.
+   */
+  async findByIdAndTenantWithRolesForJwtStretegy(id: string, tenantId: string): Promise<User | null> {
+    const qr = this.entityRepo.manager.connection.createQueryRunner();
+    await qr.connect();
+    await qr.startTransaction();
+
+    try {
+      await qr.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`);
+      await qr.query(`SELECT set_config('app.tenant_id', $1::text, true)`, [tenantId]);
+
+      return await qr.manager.getRepository(User).findOne({
+        where: { id, tenantId },
+        relations: ["userRoles", "userRoles.role"],
+      });
+    } catch (err) {
+      await qr.rollbackTransaction();
+      throw err;
+    } finally {
+      // commit (or rollback already done above) then release
+      // isTransactionActive check needed — rollback above sets it to false
+      if (qr.isTransactionActive) await qr.commitTransaction();
+      await qr.release();
+    }
   }
 }

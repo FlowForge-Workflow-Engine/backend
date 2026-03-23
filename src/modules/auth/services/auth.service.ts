@@ -21,6 +21,7 @@ import {
 import { UserRepository } from "../repositories/user.repository";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 import { LoginDto } from "../dto/login.dto";
+import { RequestContextService } from "@app/database";
 
 /**
  * Represents the authentication token pair returned after successful login or refresh.
@@ -48,7 +49,8 @@ export class AuthService {
     @Inject(TENANT_QUERY_CONTRACT)
     private readonly tenantQuery: ITenantQueryContract,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly requestContext: RequestContextService
   ) {}
 
   /**
@@ -110,6 +112,23 @@ export class AuthService {
 
     if (!stored || stored.expiresAt < new Date()) {
       throw new UnauthorizedException("Refresh token is invalid or expired");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // At this point stored.tenantId is known for the first time.
+    // The `DatabaseContextInterceptor` only set app.token_hash — no tenant_id was available
+    // at request start. Now that we have it, set it on the existing CLS QR
+    // so all subsequent queries (users, tenants) pass the uuidGuard policy.
+    // This is intentional mid-request context enrichment, not a workaround.
+    // ─────────────────────────────────────────────────────────────────────
+    const qr = this.requestContext.getQueryRunner();
+    // this.logger.debug("QR in CLS:", qr ? "yes" : "no", qr && !qr.isReleased ? " (active)" : "");
+
+    if (qr && !qr.isReleased) {
+      await qr.query(`SELECT set_config('app.tenant_id', $1::text, true)`, [stored.tenantId]);
+      this.requestContext.setTenantId(stored.tenantId);
+
+      this.logger.debug(`DB Context Updated → Refresh API: set app.tenant_id to ${stored.tenantId}`);
     }
 
     // Revoke the consumed token (rotation)

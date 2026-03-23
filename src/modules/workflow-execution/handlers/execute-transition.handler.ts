@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Inject,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
@@ -25,9 +26,11 @@ import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { CacheTTL } from "../../../infra/cache-ttl";
 import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 @CommandHandler(ExecuteTransitionCommand)
 export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransitionCommand> {
+  private readonly logger = new Logger(ExecuteTransitionHandler.name);
   constructor(
     private readonly instanceRepo: WorkflowInstanceRepository,
     @Inject(WORKFLOW_QUERY_CONTRACT)
@@ -126,6 +129,12 @@ export class ExecuteTransitionHandler implements ICommandHandler<ExecuteTransiti
     // Step 8: Perform the state change atomically with optimistic locking
     await this.dataSource.transaction(async (em) => {
       // Update the instance only if the caller's last known version still matches.
+      // ✅ Set tenant context for RLS
+      this.logger.debug(
+        `DB Context → Setting tenant_id to ${tenantId} for RLS for Atomic Workflow-Instance Update`
+      );
+
+      em.query(`SELECT set_config('${DBVariables.APP_TENANT_ID}', $1::text, true)`, [tenantId]);
       const result = await em.query(
         `UPDATE workflow_instances
          SET current_state_id = $1, current_state_name = $2, version = version + 1,

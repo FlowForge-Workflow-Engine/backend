@@ -3,13 +3,16 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { WorkflowTransition } from "../entities/workflow-transition.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class WorkflowTransitionRepository {
+export class WorkflowTransitionRepository extends BaseRepository<WorkflowTransition> {
   constructor(
-    @InjectRepository(WorkflowTransition)
-    private readonly repo: Repository<WorkflowTransition>
-  ) {}
+    @InjectRepository(WorkflowTransition) readonly entityRepo: Repository<WorkflowTransition>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   create(data: Partial<WorkflowTransition>): WorkflowTransition {
     return this.repo.create(data);

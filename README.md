@@ -143,6 +143,7 @@ backend/
 │   │   │   ├── services/
 │   │   │   │   └── tenant-provisioning.service.ts
 │   │   │   ├── entities/                # tenants, tenant_settings, tenant_feature_flags
+│   │   │   ├── repositories/            # tenant, tenant_settings, tenant_feature_flags
 │   │   │   └── publishers/
 │   │   ├── workflow-definition/         # Workflow graph authoring and versioning
 │   │   │   ├── services/
@@ -174,9 +175,15 @@ backend/
 │   │   │   └── templates/               # Pug email templates
 │   │   ├── dashboard/                   # Aggregated read-only stats
 │   │   ├── database/
+│   │   │   ├── services/
+│   │   │   │   ├── rls-context.service.ts                    # Sets PostgreSQL session context for RLS
+│   │   │   │   └── request-context.service.ts                # Stores request-scoped QueryRunner
+│   │   │   ├── interceptors/
+│   │   │   │   └── database-context.interceptor.ts           # Sets PostgreSQL session context for RLS
 │   │   │   └── migrations/
-│   │   │       ├── 1772830603496-Migration.ts          # All 22 tables + indexes
-│   │   │       └── 1772830604496-Create-RLS-Policies.ts # 19 RLS policies + audit trigger
+│   │   │   │   ├── 1772830603496-Migration.ts                # All 22 tables + indexes
+│   │   │   │   └── 1772830604496-Create-RLS-Policies.ts      # 19 RLS policies + audit trigger
+│   │   │   └── ormconfig.ts                           # TypeORM configuration for PostgreSQL 
 │   │   └── health/                      # /health and /health/ready endpoints
 │   └── infra/
 │       ├── cache-keys.ts                # 23 Redis key patterns (namespaced by module)

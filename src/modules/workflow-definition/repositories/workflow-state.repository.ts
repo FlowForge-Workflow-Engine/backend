@@ -3,13 +3,16 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { WorkflowState } from "../entities/workflow-state.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class WorkflowStateRepository {
+export class WorkflowStateRepository extends BaseRepository<WorkflowState> {
   constructor(
-    @InjectRepository(WorkflowState)
-    private readonly repo: Repository<WorkflowState>
-  ) {}
+    @InjectRepository(WorkflowState) readonly entityRepo: Repository<WorkflowState>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   create(data: Partial<WorkflowState>): WorkflowState {
     return this.repo.create(data);

@@ -3,17 +3,25 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { Tenant } from "../entities/tenant.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 @Injectable()
-export class TenantRepository {
+export class TenantRepository extends BaseRepository<Tenant> {
   constructor(
-    @InjectRepository(Tenant)
-    private readonly repo: Repository<Tenant>
-  ) {}
+    @InjectRepository(Tenant) readonly entityRepo: Repository<Tenant>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findAll(options: { page?: number; limit?: number } = {}): Promise<[Tenant[], number]> {
     const { page, limit } = options;
     const { skip, take } = pagination(page, limit);
+
+    // ✅ Bypass RLS for superadmin
+    this.repo.query(`SELECT set_config('${DBVariables.APP_ROLE}', $1::text, true)`, [DBRoles.SUPERADMIN]);
 
     return this.repo.findAndCount({
       order: { createdAt: "DESC" },

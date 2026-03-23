@@ -2,13 +2,16 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 import { TransitionRule } from "../entities/transition-rule.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class TransitionRuleRepository {
+export class TransitionRuleRepository extends BaseRepository<TransitionRule> {
   constructor(
-    @InjectRepository(TransitionRule)
-    private readonly repo: Repository<TransitionRule>
-  ) {}
+    @InjectRepository(TransitionRule) readonly entityRepo: Repository<TransitionRule>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   create(data: Partial<TransitionRule>): TransitionRule {
     return this.repo.create(data);

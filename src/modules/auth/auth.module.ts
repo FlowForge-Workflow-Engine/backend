@@ -40,6 +40,8 @@ import { AuthController } from "./controllers/auth.controller";
 import { CsrfController } from "./controllers/csrf.controller";
 import { RoleController } from "./controllers/role.controller";
 import { UserController } from "./controllers/user.controller";
+import { PostgreSQLDatabaseModule } from "../database/database.module";
+import { UserRoleRepository } from "./repositories/user-role.repository";
 
 @Module({
   imports: [
@@ -75,6 +77,7 @@ import { UserController } from "./controllers/user.controller";
     UserRepository,
     RoleRepository,
     RefreshTokenRepository,
+    UserRoleRepository,
 
     // Services (internal — NOT exported)
     AuthService,

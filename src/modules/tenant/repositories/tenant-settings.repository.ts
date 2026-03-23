@@ -2,13 +2,17 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { TenantSettings } from "../entities/tenant-settings.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class TenantSettingsRepository {
+export class TenantSettingsRepository extends BaseRepository<TenantSettings> {
   constructor(
     @InjectRepository(TenantSettings)
-    private readonly repo: Repository<TenantSettings>
-  ) {}
+    readonly entityRepo: Repository<TenantSettings>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findByTenantId(tenantId: string): Promise<TenantSettings | null> {
     return this.repo.findOne({ where: { tenantId } });

@@ -4,12 +4,10 @@ import { AppErrors } from "@app/shared/constants/app-errors.enum";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { UserRepository } from "../repositories/user.repository";
 import { RoleRepository } from "../repositories/role.repository";
+import { UserRoleRepository } from "../repositories/user-role.repository";
 import { AuthPublisher } from "../publishers/auth.publisher";
 import { User } from "../entities/user.entity";
-import { UserRole } from "../entities/user-role.entity";
 import { CreateUserDto } from "../dto/create-user.dto";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { FindUserDto } from "../dto/find-user.dto";
@@ -25,9 +23,8 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
+    private readonly userRoleRepository: UserRoleRepository,
     private readonly publisher: AuthPublisher,
-    @InjectRepository(UserRole)
-    private readonly userRoleRepo: Repository<UserRole>,
     private readonly redis: RedisService
   ) {}
 
@@ -42,6 +39,8 @@ export class UserService {
    * @throws ConflictException - If email already exists in the tenant
    */
   async create(dto: CreateUserDto, tenantId: string, actorId: string): Promise<User> {
+    // TODO: Check if the actor is tenant admin or not, Only Tenant Admins can create other users.
+
     // Step 1: Validate email uniqueness within tenant (prevent duplicate accounts)
     const existing = await this.userRepository.findByEmailAndTenant(dto.email, tenantId);
     if (existing) throw new ConflictException(AppErrors.EMAIL_ALREADY_EXISTS);
@@ -71,10 +70,12 @@ export class UserService {
       const roles = await this.roleRepository.findByNames(dto.roleNames, tenantId);
       if (roles.length) {
         // Create user-role associations with audit trail (assignedBy)
-        const userRoles = roles.map((role) =>
-          this.userRoleRepo.create({ userId: saved.id, roleId: role.id, assignedBy: actorId, tenantId })
+        await this.userRoleRepository.assignMultipleRoles(
+          saved.id,
+          roles.map((role) => role.id),
+          tenantId,
+          actorId
         );
-        await this.userRoleRepo.save(userRoles);
         roleNames = roles.map((r) => r.name);
       }
     }
@@ -180,11 +181,10 @@ export class UserService {
     const role = await this.roleRepository.findByIdAndTenant(roleId, tenantId);
     if (!role) throw new NotFoundException(AppErrors.ROLE_NOT_FOUND);
 
-    const existing = await this.userRoleRepo.findOne({ where: { userId, roleId } });
+    const existing = await this.userRoleRepository.findExistingAssignment(userId, roleId);
     if (existing) throw new ConflictException("Role already assigned to this user");
 
-    const userRole = this.userRoleRepo.create({ userId, roleId, assignedBy: actorId });
-    await this.userRoleRepo.save(userRole);
+    await this.userRoleRepository.assignRole(userId, roleId, tenantId, actorId);
 
     // Invalidate user-level caches so roles are refreshed on next read
     await this.redis.del(

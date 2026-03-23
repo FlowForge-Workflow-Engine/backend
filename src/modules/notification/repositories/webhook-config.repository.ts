@@ -3,14 +3,19 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
 import { DataSource, Repository } from "typeorm";
 import { WebhookConfig } from "../entities/webhook-config.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
 
 @Injectable()
-export class WebhookConfigRepository {
+export class WebhookConfigRepository extends BaseRepository<WebhookConfig> {
   constructor(
     @InjectRepository(WebhookConfig)
-    private readonly repo: Repository<WebhookConfig>,
+    readonly entityRepo: Repository<WebhookConfig>,
+    readonly requestContext: RequestContextService,
     private readonly dataSource: DataSource
-  ) {}
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findById(id: string, tenantId: string): Promise<WebhookConfig | null> {
     return this.repo.findOne({ where: { id, tenantId } });
@@ -71,6 +76,7 @@ export class WebhookConfigRepository {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context before reading the RLS-protected webhook config table.
+      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager.getRepository(WebhookConfig));
     });

@@ -52,7 +52,7 @@ export class NotificationService {
       status: NotificationStatus.PENDING,
     });
 
-    console.log({ template, recipientEmail, recipientUserId, tenantId, context });
+    // console.log({ template, recipientEmail, recipientUserId, tenantId, context });
 
     try {
       const subject = this.renderSubject(template.subjectTemplate, context);
