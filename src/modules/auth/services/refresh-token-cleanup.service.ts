@@ -23,7 +23,7 @@ export class RefreshTokenCleanupService implements OnModuleInit {
    * Deletes all refresh tokens that are 36 hours or older.
    * This ensures that stale tokens don't accumulate in the database.
    */
-  @Cron("28 12 * * *") // Runs every day at 12:00 PM
+  @Cron("* 12 * * *") // Runs every day at 12:00 PM (noon)
   async cleanupExpiredTokens(): Promise<void> {
     try {
       this.logger.log("Starting refresh token cleanup job...");
