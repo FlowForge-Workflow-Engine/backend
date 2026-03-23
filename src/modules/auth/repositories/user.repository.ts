@@ -5,6 +5,7 @@ import { User } from "../entities/user.entity";
 import { pagination } from "@app/shared/utils/paginaton";
 import { BaseRepository, RequestContextService } from "@app/database";
 import { DBRoles } from "@app/database/constants/db-roles.enum";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -122,7 +123,7 @@ export class UserRepository extends BaseRepository<User> {
     await qr.startTransaction();
 
     try {
-      await qr.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`);
+      await qr.query(`SELECT set_config($1, $2, true)`, [DBVariables.APP_ROLE, DBRoles.TENANT_USER]);
       await qr.query(`SELECT set_config('app.tenant_id', $1::text, true)`, [tenantId]);
 
       return await qr.manager.getRepository(User).findOne({

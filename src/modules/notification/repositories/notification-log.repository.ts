@@ -4,6 +4,7 @@ import { DataSource, Repository } from "typeorm";
 import { NotificationLog, NotificationStatus } from "../entities/notification-log.entity";
 import { BaseRepository, RequestContextService } from "@app/database";
 import { DBRoles } from "@app/database/constants/db-roles.enum";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 @Injectable()
 export class NotificationLogRepository extends BaseRepository<NotificationLog> {
@@ -68,7 +69,7 @@ export class NotificationLogRepository extends BaseRepository<NotificationLog> {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context before writing to the RLS-protected notification log table.
-      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
+      await manager.query(`SELECT set_config($1, $2, true)`, [DBVariables.APP_ROLE, DBRoles.TENANT_USER]);
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager.getRepository(NotificationLog));
     });

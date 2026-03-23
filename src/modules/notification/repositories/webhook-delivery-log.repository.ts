@@ -4,6 +4,7 @@ import { DataSource, Repository } from "typeorm";
 import { WebhookDeliveryLog } from "../entities/webhook-delivery-log.entity";
 import { BaseRepository, RequestContextService } from "@app/database";
 import { DBRoles } from "@app/database/constants/db-roles.enum";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 @Injectable()
 export class WebhookDeliveryLogRepository extends BaseRepository<WebhookDeliveryLog> {
@@ -24,7 +25,7 @@ export class WebhookDeliveryLogRepository extends BaseRepository<WebhookDelivery
 
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context before writing to the RLS-protected webhook delivery log table.
-      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
+      await manager.query(`SELECT set_config($1, $2, true)`, [DBVariables.APP_ROLE, DBRoles.TENANT_USER]);
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       const repo = manager.getRepository(WebhookDeliveryLog);
       return repo.save(repo.create(data));

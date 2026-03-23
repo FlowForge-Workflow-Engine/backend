@@ -48,7 +48,10 @@ export class RlsContextService {
 
       // 🧠 ROLE SWITCHING
       if (isPublic) {
-        await queryRunner.query(`SET LOCAL ROLE ${DBRoles.PUBLIC_USER}`);
+        await queryRunner.query(`SELECT set_config($1, $2, true)`, [
+          DBVariables.APP_ROLE,
+          DBRoles.PUBLIC_USER,
+        ]);
 
         // Public routes may use slug or tenant_id
         if (tenantSlug)
@@ -61,7 +64,10 @@ export class RlsContextService {
           ]);
       } else {
         // Authenticated routes
-        await queryRunner.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`);
+        await queryRunner.query(`SELECT set_config($1, $2, true)`, [
+          DBVariables.APP_ROLE,
+          DBRoles.TENANT_USER,
+        ]);
 
         if (!tenantId) {
           throw new Error("Missing tenant_id in authenticated request");

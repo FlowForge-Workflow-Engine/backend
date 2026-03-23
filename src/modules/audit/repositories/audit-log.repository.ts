@@ -5,6 +5,7 @@ import { pagination } from "@app/shared/utils/paginaton";
 import { AuditLog } from "../entities/audit-log.entity";
 import { DBRoles } from "@app/database/constants/db-roles.enum";
 import { BaseRepository, RequestContextService } from "@app/database";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 @Injectable()
 export class AuditLogRepository extends BaseRepository<AuditLog> {
@@ -75,7 +76,7 @@ export class AuditLogRepository extends BaseRepository<AuditLog> {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context on the same connection used by all queries below.
-      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
+      await manager.query(`SELECT set_config($1, $2, true)`, [DBVariables.APP_ROLE, DBRoles.TENANT_USER]);
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager);
     });
