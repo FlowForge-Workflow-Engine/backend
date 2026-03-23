@@ -31,6 +31,8 @@ import { AuthPublisher } from "../publishers/auth.publisher";
 import { RegisterTenantDto } from "../dto/register-tenant.dto";
 import { RegisterDto } from "../dto/register.dto";
 import { DEFAULT_SYSTEM_ROLES } from "../constants/default-system-roles";
+import { RequestContextService } from "@app/database";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 /**
  * Result of a successful onboarding flow (tenant or user registration).
@@ -67,7 +69,8 @@ export class OnboardingService {
     private readonly userRoleRepository: UserRoleRepository,
     private readonly authService: AuthService,
     private readonly publisher: AuthPublisher,
-    private readonly redis: RedisService
+    private readonly redis: RedisService,
+    private readonly requestContext: RequestContextService
   ) {}
 
   /**
@@ -197,6 +200,25 @@ export class OnboardingService {
       const tenant = await this.tenantQuery.findBySlug(dto.tenantSlug);
       if (!tenant) throw new NotFoundException(AppErrors.TENANT_NOT_FOUND);
       if (!tenant.isActive) throw new ForbiddenException(AppErrors.TENANT_INACTIVE);
+
+      // ─────────────────────────────────────────────────────────────────────
+      // At this point stored.tenantId is known for the first time.
+      // The `DatabaseContextInterceptor` only set app.token_hash — no tenant_id was available
+      // at request start. Now that we have it, set it on the existing CLS QR
+      // so all subsequent queries (users, tenants) pass the uuidGuard policy.
+      // This is intentional mid-request context enrichment, not a workaround.
+      // ─────────────────────────────────────────────────────────────────────
+      const qr = this.requestContext.getQueryRunner();
+      // this.logger.debug("QR in CLS:", qr ? "yes" : "no", qr && !qr.isReleased ? " (active)" : "");
+
+      if (qr && !qr.isReleased) {
+        await qr.query(`SELECT set_config('${DBVariables.APP_TENANT_ID}', $1::text, true)`, [tenant.id]);
+        this.requestContext.setTenantId(tenant.id);
+
+        this.logger.debug(
+          `DB Context Updated → /auth/register API: set ${DBVariables.APP_TENANT_ID} to ${tenant.id}`
+        );
+      }
 
       const existing = await this.userRepository.findByEmailAndTenant(dto.email, tenant.id);
       if (existing) throw new ConflictException(AppErrors.EMAIL_ALREADY_EXISTS);
