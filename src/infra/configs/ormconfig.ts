@@ -21,13 +21,24 @@ function shouldUsePostgresEnv(configService: ConfigService): boolean {
   return stage === "uat" || stage === "prod";
 }
 
+/**
+ * ⚠️ DO NOT USE THE FOLLOWING FOR CREATING THE DATA SOURCE
+ *
+ * ⚠️ USE ONLY FOR BOOTSTRAPPING PURPOSES LIKE MIGRATIONS
+ *
+ * ✅ FOR CREATING THE DATA SOURCE, USE THE `createDataSource` FUNCTION IN `src/modules/database/ormconfig.ts`
+ *
+ * ⚠️ WARNING: THE FOLLOWING FUNCTION USES THE ADMIN USER AND PASSWORD FROM THE .ENV FILE
+ *
+ * ⚠️ THE ADMIN USER AND PASSWORD ARE ONLY MEANT TO BE USED FOR BOOTSTRAPPING PURPOSES
+ */
 export function createOrmConfig(configService?: ConfigService): DataSourceOptions & TypeOrmModuleOptions {
   if (!configService) configService = new ConfigService();
   const usePostgresEnv = shouldUsePostgresEnv(configService);
   const hostKey = usePostgresEnv ? "POSTGRES_HOST" : "DB_HOST";
   const portKey = usePostgresEnv ? "POSTGRES_PORT" : "DB_PORT";
-  const userKey = usePostgresEnv ? "POSTGRES_USER" : "DB_USER";
-  const passwordKey = usePostgresEnv ? "POSTGRES_PASSWORD" : "DB_PASSWORD";
+  const userKey = usePostgresEnv ? "POSTGRES_USER" : "DB_ADMIN_USER";
+  const passwordKey = usePostgresEnv ? "POSTGRES_PASSWORD" : "DB_ADMIN_PASSWORD";
   const databaseKey = usePostgresEnv ? "POSTGRES_DB" : "DATABASE";
 
   const isDev =

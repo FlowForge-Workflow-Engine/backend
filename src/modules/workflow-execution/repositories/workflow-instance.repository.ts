@@ -4,13 +4,16 @@ import { pagination } from "@app/shared/utils/paginaton";
 import { Repository } from "typeorm";
 import { WorkflowInstance } from "../entities/workflow-instance.entity";
 import { WorkflowInstanceStatus } from "../enums/workflow-instance-status";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class WorkflowInstanceRepository {
+export class WorkflowInstanceRepository extends BaseRepository<WorkflowInstance> {
   constructor(
-    @InjectRepository(WorkflowInstance)
-    private readonly repo: Repository<WorkflowInstance>
-  ) {}
+    @InjectRepository(WorkflowInstance) readonly entityRepo: Repository<WorkflowInstance>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   create(data: Partial<WorkflowInstance>): WorkflowInstance {
     return this.repo.create(data);

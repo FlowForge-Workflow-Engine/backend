@@ -18,9 +18,12 @@ export const envSchema = Joi.object({
   // =============================================================================
   DB_HOST: optionalString,
   DB_PORT: Joi.number().empty("").default(5432),
-  DB_USER: optionalString,
-  DB_PASSWORD: optionalString,
+  DB_ADMIN_USER: optionalString,
+  DB_ADMIN_PASSWORD: optionalString,
   DATABASE: optionalString,
+
+  DB_APP_USER: optionalString,
+  DB_APP_PASSWORD: optionalString,
 
   // Alternative database URL format (optional)
   DATABASE_URL: optionalString,

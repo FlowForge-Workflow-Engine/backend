@@ -27,8 +27,9 @@ import { GlobalExceptionFilter } from "@app/shared/filters";
 import { LoggingInterceptor, TenantContextInterceptor } from "@app/shared/interceptors";
 import { LoggerMiddleware } from "@app/shared/middlewares";
 import { envSchema } from "@app/shared";
-import { DatabaseContextInterceptor } from "./modules/database/interceptors/database-context.interceptor";
+import { DatabaseContextInterceptor } from "@app/database/interceptors/database-context.interceptor";
 import { ScheduleModule } from "@nestjs/schedule";
+import { ClsModule } from "nestjs-cls";
 
 @Module({
   imports: [
@@ -63,6 +64,13 @@ import { ScheduleModule } from "@nestjs/schedule";
         }),
       },
     ]),
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        generateId: true,
+      },
+    }),
     ScheduleModule.forRoot(),
     WinstonModule.forRoot(winstonLoggerConfig),
     InfraModule,

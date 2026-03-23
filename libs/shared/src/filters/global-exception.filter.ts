@@ -1,5 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from "@nestjs/common";
 import { Request, Response } from "express";
+import { QueryFailedError } from "typeorm";
 
 interface ErrorResponse {
   statusCode: number;
@@ -59,6 +60,26 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         errorCode = exception.message;
         message = exception.message;
       }
+    } else if (exception instanceof QueryFailedError) {
+      // Database errors (TypeORM)
+      const dbError = exception as any;
+      const dbCode = dbError.code; // Database driver error code (e.g., '23505')
+
+      // Default to 400 Bad Request or 409 Conflict for query failures
+      statusCode = HttpStatus.BAD_REQUEST;
+      errorCode = "DATABASE_QUERY_ERROR";
+      message = "A database error occurred";
+
+      // Specific mapping (Example for PostgreSQL unique violation)
+      if (dbCode === "23505") {
+        statusCode = HttpStatus.CONFLICT;
+        errorCode = "DUPLICATE_ENTRY";
+        message = "The record already exists.";
+      }
+
+      this.logger.error(
+        `QueryFailedError [${dbCode}]: ${exception.message} on ${request.method} ${request.url}`
+      );
     } else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = "INTERNAL_SERVER_ERROR";

@@ -2,13 +2,17 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, LessThan, Repository } from "typeorm";
 import { RefreshToken } from "../entities/refresh-token.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
 
 @Injectable()
-export class RefreshTokenRepository {
+export class RefreshTokenRepository extends BaseRepository<RefreshToken> {
   constructor(
-    @InjectRepository(RefreshToken)
-    private readonly repo: Repository<RefreshToken>
-  ) {}
+    @InjectRepository(RefreshToken) readonly entityRepo: Repository<RefreshToken>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findByHash(tokenHash: string): Promise<RefreshToken | null> {
     return this.repo.findOne({ where: { tokenHash, revokedAt: IsNull() } });
@@ -43,9 +47,26 @@ export class RefreshTokenRepository {
    */
   async deleteOldTokens(hoursOld: number): Promise<number> {
     const cutoffTime = new Date(Date.now() - hoursOld * 60 * 60 * 1000);
-    const result = await this.repo.delete({
-      createdAt: LessThan(cutoffTime),
-    });
-    return result.affected || 0;
+
+    const qr = this.entityRepo.manager.connection.createQueryRunner();
+    await qr.connect();
+    await qr.startTransaction();
+
+    try {
+      await qr.query(`SET LOCAL ROLE ${DBRoles.SUPERADMIN}`);
+      await qr.query(`SELECT set_config('app.role', 'superadmin', true)`);
+
+      const result = await qr.manager.delete(RefreshToken, {
+        createdAt: LessThan(cutoffTime),
+      });
+
+      await qr.commitTransaction();
+      return result.affected || 0;
+    } catch (error) {
+      await qr.rollbackTransaction();
+      throw error;
+    } finally {
+      await qr.release();
+    }
   }
 }

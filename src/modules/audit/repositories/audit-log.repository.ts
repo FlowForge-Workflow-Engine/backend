@@ -3,14 +3,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, EntityManager, Repository } from "typeorm";
 import { pagination } from "@app/shared/utils/paginaton";
 import { AuditLog } from "../entities/audit-log.entity";
+import { DBRoles } from "@app/database/constants/db-roles.enum";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class AuditLogRepository {
+export class AuditLogRepository extends BaseRepository<AuditLog> {
   constructor(
-    @InjectRepository(AuditLog)
-    private readonly repo: Repository<AuditLog>,
+    @InjectRepository(AuditLog) readonly entityRepo: Repository<AuditLog>,
+    readonly requestContext: RequestContextService,
     private readonly dataSource: DataSource
-  ) {}
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   /**
    * Idempotency check — must be called before every insert.
@@ -71,6 +75,7 @@ export class AuditLogRepository {
   ): Promise<T> {
     return this.dataSource.transaction(async (manager) => {
       // Set transaction-local tenant context on the same connection used by all queries below.
+      await manager.query(`SET LOCAL ROLE ${DBRoles.TENANT_USER}`); // ← ADD
       await manager.query("SELECT set_config('app.tenant_id', $1::text, true)", [tenantId]);
       return fn(manager);
     });

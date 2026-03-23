@@ -26,8 +26,8 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
   const usePostgresEnv = shouldUsePostgresEnv(configService);
   const hostKey = usePostgresEnv ? "POSTGRES_HOST" : "DB_HOST";
   const portKey = usePostgresEnv ? "POSTGRES_PORT" : "DB_PORT";
-  const userKey = usePostgresEnv ? "POSTGRES_USER" : "DB_USER";
-  const passwordKey = usePostgresEnv ? "POSTGRES_PASSWORD" : "DB_PASSWORD";
+  const userKey = usePostgresEnv ? "POSTGRES_USER" : "DB_APP_USER";
+  const passwordKey = usePostgresEnv ? "POSTGRES_PASSWORD" : "DB_APP_PASSWORD";
   const databaseKey = usePostgresEnv ? "POSTGRES_DB" : "DATABASE";
 
   const isDev =
@@ -59,9 +59,10 @@ export function createOrmConfig(configService?: ConfigService): DataSourceOption
     ssl: usePostgresEnv ? { rejectUnauthorized: false } : false,
     extra: {
       // Connection pool settings
-      max: 20,
-      idleTimeoutMillis: 30_000,
-      connectionTimeoutMillis: 10_000,
+      max: 20, // max connections in the pool, max limit is 100, `SHOW max_connections;`
+      idleTimeoutMillis: 30_000, // time to wait before failing to connect
+      connectionTimeoutMillis: 2_000, // close idle clients after this time (ms)
+      keepAlive: true, // keep TCP connections alive
     },
   };
 

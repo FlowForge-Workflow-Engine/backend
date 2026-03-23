@@ -6,8 +6,6 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 import {
   TENANT_PROVISIONING_CONTRACT,
   ITenantProvisioningContract,
@@ -27,9 +25,9 @@ import { RedisService } from "../../../infra/redis.service";
 import { CacheKeys } from "../../../infra/cache-keys";
 import { UserRepository } from "../repositories/user.repository";
 import { RoleRepository } from "../repositories/role.repository";
+import { UserRoleRepository } from "../repositories/user-role.repository";
 import { AuthService } from "./auth.service";
 import { AuthPublisher } from "../publishers/auth.publisher";
-import { UserRole } from "../entities/user-role.entity";
 import { RegisterTenantDto } from "../dto/register-tenant.dto";
 import { RegisterDto } from "../dto/register.dto";
 import { DEFAULT_SYSTEM_ROLES } from "../constants/default-system-roles";
@@ -66,8 +64,7 @@ export class OnboardingService {
     private readonly tenantQuery: ITenantQueryContract,
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
-    @InjectRepository(UserRole)
-    private readonly userRoleRepo: Repository<UserRole>,
+    private readonly userRoleRepository: UserRoleRepository,
     private readonly authService: AuthService,
     private readonly publisher: AuthPublisher,
     private readonly redis: RedisService
@@ -120,13 +117,7 @@ export class OnboardingService {
       // Assign Admin role
       const adminRole = savedRoles.find((r) => r.name === "Admin");
       if (adminRole) {
-        const userRole = this.userRoleRepo.create({
-          userId: savedUser.id,
-          roleId: adminRole.id,
-          tenantId: tenant.id,
-          assignedBy: savedUser.id,
-        });
-        await this.userRoleRepo.save(userRole);
+        await this.userRoleRepository.assignRole(savedUser.id, adminRole.id, tenant.id, savedUser.id);
       }
 
       // Bootstrap the tenant-scoped welcome template before publishing tenant.created so the first
@@ -225,13 +216,7 @@ export class OnboardingService {
       const requestorRole = await this.roleRepository.findByNameAndTenant("Requestor", tenant.id);
       let roleNames: string[] = [];
       if (requestorRole) {
-        const userRole = this.userRoleRepo.create({
-          userId: savedUser.id,
-          roleId: requestorRole.id,
-          tenantId: tenant.id,
-          assignedBy: null,
-        });
-        await this.userRoleRepo.save(userRole);
+        await this.userRoleRepository.assignRole(savedUser.id, requestorRole.id, tenant.id, null);
         roleNames = ["Requestor"];
       }
 

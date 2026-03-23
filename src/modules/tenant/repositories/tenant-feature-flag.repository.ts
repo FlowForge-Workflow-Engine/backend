@@ -2,13 +2,17 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { TenantFeatureFlag } from "../entities/tenant-feature-flag.entity";
+import { BaseRepository, RequestContextService } from "@app/database";
 
 @Injectable()
-export class TenantFeatureFlagRepository {
+export class TenantFeatureFlagRepository extends BaseRepository<TenantFeatureFlag> {
   constructor(
     @InjectRepository(TenantFeatureFlag)
-    private readonly repo: Repository<TenantFeatureFlag>
-  ) {}
+    readonly entityRepo: Repository<TenantFeatureFlag>,
+    readonly requestContext: RequestContextService
+  ) {
+    super(entityRepo, requestContext);
+  }
 
   findByTenantId(tenantId: string): Promise<TenantFeatureFlag[]> {
     return this.repo.find({ where: { tenantId }, order: { flagKey: "ASC" } });
