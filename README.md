@@ -300,7 +300,67 @@ cp .env.stage.example .env.stage.dev
 # Edit .env.stage.dev with your local values (see Environment Variables below)
 ```
 
-### 4. Run database migrations
+### 4. Run database script and migrations
+
+- You must run the below sql script as `postgres` user in database
+
+**USER AND ROLES CREATION AND PERMISSIONS**
+
+``` text
+workflow_app  (NOLOGIN? No — this IS the DB user, no BYPASSRLS)
+├── tenant_user   (no BYPASSRLS)
+├── public_user   (no BYPASSRLS)
+└── superadmin    (BYPASSRLS ✓)
+```
+
+```sql
+-- 1. Create a dedicated application user
+CREATE USER workflow_app WITH PASSWORD 'workflow-password';
+
+-- 2. Create Roles that needs to be used
+CREATE ROLE tenant_user;
+CREATE ROLE public_user;
+CREATE ROLE superadmin;
+
+-- 2. Grant necessary permissions
+GRANT CONNECT ON DATABASE "workflow-engine" TO workflow_app; -- to be updated in env file too
+
+GRANT USAGE ON SCHEMA public TO workflow_app;
+GRANT USAGE ON SCHEMA public TO tenant_user;
+GRANT USAGE ON SCHEMA public TO public_user;
+GRANT USAGE ON SCHEMA public TO superadmin;
+
+
+-- 4. Grant DML to both roles
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO workflow_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenant_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO public_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO superadmin;
+
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO workflow_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tenant_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO public_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO superadmin;
+
+-- 5. Cover tables created by future migrations
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO workflow_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tenant_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO public_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO superadmin;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO workflow_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO tenant_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO public_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO superadmin;
+
+-- 6. Grant the roles the permissions of application user
+GRANT tenant_user TO workflow_app;
+GRANT public_user TO workflow_app;
+GRANT superadmin TO workflow_app;
+
+-- 7. Grant superadmin the BYPASSRLS attribute
+ALTER ROLE superadmin BYPASSRLS;
+```
 
 ```bash
 bun run migration:run
