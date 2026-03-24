@@ -109,8 +109,40 @@ export class DatabaseContextInterceptor implements NestInterceptor {
         this.logger.debug(
           `QR released — tx ${requestFailed ? "rolled back" : "committed"}, RLS context cleared`
         );
-        console.log("=".repeat(150));
+        this.logger.log("=".repeat(150));
       })
     );
+
+    // return from(this.rlsContextService.setTenantContext(tenantId, tenantSlug, refreshToken, isPublic)).pipe(
+    //   switchMap(() => {
+    //     // Capture QR reference HERE — while AsyncLocalStorage context is still alive
+    //     const qr = this.rlsContextService.getTenantContext();
+
+    //     return next.handle().pipe(
+    //       switchMap(async (responseData) => {
+    //         if (qr && !qr.isReleased && qr.isTransactionActive) {
+    //           console.log("COMMITING TRANSACTION");
+    //           await qr.commitTransaction();
+    //         }
+    //         console.log("RELEASING QR (success)");
+    //         await qr.release();
+    //         console.log("=".repeat(150));
+    //         return responseData;
+    //       }),
+
+    //       catchError(async (err) => {
+    //         if (qr && !qr.isReleased && qr.isTransactionActive) {
+    //           console.log("ROLLING BACK TRANSACTION");
+    //           await qr.rollbackTransaction();
+    //         }
+    //         if (qr && !qr.isReleased) {
+    //           console.log("RELEASING QR (error)");
+    //           await qr.release();
+    //         }
+    //         throw err;
+    //       })
+    //     );
+    //   })
+    // );
   }
 }

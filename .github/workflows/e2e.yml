@@ -1,0 +1,74 @@
+# .github/workflows/e2e.yml
+name: E2E Tests
+
+on: [push, pull_request]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: workflow_engine_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Create PostgreSQL roles
+        run: |
+          PGPASSWORD=test_password psql -h localhost -U app_user -d workflow_engine_test -c "
+            CREATE ROLE tenant_user NOINHERIT;
+            CREATE ROLE public_user NOINHERIT;
+            GRANT tenant_user TO app_user;
+            GRANT public_user TO app_user;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenant_user;
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO public_user;
+          "
+
+      - name: Start NATS
+        run: |
+          curl -L https://github.com/nats-io/nats-server/releases/download/v2.10.0/nats-server-v2.10.0-linux-amd64.zip -o nats.zip
+          unzip nats.zip
+          ./nats-server-v2.10.0-linux-amd64/nats-server &
+
+      - name: Run E2E tests
+        env:
+          STAGE: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: app_user
+          DB_PASSWORD: test_password
+          DATABASE: workflow_engine_test
+          REDIS_URL: redis://localhost:6379
+          NATS_URL: nats://localhost:4222
+          JWT_SECRET: test-secret
+          JWT_EXPIRES_IN: 15m
+          THROTTLE_LIMIT: 999999
+        run: bun run test:e2e

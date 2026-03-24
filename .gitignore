@@ -5,6 +5,7 @@
 
 # SQL Files
 *.sql
+!script.sql
 
 # ENVs
 .env
@@ -25,7 +26,8 @@ lerna-debug.log*
 .DS_Store
 
 # Tests
-/coverage
+/coverage/*
+!/coverage/badges/
 /.nyc_output
 
 # IDEs and editors

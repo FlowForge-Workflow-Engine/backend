@@ -1,16 +1,8 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from "@nestjs/common";
+import { Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 
-import * as crypto from "crypto";
-import { argon2hash, argon2verify } from "@app/shared/utils/hashes/argon2";
+import { argon2verify } from "@app/shared/utils/hashes/argon2";
 import { IJwtPayload } from "@app/shared/interfaces/jwt-payload.interface";
 import { generateUUID } from "@app/shared/utils/uuid.util";
 import { sha256 } from "@app/shared/utils/hashes/hash";
@@ -22,6 +14,7 @@ import { UserRepository } from "../repositories/user.repository";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 import { LoginDto } from "../dto/login.dto";
 import { RequestContextService } from "@app/database";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 
 /**
  * Represents the authentication token pair returned after successful login or refresh.
@@ -125,10 +118,12 @@ export class AuthService {
     // this.logger.debug("QR in CLS:", qr ? "yes" : "no", qr && !qr.isReleased ? " (active)" : "");
 
     if (qr && !qr.isReleased) {
-      await qr.query(`SELECT set_config('app.tenant_id', $1::text, true)`, [stored.tenantId]);
+      await qr.query(`SELECT set_config('${DBVariables.APP_TENANT_ID}', $1::text, true)`, [stored.tenantId]);
       this.requestContext.setTenantId(stored.tenantId);
 
-      this.logger.debug(`DB Context Updated → Refresh API: set app.tenant_id to ${stored.tenantId}`);
+      this.logger.debug(
+        `DB Context Updated → /auth/refresh API: set ${DBVariables.APP_TENANT_ID} to ${stored.tenantId}`
+      );
     }
 
     // Revoke the consumed token (rotation)

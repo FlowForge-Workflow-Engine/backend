@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, LessThan, Repository } from "typeorm";
 import { RefreshToken } from "../entities/refresh-token.entity";
 import { BaseRepository, RequestContextService } from "@app/database";
+import { DBVariables } from "@app/database/constants/db-variables.enum";
 import { DBRoles } from "@app/database/constants/db-roles.enum";
 
 @Injectable()
@@ -53,8 +54,8 @@ export class RefreshTokenRepository extends BaseRepository<RefreshToken> {
     await qr.startTransaction();
 
     try {
-      await qr.query(`SET LOCAL ROLE ${DBRoles.SUPERADMIN}`);
-      await qr.query(`SELECT set_config('app.role', 'superadmin', true)`);
+      // ✅ Bypass RLS for superadmin
+      await qr.query(`SELECT set_config($1, $2, true)`, [DBVariables.APP_ROLE, DBRoles.SUPERADMIN]);
 
       const result = await qr.manager.delete(RefreshToken, {
         createdAt: LessThan(cutoffTime),
