@@ -13,7 +13,23 @@ const config: Config = {
     "^.+\\.(t|j)s$": "ts-jest",
   },
   transformIgnorePatterns: ["node_modules/(?!(uuid)/)"],
-  collectCoverageFrom: ["**/*.(t|j)s"],
+  // collectCoverageFrom: ["**/*.(t|j)s"],
+  collectCoverageFrom: [
+    "src/modules/**/*.(t|j)s", // ✅ only include src/modules
+    "!**/*.d.ts", // optional: ignore types
+    // "!**/libs/**", // optional: ignore shared libs
+    "!src/modules/database/**/**.ts", // optional: ignore database module
+    "!src/modules/health/**/**.ts", // optional: ignore health module
+    "!src/**/*.module.ts",
+    "!src/**/index.ts",
+    "!src/**/*.dto.ts",
+    "!src/**/*.interface.ts",
+    "!src/**/*.types.ts",
+    "!src/**/*.guard.ts",
+    "!src/**/*.filter.ts",
+    "!src/**/*.interceptor.ts",
+    "!src/**/*.strategy.ts",
+  ],
   coverageDirectory: "./coverage",
   testEnvironment: "node",
   roots: ["<rootDir>/src/", "<rootDir>/libs/"],
