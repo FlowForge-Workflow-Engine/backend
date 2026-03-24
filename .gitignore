@@ -5,6 +5,7 @@
 
 # SQL Files
 *.sql
+!script.sql
 
 # ENVs
 .env
