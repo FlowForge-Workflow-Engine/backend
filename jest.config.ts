@@ -31,6 +31,7 @@ const config: Config = {
     "!src/**/*.strategy.ts",
   ],
   coverageDirectory: "./coverage",
+  coverageReporters: ["json", "json-summary", "lcov", "text", "clover"], // Customize as needed
   testEnvironment: "node",
   roots: ["<rootDir>/src/", "<rootDir>/libs/"],
   moduleNameMapper: {

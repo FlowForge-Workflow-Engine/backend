@@ -10,6 +10,11 @@ author: Debi Prasad Mishra
 
 # Multi-Tenant Workflow Engine — Backend
 
+
+![Statements](./coverage/badges/badge-statements.svg)     ![Branches](./coverage/badges/badge-branches.svg)    ![Functions](./coverage/badges/badge-functions.svg)   ![Lines](./coverage/badges/badge-lines.svg) 
+
+
+
 A production-ready, multi-tenant SaaS backend for defining, deploying, and executing complex approval and routing workflows. Built as a strict modular monolith with contract-first inter-module communication — every module can be extracted as an independent microservice with zero business logic changes.
 
 **Architecture**: Microservice-Extractable Contract-First Modular Monolith
