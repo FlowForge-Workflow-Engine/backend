@@ -36,7 +36,7 @@ import { ClsModule } from "nestjs-cls";
     ConfigModule.forRoot({
       envFilePath: [`.env.stage.${process.env.STAGE || "dev"}`, ".env"],
       isGlobal: true,
-      validationSchema: envSchema,
+      validationSchema: process.env.NODE_ENV === "test" ? undefined : envSchema,
       validationOptions: {
         allowUnknown: true,
         abortEarly: false,

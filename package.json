@@ -20,7 +20,7 @@
     "test:watch": "cross-env STAGE=dev jest --watch",
     "test:cov": "cross-env STAGE=dev jest --coverage --runInBand",
     "test:debug": "cross-env STAGE=dev node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "cross-env STAGE=test jest --config ./test/jest-e2e.json --runInBand",
+    "test:e2e": "cross-env STAGE=test jest --config ./test/jest-e2e.json --runInBand --detectOpenHandles",
     "test:e2e:watch": "cross-env STAGE=test jest --config ./test/jest-e2e.json --watchAll --no-cache --runInBand",
     "test:e2e:cov": "cross-env STAGE=test jest --config ./test/jest-e2e.json --coverage --runInBand",
     "typedoc": "typedoc --options ./typedoc.json",

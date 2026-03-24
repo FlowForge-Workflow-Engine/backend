@@ -10,11 +10,12 @@ import { RedisService } from "../../../infra/redis.service";
 import { TENANT_PROVISIONING_CONTRACT } from "@app/shared/interfaces/contracts/tenant-provisioning.contract";
 import { TENANT_QUERY_CONTRACT } from "@app/shared/interfaces/contracts/tenant-query.contract";
 import { NOTIFICATION_TEMPLATE_BOOTSTRAP_CONTRACT } from "@app/shared/interfaces/contracts/notification-template-bootstrap.contract";
-import { createMockRedisService } from "@app/shared/test-utils/mocks";
+import { createMockRedisService, createMockRequestContextService } from "@app/shared/test-utils/mocks";
 import { makeUser, makeRole, makeUserRole, makeTenantSummary, TEST_IDS } from "@app/shared/test-utils";
 import * as argon2 from "@app/shared/utils/hashes/argon2";
 import * as uuidUtil from "@app/shared/utils/uuid.util";
 import { AppErrors } from "@app/shared/constants/app-errors.enum";
+import { RequestContextService } from "@app/database";
 
 jest.mock("@app/shared/utils/hashes/argon2");
 jest.mock("@app/shared/utils/uuid.util");
@@ -29,6 +30,7 @@ describe("OnboardingService", () => {
   let userRoleRepo: jest.Mocked<UserRoleRepository>;
   let publisher: jest.Mocked<AuthPublisher>;
   let redis: ReturnType<typeof createMockRedisService>;
+  let requestContext: ReturnType<typeof createMockRequestContextService>;
   let tenantProvisioning: { provision: jest.Mock };
   let tenantQuery: { findBySlug: jest.Mock };
   let notificationBootstrap: { ensureTenantCreatedWelcomeTemplate: jest.Mock };
@@ -70,6 +72,7 @@ describe("OnboardingService", () => {
     } as unknown as jest.Mocked<AuthPublisher>;
 
     redis = createMockRedisService();
+    requestContext = createMockRequestContextService();
     tenantProvisioning = { provision: jest.fn().mockResolvedValue(TENANT_PROVISION_RESULT) };
     tenantQuery = { findBySlug: jest.fn() };
     notificationBootstrap = { ensureTenantCreatedWelcomeTemplate: jest.fn().mockResolvedValue(undefined) };
@@ -90,6 +93,7 @@ describe("OnboardingService", () => {
         { provide: AuthService, useValue: authService },
         { provide: AuthPublisher, useValue: publisher },
         { provide: RedisService, useValue: redis },
+        { provide: RequestContextService, useValue: requestContext },
       ],
     }).compile();
 

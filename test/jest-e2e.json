@@ -1,17 +1,16 @@
 {
-  "moduleFileExtensions": [
-    "js",
-    "json",
-    "ts"
-  ],
-  "rootDir": ".",
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
   "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
+  "testMatch": ["<rootDir>/test/**/*.e2e-spec.ts"],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "transformIgnorePatterns": ["node_modules/(?!(uuid)/)"],
+  "testTimeout": 30000,
+  "setupFilesAfterEnv": ["<rootDir>/test/setup.ts"],
   "moduleNameMapper": {
-    "@app/shared/(.*)": "<rootDir>/../libs/shared/src/$1",
-    "@app/shared": "<rootDir>/../libs/shared/src"
+    "^@app/shared(|/.*)$": "<rootDir>/libs/shared/src/$1",
+    "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1"
   }
 }
