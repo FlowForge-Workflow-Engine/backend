@@ -1,5 +1,28 @@
 # Questions and Answers
 
+## Table of Contents
+
+- [Scale Targets Referenced Throughout](#scale-targets-referenced-throughout)
+- [1. Observability Stack: Can you use OpenTelemetry + Grafana, or SigNoz is required?](#1-observability-stack-can-you-use-opentelemetry--grafana-or-signoz-is-required)
+  - [SigNoz](#signoz)
+  - [Grafana](#grafana)
+  - [Sentry](#sentry)
+  - [Decision Matrix](#decision-matrix)
+  - [Rational for New Relic / Datadog](#rational-for-new-relic--datadog)
+  - [🤔 Decision Martix](#-decision-martix)
+  - [After Scaling to Global Level](#after-scaling-to-global-level)
+  - [Verdict](#verdict)
+- [2. Dual Bus Architecture Justification: NATS + Kafka, why not just NATS with JetStream?](#2-dual-bus-architecture-justification-nats--kafka-why-not-just-nats-with-jetstream)
+  - [Direct Answer](#direct-answer)
+  - [What NATS JetStream Can Do (That Used to Require Kafka)](#what-nats-jetstream-can-do-that-used-to-require-kafka)
+  - [What Kafka Does That JetStream Cannot Match](#what-kafka-does-that-jetstream-cannot-match)
+  - [Recommended Strategy](#recommended-strategy)
+- [3. Why Does Rule Engine Need to Be a Separate Service?](#3-why-does-rule-engine-need-to-be-a-separate-service)
+- [4. Is there a simplified more accurate architecture, Can you simplify this architecture? YES/NO](#4-is-there-a-simplified-more-accurate-architecture-can-you-simplify-this-architecture-yesno)
+  - [Direct Answer:](#direct-answer-1)
+
+---
+
 ## Scale Targets Referenced Throughout
 
 | Label | Concurrent Users | Tenants | Total Users | Workflow Instances |
@@ -230,7 +253,7 @@ Ask 3 questions:
 
 ### Recommended Strategy
 > Refer `docs/references/FlowForge_Throughput_Derivation.md` for throughput derivation and messaging stack recommendation
-> `docs/references/FlowForge_Throughput_Derivation.md#Then Why Would You Ever Add Kafka? — The Real Reasons`
+> [docs/references/FlowForge_Throughput_Derivation.md#Then Why Would You Ever Add Kafka? — The Real Reasons](./references/FlowForge_Throughput_Derivation.md#then-why-would-you-ever-add-kafka--the-real-reasons)
 
 | Phase | Messaging Stack | Rationale |
 |---|---|---|
