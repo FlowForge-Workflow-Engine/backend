@@ -109,7 +109,7 @@ export class DatabaseContextInterceptor implements NestInterceptor {
         this.logger.debug(
           `QR released — tx ${requestFailed ? "rolled back" : "committed"}, RLS context cleared`
         );
-        this.logger.log("=".repeat(150));
+        this.logger.log("=".repeat(100));
       })
     );
 
