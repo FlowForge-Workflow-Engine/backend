@@ -109,7 +109,7 @@ export class DatabaseContextInterceptor implements NestInterceptor {
         this.logger.debug(
           `QR released — tx ${requestFailed ? "rolled back" : "committed"}, RLS context cleared`
         );
-        this.logger.log("=".repeat(100));
+        console.log("=".repeat(150));
       })
     );
 
@@ -121,23 +121,26 @@ export class DatabaseContextInterceptor implements NestInterceptor {
     //     return next.handle().pipe(
     //       switchMap(async (responseData) => {
     //         if (qr && !qr.isReleased && qr.isTransactionActive) {
-    //           console.log("COMMITING TRANSACTION");
+    //           // console.log("COMMITING TRANSACTION");
     //           await qr.commitTransaction();
     //         }
-    //         console.log("RELEASING QR (success)");
+    //         // console.log("RELEASING QR (success)");
     //         await qr.release();
+    //         this.logger.debug(`QR released — tx committed, RLS context cleared`);
     //         console.log("=".repeat(150));
     //         return responseData;
     //       }),
 
     //       catchError(async (err) => {
     //         if (qr && !qr.isReleased && qr.isTransactionActive) {
-    //           console.log("ROLLING BACK TRANSACTION");
+    //           // console.log("ROLLING BACK TRANSACTION");
     //           await qr.rollbackTransaction();
     //         }
     //         if (qr && !qr.isReleased) {
-    //           console.log("RELEASING QR (error)");
+    //           // console.log("RELEASING QR (error)");
     //           await qr.release();
+    //           this.logger.debug(`QR released — tx rolled back, RLS context cleared`);
+    //           console.log("=".repeat(150));
     //         }
     //         throw err;
     //       })
