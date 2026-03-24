@@ -1,13 +1,3 @@
----
-title: Multi-Tenant Workflow Engine — Backend
-version: 1.0.0
-status: Draft
-project: Multi-Tenant Workflow Engine — SaaS Platform
-architecture: Microservice-Extractable Contract-First Modular Monolith
-last_updated: 2026-03-10
-author: Debi Prasad Mishra
----
-
 # Multi-Tenant Workflow Engine — Backend
 
 
