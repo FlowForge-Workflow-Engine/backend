@@ -10,7 +10,6 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -19,10 +18,10 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/shared": ["libs/shared/src"],
-      "@app/shared/*": ["libs/shared/src/*"],
-      "@app/database": ["libs/database/src"],
-      "@app/database/*": ["libs/database/src/*"]
+      "@app/shared": ["./libs/shared/src"],
+      "@app/shared/*": ["./libs/shared/src/*"],
+      "@app/database": ["./libs/database/src"],
+      "@app/database/*": ["./libs/database/src/*"]
     }
   }
 }

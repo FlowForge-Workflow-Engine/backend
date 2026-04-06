@@ -70,7 +70,7 @@ SELECT
 FROM 
     information_schema.columns
 WHERE 
-    table_name = 'users'
+    table_name = 'audit_logs'
 ORDER BY 
     ordinal_position;
 
@@ -209,7 +209,9 @@ ALTER ROLE superadmin BYPASSRLS;
 --DROP USER test_rls;
 
 
-
+SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check
+FROM pg_policies
+WHERE tablename = 'users';
 
 
 
