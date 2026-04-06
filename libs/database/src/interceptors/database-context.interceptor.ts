@@ -101,7 +101,10 @@ export class DatabaseContextInterceptor implements NestInterceptor {
             }
           }
         } catch (err) {
-          this.logger.error("Failed to commit/rollback transaction:", err.message);
+          this.logger.error(
+            "Failed to commit/rollback transaction:",
+            err instanceof Error ? err.message : String(err)
+          );
         } finally {
           await qr.release(); // always release — returns connection to pool clean
         }
